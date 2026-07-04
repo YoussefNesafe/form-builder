@@ -2,7 +2,7 @@
 
 > Part of `docs/plans/2026-07-05-form-builder-implementation.md`. Read overview rules first.
 
-Pattern for every field component: `"use client"`; receives `{ field }`; uses RHF context via shadcn `FormField` (`useFormContext` under the hood); renders inside `FieldWrapper`; honors `field.disabled` OR disabled-by-condition via `FieldRuntimeContext` (created in Task 3.2, populated by renderer's gate in Phase 5); never hardcodes styling beyond token classes.
+Pattern for every field component: `"use client"`; receives `{ field }`; wires RHF via `Controller` + `useFormContext` (shadcn 4.13 registry removed the RHF-bound `form` component — `components/ui/field.tsx` primitives are markup-only); renders inside `FieldWrapper`; honors `field.disabled` OR disabled-by-condition via `FieldRuntimeContext` (created in Task 3.2, populated by renderer's gate in Phase 5); never hardcodes styling beyond token classes.
 
 Field components have no unit tests (design decision) — visual verification happens in Phase 5 smoke demo and Phase 7 kitchen-sink demo.
 
@@ -23,7 +23,7 @@ export const fieldWrapperVariants = cva("flex flex-col gap-1.5", {
 });
 ```
 
-`FieldWrapper.tsx` (`"use client"`): thin composition over shadcn `FormItem/FormLabel/FormDescription/FormMessage` (from `@/components/ui/form`). Props: `{ label?, description?, required?, size?, children }`. Required renders `<span aria-hidden className="text-destructive ms-1">*</span>`. All spacing logical (`ms-*`). No colors beyond tokens.
+`FieldWrapper.tsx` (`"use client"`): thin composition over shadcn `Field/FieldLabel/FieldDescription/FieldError` (from `@/components/ui/field` — the `form` component no longer exists in the registry; `FieldError` accepts an `errors` prop that maps onto Controller's `fieldState.error`). Props: `{ label?, description?, required?, size?, error?, children }`. Required renders `<span aria-hidden className="text-destructive ms-1">*</span>`. All spacing logical (`ms-*`). No colors beyond tokens.
 
 **Steps:** implement → `yarn tsc --noEmit` → commit `feat: add field wrapper and cva variants`.
 

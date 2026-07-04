@@ -78,6 +78,7 @@ Boundaries:
 - App imports only from `form-builder` root index.
 - shadcn primitives live in app-level `components/ui/`; `form-builder/` imports via alias.
 - **Portability contract:** consuming project must run the same `shadcn add` list (shadcn is copy-in code). Documented, not vendored — vendoring was considered and rejected (duplicates components.json flow, diverges from app theme).
+  Actual list (shadcn 4.13, radix base): `button input textarea label select command popover radio-group checkbox switch calendar slider progress separator input-otp @shadcn/field` (+ `dialog`, `input-group` pulled in as dependencies). Note: the RHF-bound `form` component was removed from the registry — `field` primitives replace it; RHF wiring is done via `Controller` in `form-builder/` code.
 - Zustand stepper store is a factory per form instance — no global singleton, no cross-form collisions, extendable later.
 
 ## Core types
