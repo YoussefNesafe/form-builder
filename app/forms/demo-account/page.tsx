@@ -4,11 +4,28 @@ import { AccountFormClient } from "../AccountFormClient";
 const config: FormConfig = {
   id: "demo-account",
   fields: [
-    { type: "static", name: "heading", content: "Open a Demo Account", as: "h1" },
+    {
+      type: "static",
+      name: "heading",
+      content: "Open a Demo Account",
+      as: "h1",
+    },
     { type: "static", name: "subheading", content: "Enjoy risk-free trading!" },
-    { type: "text", name: "firstName", label: "First Name", required: true, colSpan: 2 },
-    { type: "text", name: "lastName", label: "Last Name", required: true, colSpan: 2 },
-    { type: "email", name: "email", label: "Email", required: true },
+    {
+      type: "text",
+      name: "firstName",
+      placeholder: "First Name",
+      required: true,
+      colSpan: 2,
+    },
+    {
+      type: "text",
+      name: "lastName",
+      placeholder: "Last Name",
+      required: true,
+      colSpan: 2,
+    },
+    { type: "email", name: "email", placeholder: "Email", required: true },
     {
       type: "password",
       name: "password",
@@ -16,8 +33,21 @@ const config: FormConfig = {
       required: true,
       rules: { minLength: 8 },
     },
-    { type: "phone", name: "phone", label: "Phone Number", defaultCountry: "AE", required: true },
-    { type: "otp", name: "otp", label: "Verification Code (OTP)", length: 6, required: true, dependsOn: "phone" },
+    {
+      type: "phone",
+      name: "phone",
+      label: "Phone Number",
+      defaultCountry: "AE",
+      required: true,
+    },
+    {
+      type: "otp",
+      name: "otp",
+      label: "Verification Code (OTP)",
+      length: 6,
+      required: true,
+      dependsOn: "phone",
+    },
     {
       type: "static",
       name: "consent",

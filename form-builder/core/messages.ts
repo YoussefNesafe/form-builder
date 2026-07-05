@@ -11,7 +11,11 @@ export type Messages = {
   sendCode: string;
   codeSent: string;
   resend: string;
-  resendIn: (seconds: number) => string;
+  // Resend line reads: `{otpDidntReceive} {resendIn} {n} {seconds}` — split
+  // so the countdown number can be styled separately.
+  otpDidntReceive: string;
+  resendIn: string;
+  seconds: string;
   otpVerified: string;
   otpSendFailed: string;
   otpVerifyFailed: string;
@@ -41,13 +45,15 @@ export const defaultMessages: Messages = {
   fileSize: (mb) => `File must be smaller than ${mb} MB`,
   otpLength: (n) => `Enter the ${n}-digit code`,
   sendCode: "Send OTP",
-  codeSent: "Code sent",
+  codeSent: "Code Sent",
   resend: "Resend",
-  resendIn: (seconds) => `Resend in ${seconds}s`,
+  otpDidntReceive: "Didn't receive otp?",
+  resendIn: "Resend in",
+  seconds: "seconds",
   otpVerified: "Verified",
   otpSendFailed: "Could not send the code. Try again.",
-  otpVerifyFailed: "Invalid code",
-  otpNotVerified: "Verify the code first",
+  otpVerifyFailed: "Invalid OTP",
+  otpNotVerified: "OTP is not verified",
   invalidDate: "Enter a valid date",
   invalidPhone: "Enter a valid phone number",
   showPassword: "Show password",

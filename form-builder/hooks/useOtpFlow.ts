@@ -132,6 +132,9 @@ export function useOtpFlow(config: OtpFlowConfig) {
     if (!otp?.send || !canSend || state.status === "sending" || state.status === "verified") return;
     const resend = state.status !== "idle";
     attempted.current = null;
+    // A resend issues a fresh code — stale digits would only auto-verify
+    // against the old one, so clear them (also clears the field error).
+    if (resend) resetField(config.name, { defaultValue: "" });
     const stamp = ++generation.current;
     dispatch({ type: "SEND", resend });
     try {

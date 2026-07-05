@@ -78,16 +78,25 @@ function OtpControl({
               {sendLabel}
             </Button>
             {flow.showResend && (
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={flow.send}
-                disabled={disabled || flow.seconds > 0}
-                className="w-full text-muted-foreground"
-              >
-                {flow.seconds > 0 ? messages.resendIn(flow.seconds) : messages.resend}
-              </Button>
+              <p className="text-center text-xs text-muted-foreground">
+                {messages.otpDidntReceive}{" "}
+                {flow.seconds > 0 ? (
+                  <>
+                    {messages.resendIn}{" "}
+                    <span className="text-blue-600 dark:text-blue-400">{flow.seconds}</span>{" "}
+                    {messages.seconds}
+                  </>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={flow.send}
+                    disabled={disabled}
+                    className="cursor-pointer text-blue-600 hover:underline dark:text-blue-400"
+                  >
+                    {messages.resend}
+                  </button>
+                )}
+              </p>
             )}
           </div>
         )}
@@ -102,7 +111,7 @@ function OtpControl({
           }}
           onBlur={rhf.onBlur}
           disabled={disabled || flow.inputsDisabled}
-          aria-invalid={!!fieldState.error}
+          aria-invalid={!!error}
           aria-describedby={fieldAriaDescribedBy(id, {
             description: config.description,
             error,
@@ -113,7 +122,7 @@ function OtpControl({
               <InputOTPSlot
                 key={index}
                 index={index}
-                aria-invalid={!!fieldState.error}
+                aria-invalid={!!error}
                 className={cn(
                   "rounded-md border dark:bg-input/30",
                   verified && "border-green-600 dark:border-green-500",
