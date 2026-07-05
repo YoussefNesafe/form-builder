@@ -79,7 +79,9 @@ export function FormStepper({ config }: { config: FormConfig }) {
           submitField ? (
             renderField(submitField)
           ) : (
-            <Button type="submit">{messages.submit}</Button>
+            <Button type="submit" disabled={form.formState.isSubmitting || !form.formState.isValid}>
+              {messages.submit}
+            </Button>
           )
         ) : (
           <Button type="button" onClick={handleNext}>

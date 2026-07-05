@@ -29,7 +29,7 @@ const config: FormConfig = {
     {
       type: "otp",
       name: "emailOtp",
-      label: "Email Verification Code",
+      placeholder: "Email Verification Code",
       length: 6,
       required: true,
       dependsOn: "email",
@@ -37,7 +37,7 @@ const config: FormConfig = {
     {
       type: "phone",
       name: "phone",
-      label: "Phone Number",
+      placeholder: "Phone Number",
       defaultCountry: "AE",
       required: true,
       enabledWhenVerified: "emailOtp",
@@ -45,7 +45,6 @@ const config: FormConfig = {
     {
       type: "otp",
       name: "otp",
-      label: "Verification Code (OTP)",
       length: 6,
       required: true,
       dependsOn: "phone",
@@ -53,7 +52,7 @@ const config: FormConfig = {
     {
       type: "password",
       name: "password",
-      label: "Create Password",
+      placeholder: "Create Password",
       required: true,
       rules: { minLength: 8 },
     },
