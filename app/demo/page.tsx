@@ -1,4 +1,4 @@
-import type { FormConfig } from "@/form-builder/core/types";
+import type { FormConfig } from "@/form-builder";
 import { DemoClient } from "./DemoClient";
 
 const config: FormConfig = {
@@ -72,6 +72,11 @@ const config: FormConfig = {
     },
     { type: "hidden", name: "utm", value: "smoke-campaign" },
     { type: "submit", name: "go", text: "Send" },
+  ],
+  steps: [
+    { title: "Account", fieldNames: ["title", "firstName", "email", "secret"] },
+    { title: "Profile", fieldNames: ["other", "details", "size", "color", "toppings", "code", "mobile"] },
+    { title: "Extras", fieldNames: ["birthday", "stay", "level", "cv", "team"] },
   ],
 };
 
