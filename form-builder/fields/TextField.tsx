@@ -45,6 +45,16 @@ export function TextField({ field }: FieldComponentProps) {
         const showChecklist =
           failing.length > 0 && (fieldState.isDirty || fieldState.isTouched);
 
+        // trim rule also normalizes the visible value on blur, not only the
+        // parsed payload.
+        const handleBlur = () => {
+          if ("rules" in config && config.rules?.trim && typeof rhf.value === "string") {
+            const trimmed = rhf.value.trim();
+            if (trimmed !== rhf.value) rhf.onChange(trimmed);
+          }
+          rhf.onBlur();
+        };
+
         return (
         <FieldWrapper
           id={id}
@@ -58,6 +68,7 @@ export function TextField({ field }: FieldComponentProps) {
             <Textarea
               placeholder={config.placeholder}
               {...rhf}
+              onBlur={handleBlur}
               id={id}
               disabled={disabled}
               aria-invalid={!!fieldState.error}
@@ -78,6 +89,7 @@ export function TextField({ field }: FieldComponentProps) {
                 step={config.type === "number" ? config.step : undefined}
                 className={isPassword ? "pe-10" : undefined}
                 {...rhf}
+                onBlur={handleBlur}
                 id={id}
                 disabled={disabled}
                 aria-invalid={!!fieldState.error}
