@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import type { FieldComponentProps } from "../core/registry";
 import type { FieldConfig } from "../core/types";
-import { useFieldDisabled } from "../components/FieldRuntime";
+import { useFieldDisabled, useFieldRuntime } from "../components/FieldRuntime";
 import { FieldWrapper, fieldAriaDescribedBy } from "../ui/FieldWrapper";
 
 type PhoneFieldConfig = Extract<FieldConfig, { type: "phone" }>;
@@ -22,9 +22,10 @@ type CountrySelectProps = {
   options: { value?: string; label: string }[];
   disabled?: boolean;
   className?: string;
+  "aria-label"?: string;
 };
 
-function CountrySelect({ value, onChange, options, disabled, className }: CountrySelectProps) {
+function CountrySelect({ value, onChange, options, disabled, className, ...rest }: CountrySelectProps) {
   return (
     <div className={cn("relative flex items-center", className)}>
       <span aria-hidden className="pointer-events-none absolute start-2 text-base">
@@ -34,7 +35,7 @@ function CountrySelect({ value, onChange, options, disabled, className }: Countr
         value={value ?? ""}
         onChange={(event) => onChange(event.target.value || undefined)}
         disabled={disabled}
-        aria-label="Country"
+        aria-label={rest["aria-label"]}
         className="h-9 w-16 appearance-none rounded-md border border-input bg-transparent ps-8 pe-1 text-sm text-transparent shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30"
       >
         <option value="">—</option>
@@ -54,6 +55,7 @@ export function PhoneField({ field }: FieldComponentProps) {
   const config = field as PhoneFieldConfig;
   const { control } = useFormContext();
   const disabled = useFieldDisabled(config);
+  const { messages } = useFieldRuntime();
   const id = useId();
 
   return (
@@ -80,6 +82,7 @@ export function PhoneField({ field }: FieldComponentProps) {
             countryOptionsOrder={config.preferredCountries as ComponentProps<typeof PhoneInput>["countryOptionsOrder"]}
             inputComponent={Input}
             countrySelectComponent={CountrySelect}
+            countrySelectProps={{ "aria-label": messages.country }}
             className="flex gap-2"
             numberInputProps={{
               "aria-invalid": !!fieldState.error,

@@ -11,6 +11,13 @@ export type Messages = {
   invalidDate: string;
   showPassword: string;
   hidePassword: string;
+  next: string;
+  back: string;
+  country: string;
+  addRow: string;
+  removeRow: (row: number) => string;
+  removeFile: (name: string) => string;
+  noOptions: string;
 };
 
 export const defaultMessages: Messages = {
@@ -26,6 +33,13 @@ export const defaultMessages: Messages = {
   invalidDate: "Enter a valid date",
   showPassword: "Show password",
   hidePassword: "Hide password",
+  next: "Next",
+  back: "Back",
+  country: "Country",
+  addRow: "Add",
+  removeRow: (row) => `Remove row ${row}`,
+  removeFile: (name) => `Remove ${name}`,
+  noOptions: "No options",
 };
 
 export function mergeMessages(overrides?: Partial<Messages>): Messages {

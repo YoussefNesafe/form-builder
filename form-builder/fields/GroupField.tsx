@@ -6,8 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import type { FieldComponentProps } from "../core/registry";
 import type { Condition, FieldConfig } from "../core/types";
-import { renderField } from "../components/FormRenderer";
-import { useFieldDisabled } from "../components/FieldRuntime";
+import { renderField } from "../components/renderField";
+import { useFieldDisabled, useFieldRuntime } from "../components/FieldRuntime";
 import { FieldWrapper } from "../ui/FieldWrapper";
 import { buildDefaultValues } from "../hooks/useDynamicForm";
 
@@ -31,6 +31,7 @@ export function GroupField({ field }: FieldComponentProps) {
   const config = field as GroupFieldConfig;
   const { control } = useFormContext();
   const disabled = useFieldDisabled(config);
+  const { messages } = useFieldRuntime();
   const { fields: rows, append, remove } = useFieldArray({ control, name: config.name });
   const { errors } = useFormState({ control, name: config.name });
   const rootError = errors[config.name]?.root ?? errors[config.name];
@@ -62,7 +63,7 @@ export function GroupField({ field }: FieldComponentProps) {
                 variant="ghost"
                 size="icon"
                 disabled={disabled || rows.length <= min}
-                aria-label={`Remove row ${index + 1}`}
+                aria-label={messages.removeRow(index + 1)}
                 onClick={() => remove(index)}
               >
                 <Trash2 className="size-4" />
@@ -78,7 +79,7 @@ export function GroupField({ field }: FieldComponentProps) {
           className="w-fit"
         >
           <Plus className="me-2 size-4" />
-          {config.placeholder ?? "+"}
+          {config.placeholder ?? messages.addRow}
         </Button>
       </div>
     </FieldWrapper>

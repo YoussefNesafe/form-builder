@@ -23,7 +23,7 @@ import {
 import { cn } from "@/lib/utils";
 import type { FieldComponentProps } from "../core/registry";
 import type { FieldConfig, Option } from "../core/types";
-import { useFieldDisabled } from "../components/FieldRuntime";
+import { useFieldDisabled, useFieldRuntime } from "../components/FieldRuntime";
 import { FieldWrapper, fieldAriaDescribedBy } from "../ui/FieldWrapper";
 
 type SelectFieldConfig = Extract<FieldConfig, { type: "select" }>;
@@ -36,6 +36,7 @@ export function SelectField({ field }: FieldComponentProps) {
   const config = field as SelectFieldConfig;
   const { control } = useFormContext();
   const disabled = useFieldDisabled(config);
+  const { messages } = useFieldRuntime();
   const id = useId();
   const [open, setOpen] = useState(false);
 
@@ -85,7 +86,7 @@ export function SelectField({ field }: FieldComponentProps) {
               <Command>
                 {config.searchable && <CommandInput placeholder={config.placeholder} />}
                 <CommandList>
-                  <CommandEmpty>—</CommandEmpty>
+                  <CommandEmpty>{messages.noOptions}</CommandEmpty>
                   <CommandGroup>
                     {config.options.map((option) => {
                       const selected = config.multiple

@@ -105,7 +105,7 @@ export function FileField({ field }: FieldComponentProps) {
                       variant="ghost"
                       size="icon"
                       className="size-6"
-                      aria-label={`Remove ${file.name}`}
+                      aria-label={messages.removeFile(file.name)}
                       onClick={() => removeFile(index)}
                     >
                       <X className="size-3" />
