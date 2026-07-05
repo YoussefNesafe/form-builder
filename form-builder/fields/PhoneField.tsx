@@ -4,7 +4,7 @@ import { useId, useState, type ComponentProps } from "react";
 import { Controller, useFormContext } from "react-hook-form";
 import PhoneInput, { getCountryCallingCode, type Country } from "react-phone-number-input";
 import flags from "react-phone-number-input/flags";
-import { Check, ChevronsUpDown } from "lucide-react";
+import { Check, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Command,
@@ -14,7 +14,6 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import type { FieldComponentProps } from "../core/registry";
@@ -23,6 +22,20 @@ import { useFieldDisabled, useFieldRuntime } from "../components/FieldRuntime";
 import { FieldWrapper, fieldAriaDescribedBy } from "../ui/FieldWrapper";
 
 type PhoneFieldConfig = Extract<FieldConfig, { type: "phone" }>;
+
+// Borderless input: the PhoneInput container carries the input chrome so
+// flag selector and number read as one field.
+function BareInput({ className, ...props }: React.ComponentProps<"input">) {
+  return (
+    <input
+      {...props}
+      className={cn(
+        "h-full w-full min-w-0 bg-transparent pe-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed",
+        className,
+      )}
+    />
+  );
+}
 
 // SVG flags: emoji flags render as plain letters on Windows.
 function CountryFlag({ country }: { country?: string }) {
@@ -61,16 +74,15 @@ function CountrySelect({ value, onChange, options, disabled, className, ...rest 
       <PopoverTrigger asChild>
         <Button
           type="button"
-          variant="outline"
+          variant="ghost"
           role="combobox"
           aria-expanded={open}
           aria-label={rest["aria-label"]}
           disabled={disabled}
-          className={cn("w-fit shrink-0 justify-between gap-1 px-2 font-normal", className)}
+          className={cn("h-full shrink-0 gap-1 rounded-e-none ps-3 pe-2 font-normal", className)}
         >
           <CountryFlag country={value} />
-          <span className="text-sm text-muted-foreground">{value ? callingCode(value) : ""}</span>
-          <ChevronsUpDown className="size-3.5 shrink-0 opacity-50" />
+          <ChevronDown className="size-3.5 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-72 p-0" align="start">
@@ -140,10 +152,17 @@ export function PhoneField({ field }: FieldComponentProps) {
             placeholder={config.placeholder}
             defaultCountry={config.defaultCountry as Country | undefined}
             countryOptionsOrder={config.preferredCountries as ComponentProps<typeof PhoneInput>["countryOptionsOrder"]}
-            inputComponent={Input}
+            international
+            countryCallingCodeEditable={false}
+            inputComponent={BareInput}
             countrySelectComponent={CountrySelect}
             countrySelectProps={{ "aria-label": messages.country }}
-            className="flex gap-2"
+            className={cn(
+              "flex h-9 w-full items-center gap-1 rounded-md border border-input bg-transparent shadow-xs transition-[color,box-shadow]",
+              "focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50 dark:bg-input/30",
+              disabled && "opacity-50",
+              fieldState.error && "border-destructive ring-3 ring-destructive/20 dark:ring-destructive/40",
+            )}
             numberInputProps={{
               "aria-invalid": !!fieldState.error,
               "aria-describedby": fieldAriaDescribedBy(id, {
