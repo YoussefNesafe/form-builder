@@ -27,7 +27,9 @@ export function FormRenderer({ config, onSubmit, messages, className }: FormRend
           {config.steps?.length ? (
             <FormStepper config={config} />
           ) : (
-            <div className="grid grid-cols-4 gap-4">{config.fields.map(renderField)}</div>
+            // shadow-none on descendants: flat bordered controls; rings
+            // (focus/error/valid) use separate ring vars and survive.
+            <div className="grid grid-cols-4 gap-4 [&_*]:shadow-none">{config.fields.map(renderField)}</div>
           )}
         </form>
       </FieldRuntimeContext.Provider>

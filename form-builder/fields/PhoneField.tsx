@@ -162,7 +162,7 @@ export function PhoneField({ field }: FieldComponentProps) {
             countrySelectComponent={CountrySelect}
             countrySelectProps={{ "aria-label": messages.country }}
             className={cn(
-              "flex h-9 w-full items-center gap-1 rounded-md border border-input bg-transparent shadow-xs transition-[color,box-shadow]",
+              "flex h-9 w-full items-center gap-1 rounded-md border border-input bg-transparent transition-[color,box-shadow]",
               "focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50 dark:bg-input/30",
               disabled && "opacity-50",
               fieldState.error &&

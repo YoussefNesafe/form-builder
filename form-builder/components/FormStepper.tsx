@@ -66,7 +66,7 @@ export function FormStepper({ config }: { config: FormConfig }) {
         ))}
       </ol>
 
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-4 gap-4 [&_*]:shadow-none">
         {currentFields.map(renderField)}
         {hiddenFields.map(renderField)}
       </div>
