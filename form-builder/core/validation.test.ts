@@ -94,6 +94,23 @@ describe("phone", () => {
     expect(schema.safeParse("").success).toBe(false);
     expect(schema.safeParse("+31612345678").success).toBe(true);
   });
+
+  it("validates real number lengths per country", () => {
+    const schema = schemaFor({ type: "phone", name: "p", required: true });
+    expect(schema.safeParse("+971501095033").success).toBe(true);
+    const tooLong = schema.safeParse("+9715010950331");
+    expect(tooLong.success).toBe(false);
+    if (!tooLong.success) expect(tooLong.error.issues[0].message).toBe(messages.invalidPhone);
+    expect(schema.safeParse("+97150109503").success).toBe(false);
+    expect(schema.safeParse("123").success).toBe(false);
+  });
+
+  it("optional accepts empty but rejects invalid", () => {
+    const schema = schemaFor({ type: "phone", name: "p" });
+    expect(schema.safeParse("").success).toBe(true);
+    expect(schema.safeParse(undefined).success).toBe(true);
+    expect(schema.safeParse("+9715010950331").success).toBe(false);
+  });
 });
 
 describe("select", () => {

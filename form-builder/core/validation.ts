@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { isValidPhoneNumber } from "libphonenumber-js";
 import type { Messages } from "./messages";
 import { isBuiltInField } from "./types";
 import type { AnyFieldConfig, FieldConfig, FormConfig, Option, TextRules } from "./types";
@@ -95,8 +96,9 @@ export function toZodSchema(field: FieldConfig, messages: Messages): FieldSchema
     }
 
     case "phone": {
-      const schema = z.string();
-      return field.required ? schema.min(1, messages.required) : optionalEmptyable(schema);
+      const base = field.required ? z.string({ error: messages.required }).min(1, messages.required) : z.string();
+      const schema = base.refine((value) => isValidPhoneNumber(value), messages.invalidPhone);
+      return field.required ? schema : optionalEmptyable(schema);
     }
 
     case "select": {

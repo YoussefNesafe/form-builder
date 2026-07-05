@@ -9,6 +9,7 @@ export type Messages = {
   fileSize: (mb: number) => string;
   otpLength: (n: number) => string;
   invalidDate: string;
+  invalidPhone: string;
   showPassword: string;
   hidePassword: string;
   next: string;
@@ -32,6 +33,7 @@ export const defaultMessages: Messages = {
   fileSize: (mb) => `File must be smaller than ${mb} MB`,
   otpLength: (n) => `Enter the ${n}-digit code`,
   invalidDate: "Enter a valid date",
+  invalidPhone: "Enter a valid phone number",
   showPassword: "Show password",
   hidePassword: "Hide password",
   next: "Next",
