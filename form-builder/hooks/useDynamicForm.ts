@@ -82,7 +82,8 @@ export function useDynamicForm(config: FormConfig, opts?: { messages?: Partial<M
   const resolver = useMemo(() => conditionAwareResolver(config, messages), [config, messages]);
   const defaultValues = useMemo(() => buildDefaultValues(config.fields), [config]);
 
-  const form = useForm<FormValues>({ resolver, defaultValues });
+  // onTouched: errors surface on first blur, then revalidate per keystroke.
+  const form = useForm<FormValues>({ resolver, defaultValues, mode: "onTouched" });
 
   return { form, schema, messages };
 }
