@@ -5,10 +5,31 @@ import { countryOptions } from "../countries";
 const config: FormConfig = {
   id: "live-account",
   fields: [
-    { type: "static", name: "heading", content: "Open a Live Account", as: "h1" },
-    { type: "static", name: "subheading", content: "and start trading in 2 minutes" },
-    { type: "text", name: "firstName", label: "First Name", required: true, colSpan: 2 },
-    { type: "text", name: "lastName", label: "Last Name", required: true, colSpan: 2 },
+    {
+      type: "static",
+      name: "heading",
+      content: "Open a Live Account",
+      as: "h1",
+    },
+    {
+      type: "static",
+      name: "subheading",
+      content: "and start trading in 2 minutes",
+    },
+    {
+      type: "text",
+      name: "firstName",
+      label: "First Name",
+      required: true,
+      colSpan: 2,
+    },
+    {
+      type: "text",
+      name: "lastName",
+      label: "Last Name",
+      required: true,
+      colSpan: 2,
+    },
     { type: "email", name: "email", label: "Email", required: true },
     {
       type: "select",
@@ -34,8 +55,20 @@ const config: FormConfig = {
       required: true,
       rules: { minLength: 8 },
     },
-    { type: "phone", name: "phone", label: "Phone Number", defaultCountry: "AE", required: true },
-    { type: "otp", name: "otp", label: "Verification Code (OTP)", length: 6, required: true },
+    {
+      type: "phone",
+      name: "phone",
+      label: "Phone Number",
+      defaultCountry: "AE",
+      required: true,
+    },
+    {
+      type: "otp",
+      name: "otp",
+      label: "Verification Code (OTP)",
+      length: 6,
+      required: true,
+    },
     {
       type: "static",
       name: "consent",
