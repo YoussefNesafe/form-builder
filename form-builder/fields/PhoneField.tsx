@@ -1,9 +1,21 @@
 "use client";
 
-import { useId, type ComponentProps } from "react";
+import { useId, useState, type ComponentProps } from "react";
 import { Controller, useFormContext } from "react-hook-form";
-import PhoneInput, { type Country } from "react-phone-number-input";
+import PhoneInput, { getCountryCallingCode, type Country } from "react-phone-number-input";
+import flags from "react-phone-number-input/flags";
+import { Check, ChevronsUpDown } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import { Input } from "@/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import type { FieldComponentProps } from "../core/registry";
 import type { FieldConfig } from "../core/types";
@@ -12,8 +24,23 @@ import { FieldWrapper, fieldAriaDescribedBy } from "../ui/FieldWrapper";
 
 type PhoneFieldConfig = Extract<FieldConfig, { type: "phone" }>;
 
-function flagEmoji(country: string): string {
-  return String.fromCodePoint(...[...country.toUpperCase()].map((char) => 0x1f1a5 + char.charCodeAt(0)));
+// SVG flags: emoji flags render as plain letters on Windows.
+function CountryFlag({ country }: { country?: string }) {
+  const Flag = country ? flags[country as Country] : undefined;
+  if (!Flag) return <span aria-hidden>🌐</span>;
+  return (
+    <span aria-hidden className="inline-flex w-5 overflow-hidden rounded-xs">
+      <Flag title="" />
+    </span>
+  );
+}
+
+function callingCode(country: string): string {
+  try {
+    return `+${getCountryCallingCode(country as Country)}`;
+  } catch {
+    return "";
+  }
 }
 
 type CountrySelectProps = {
@@ -26,28 +53,61 @@ type CountrySelectProps = {
 };
 
 function CountrySelect({ value, onChange, options, disabled, className, ...rest }: CountrySelectProps) {
+  const [open, setOpen] = useState(false);
+  const countries = options.filter((option) => option.value);
+
   return (
-    <div className={cn("relative flex items-center", className)}>
-      <span aria-hidden className="pointer-events-none absolute start-2 text-base">
-        {value ? flagEmoji(value) : "🌐"}
-      </span>
-      <select
-        value={value ?? ""}
-        onChange={(event) => onChange(event.target.value || undefined)}
-        disabled={disabled}
-        aria-label={rest["aria-label"]}
-        className="h-9 w-16 appearance-none rounded-md border border-input bg-transparent ps-8 pe-1 text-sm text-transparent shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30"
-      >
-        <option value="">—</option>
-        {options
-          .filter((option) => option.value)
-          .map((option) => (
-            <option key={option.value} value={option.value} className="text-foreground">
-              {option.label}
-            </option>
-          ))}
-      </select>
-    </div>
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          aria-label={rest["aria-label"]}
+          disabled={disabled}
+          className={cn("w-fit shrink-0 justify-between gap-1 px-2 font-normal", className)}
+        >
+          <CountryFlag country={value} />
+          <span className="text-sm text-muted-foreground">{value ? callingCode(value) : ""}</span>
+          <ChevronsUpDown className="size-3.5 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-72 p-0" align="start">
+        <Command
+          filter={(itemValue, search) => (itemValue.toLowerCase().includes(search.toLowerCase()) ? 1 : 0)}
+        >
+          <CommandInput placeholder={rest["aria-label"]} />
+          <CommandList>
+            <CommandEmpty>—</CommandEmpty>
+            <CommandGroup>
+              {countries.map((option) => {
+                const code = callingCode(option.value as string);
+                return (
+                  <CommandItem
+                    key={option.value}
+                    value={`${option.label} ${code} ${option.value}`}
+                    onSelect={() => {
+                      onChange(option.value);
+                      setOpen(false);
+                    }}
+                  >
+                    <Check
+                      className={cn("me-2 size-4", option.value === value ? "opacity-100" : "opacity-0")}
+                    />
+                    <span className="me-2">
+                      <CountryFlag country={option.value} />
+                    </span>
+                    <span className="truncate">{option.label}</span>
+                    <span className="ms-auto ps-2 text-muted-foreground">{code}</span>
+                  </CommandItem>
+                );
+              })}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
   );
 }
 
