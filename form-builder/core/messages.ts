@@ -40,7 +40,7 @@ export const defaultMessages: Messages = {
   pattern: "Invalid format",
   fileSize: (mb) => `File must be smaller than ${mb} MB`,
   otpLength: (n) => `Enter the ${n}-digit code`,
-  sendCode: "Send code",
+  sendCode: "Send OTP",
   codeSent: "Code sent",
   resend: "Resend",
   resendIn: (seconds) => `Resend in ${seconds}s`,

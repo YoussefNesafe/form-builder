@@ -59,7 +59,39 @@ function OtpControl({
       disabled={disabled}
       error={error}
     >
+      {/* Reference layout: send button leads (fills the start half), detached
+          rounded code boxes follow. Mobile stacks button above the boxes. */}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start">
+        {flow.showSend && (
+          <div className="flex w-full flex-col items-stretch gap-1 sm:flex-1">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={flow.send}
+              disabled={disabled || !flow.canSend || flow.status !== "idle"}
+              className={cn(
+                "w-full font-normal",
+                verified && "border-green-600 text-green-600 dark:border-green-500 dark:text-green-500",
+              )}
+            >
+              {verified && <Check className="size-4" />}
+              {sendLabel}
+            </Button>
+            {flow.showResend && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={flow.send}
+                disabled={disabled || flow.seconds > 0}
+                className="w-full text-muted-foreground"
+              >
+                {flow.seconds > 0 ? messages.resendIn(flow.seconds) : messages.resend}
+              </Button>
+            )}
+          </div>
+        )}
+
         <InputOTP
           id={id}
           maxLength={config.length}
@@ -76,47 +108,20 @@ function OtpControl({
             error,
           })}
         >
-          <InputOTPGroup>
+          <InputOTPGroup className="w-full justify-between gap-2 sm:w-auto sm:justify-start">
             {Array.from({ length: config.length }, (_, index) => (
               <InputOTPSlot
                 key={index}
                 index={index}
                 aria-invalid={!!fieldState.error}
-                className={cn(verified && "border-green-600 dark:border-green-500")}
+                className={cn(
+                  "rounded-md border dark:bg-input/30",
+                  verified && "border-green-600 dark:border-green-500",
+                )}
               />
             ))}
           </InputOTPGroup>
         </InputOTP>
-
-        {flow.showSend && (
-          <div className="flex w-full flex-col items-stretch gap-1 sm:w-auto">
-            <Button
-              type="button"
-              onClick={flow.send}
-              disabled={disabled || !flow.canSend || flow.status !== "idle"}
-              className={cn(
-                "w-full sm:w-auto",
-                verified && "border-green-600 text-green-600 dark:border-green-500 dark:text-green-500",
-              )}
-              variant={verified ? "outline" : "default"}
-            >
-              {verified && <Check className="size-4" />}
-              {sendLabel}
-            </Button>
-            {flow.showResend && (
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={flow.send}
-                disabled={disabled || flow.seconds > 0}
-                className="w-full text-muted-foreground sm:w-auto"
-              >
-                {flow.seconds > 0 ? messages.resendIn(flow.seconds) : messages.resend}
-              </Button>
-            )}
-          </div>
-        )}
       </div>
     </FieldWrapper>
   );
