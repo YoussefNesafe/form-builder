@@ -1,6 +1,6 @@
 "use client";
 
-import { useFieldArray, useFormContext } from "react-hook-form";
+import { useFieldArray, useFormContext, useFormState } from "react-hook-form";
 import { Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -32,12 +32,23 @@ export function GroupField({ field }: FieldComponentProps) {
   const { control } = useFormContext();
   const disabled = useFieldDisabled(config);
   const { fields: rows, append, remove } = useFieldArray({ control, name: config.name });
+  const { errors } = useFormState({ control, name: config.name });
+  const rootError = errors[config.name]?.root ?? errors[config.name];
+  const groupError =
+    rootError && typeof rootError.message === "string" ? { message: rootError.message } : undefined;
 
   const min = config.min ?? 0;
   const max = config.max ?? Number.POSITIVE_INFINITY;
 
   return (
-    <FieldWrapper asGroup label={config.label} description={config.description} required={config.required} disabled={disabled}>
+    <FieldWrapper
+      asGroup
+      label={config.label}
+      description={config.description}
+      required={config.required}
+      disabled={disabled}
+      error={groupError}
+    >
       <div className="flex flex-col gap-4">
         {rows.map((row, index) => (
           <div key={row.id} className="flex flex-col gap-4">

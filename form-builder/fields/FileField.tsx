@@ -79,6 +79,8 @@ export function FileField({ field }: FieldComponentProps) {
               onChange={(event) => {
                 const incoming = Array.from(event.target.files ?? []);
                 if (incoming.length) acceptFiles(incoming);
+                // Reset so re-selecting the same file fires change again.
+                event.target.value = "";
               }}
               onBlur={rhf.onBlur}
             />

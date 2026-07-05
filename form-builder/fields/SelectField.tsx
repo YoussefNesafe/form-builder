@@ -94,7 +94,7 @@ export function SelectField({ field }: FieldComponentProps) {
                       return (
                         <CommandItem
                           key={option.value}
-                          value={String(option.label)}
+                          value={`${option.label} ${option.value}`}
                           disabled={option.disabled}
                           onSelect={() => {
                             if (config.multiple) {

@@ -125,9 +125,16 @@ export function toZodSchema(field: FieldConfig, messages: Messages): FieldSchema
 
     case "date": {
       if (field.range) {
+        const iso = isoDateSchema(field, messages);
+        // Root-pathed refines: Controller reads fieldState.error at the field
+        // name, so nested from/to issues would render as empty error text.
         const schema = z
-          .object({ from: isoDateSchema(field, messages), to: isoDateSchema(field, messages) })
-          .refine((range) => Date.parse(range.from) <= Date.parse(range.to), messages.invalidDate);
+          .object({ from: iso, to: iso.optional() }, { error: messages.required })
+          .refine((range) => range.to !== undefined, messages.required)
+          .refine(
+            (range) => range.to === undefined || Date.parse(range.from) <= Date.parse(range.to),
+            messages.invalidDate,
+          );
         return field.required ? schema : schema.optional();
       }
       const schema = isoDateSchema(field, messages);

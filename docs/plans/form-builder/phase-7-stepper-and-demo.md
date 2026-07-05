@@ -22,6 +22,8 @@ Receives `config` (with `steps`), `form`, `messages`. Renders: step header (titl
 
 Commit: `feat: add multi-step form stepper with zustand`.
 
+Phase 6 review follow-up (do with 7.3): move remaining hardcoded UI strings into `Messages` — PhoneField `aria-label="Country"`, GroupField `Remove row ${n}`/add-button fallback, FileField `Remove ${name}`, SelectField `CommandEmpty` placeholder.
+
 ## Task 7.3: index.ts (public surface)
 ```ts
 export type { FormConfig, FieldConfig, Condition, Option, TextRules, FormValues } from "./core/types";

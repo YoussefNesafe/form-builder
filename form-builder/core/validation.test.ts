@@ -188,10 +188,18 @@ describe("date", () => {
     expect(schema.safeParse("2026-06-01").success).toBe(true);
   });
 
-  it("range needs from and to", () => {
+  it("range needs from and to, errors land at field root with required message", () => {
     const schema = schemaFor({ type: "date", name: "d", range: true, required: true });
     expect(schema.safeParse({ from: "2026-01-01", to: "2026-01-05" }).success).toBe(true);
-    expect(schema.safeParse({ from: "2026-01-01" }).success).toBe(false);
+    const partial = schema.safeParse({ from: "2026-01-01" });
+    expect(partial.success).toBe(false);
+    if (!partial.success) {
+      expect(partial.error.issues[0].message).toBe(messages.required);
+      expect(partial.error.issues[0].path).toEqual([]);
+    }
+    const missing = schema.safeParse(undefined);
+    expect(missing.success).toBe(false);
+    if (!missing.success) expect(missing.error.issues[0].message).toBe(messages.required);
   });
 
   it("range rejects from after to", () => {
