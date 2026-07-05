@@ -80,6 +80,38 @@ describe("number", () => {
   });
 });
 
+describe("password complexity", () => {
+  const field = {
+    type: "password",
+    name: "pw",
+    required: true,
+    complexity: { uppercase: true, lowercase: true, number: true, special: true, minLength: 8 },
+  } as const;
+
+  it("accepts a password meeting every rule", () => {
+    expect(schemaFor(field).safeParse("Abcdef1!").success).toBe(true);
+  });
+
+  it.each([
+    ["abcdef1!", "1 Uppercase"],
+    ["ABCDEF1!", "1 Lowercase"],
+    ["Abcdefg!", "1 Number"],
+    ["Abcdefg1", "1 Special Char"],
+    ["Ab1!", "Min. 8 char."],
+  ])("rejects %s with message %s", (value, message) => {
+    const result = schemaFor(field).safeParse(value);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues.map((issue) => issue.message)).toContain(message);
+    }
+  });
+
+  it("without complexity keeps plain rules only", () => {
+    const schema = schemaFor({ type: "password", name: "pw", required: true });
+    expect(schema.safeParse("abc").success).toBe(true);
+  });
+});
+
 describe("otp", () => {
   it("requires exact length", () => {
     const schema = schemaFor({ type: "otp", name: "o", length: 6, required: true });

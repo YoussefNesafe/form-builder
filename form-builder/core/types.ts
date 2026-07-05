@@ -7,6 +7,14 @@ export type TextRules = {
   message?: string; // custom error for pattern
 };
 
+export type PasswordComplexity = {
+  uppercase?: boolean;
+  lowercase?: boolean;
+  number?: boolean;
+  special?: boolean;
+  minLength?: number;
+};
+
 export type ButtonVariant = "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
 
 export type Condition = {
@@ -52,7 +60,8 @@ export const BUILT_IN_FIELD_TYPES = [
 ] as const;
 
 export type FieldConfig =
-  | (BaseField & { type: "text" | "email" | "password" | "textarea"; rules?: TextRules })
+  | (BaseField & { type: "text" | "email" | "textarea"; rules?: TextRules })
+  | (BaseField & { type: "password"; rules?: TextRules; complexity?: PasswordComplexity })
   | (BaseField & { type: "number"; min?: number; max?: number; step?: number })
   | (BaseField & { type: "otp"; length: number; dependsOn?: string })
   | (BaseField & { type: "phone"; defaultCountry?: string; preferredCountries?: string[] })

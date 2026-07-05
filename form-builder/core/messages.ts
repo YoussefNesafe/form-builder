@@ -24,6 +24,11 @@ export type Messages = {
   invalidPhone: string;
   showPassword: string;
   hidePassword: string;
+  passwordUppercase: string;
+  passwordLowercase: string;
+  passwordNumber: string;
+  passwordSpecial: string;
+  passwordMinLength: (n: number) => string;
   next: string;
   back: string;
   submit: string;
@@ -58,6 +63,11 @@ export const defaultMessages: Messages = {
   invalidPhone: "Enter a valid phone number",
   showPassword: "Show password",
   hidePassword: "Hide password",
+  passwordUppercase: "1 Uppercase",
+  passwordLowercase: "1 Lowercase",
+  passwordNumber: "1 Number",
+  passwordSpecial: "1 Special Char",
+  passwordMinLength: (n) => `Min. ${n} char.`,
   next: "Next",
   back: "Back",
   submit: "Submit",

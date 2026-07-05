@@ -2,11 +2,12 @@
 
 import { useId, useState } from "react";
 import { Controller, useFormContext } from "react-hook-form";
-import { Eye, EyeOff } from "lucide-react";
+import { CircleX, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import type { FieldComponentProps } from "../core/registry";
+import { getPasswordChecks } from "../core/password";
 import type { FieldConfig } from "../core/types";
 import { useFieldDisabled, useFieldRuntime } from "../components/FieldRuntime";
 import { FieldWrapper, fieldAriaDescribedBy } from "../ui/FieldWrapper";
@@ -25,19 +26,33 @@ export function TextField({ field }: FieldComponentProps) {
   const [showPassword, setShowPassword] = useState(false);
 
   const isPassword = config.type === "password";
+  const complexityChecks =
+    config.type === "password" && config.complexity
+      ? getPasswordChecks(config.complexity, messages)
+      : null;
 
   return (
     <Controller
       name={config.name}
       control={control}
-      render={({ field: rhf, fieldState }) => (
+      render={({ field: rhf, fieldState }) => {
+        // Live checklist (reference behavior): only failing rules render, in
+        // red, while the user types; the checklist replaces the error text so
+        // the same rule is not reported twice.
+        const failing = complexityChecks
+          ? complexityChecks.filter((check) => !check.test((rhf.value as string) ?? ""))
+          : [];
+        const showChecklist =
+          failing.length > 0 && (fieldState.isDirty || fieldState.isTouched);
+
+        return (
         <FieldWrapper
           id={id}
           label={config.label}
           description={config.description}
           required={config.required}
           disabled={disabled}
-          error={fieldState.error}
+          error={showChecklist ? undefined : fieldState.error}
         >
           {config.type === "textarea" ? (
             <Textarea
@@ -92,8 +107,19 @@ export function TextField({ field }: FieldComponentProps) {
               )}
             </div>
           )}
+          {showChecklist && (
+            <div aria-live="polite" className="grid grid-cols-2 gap-x-4 gap-y-1">
+              {failing.map((check) => (
+                <span key={check.key} className="flex items-center gap-1 text-xs text-destructive">
+                  <CircleX aria-hidden className="size-3.5 shrink-0" />
+                  {check.label}
+                </span>
+              ))}
+            </div>
+          )}
         </FieldWrapper>
-      )}
+        );
+      }}
     />
   );
 }

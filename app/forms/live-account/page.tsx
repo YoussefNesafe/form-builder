@@ -53,7 +53,7 @@ const config: FormConfig = {
       name: "password",
       label: "Create Password",
       required: true,
-      rules: { minLength: 8 },
+      complexity: { uppercase: true, lowercase: true, number: true, special: true, minLength: 8 },
     },
     {
       type: "phone",

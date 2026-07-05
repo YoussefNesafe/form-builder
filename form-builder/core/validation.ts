@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { isValidPhoneNumber } from "libphonenumber-js";
 import type { Messages } from "./messages";
+import { getPasswordChecks } from "./password";
 import { isBuiltInField } from "./types";
 import type { AnyFieldConfig, FieldConfig, FormConfig, Option, TextRules } from "./types";
 
@@ -76,7 +77,12 @@ export function toZodSchema(
     case "password":
     case "textarea": {
       const base = field.required ? z.string({ error: messages.required }).min(1, messages.required) : z.string();
-      const schema = applyTextRules(base, field.rules, messages);
+      let schema: z.ZodType = applyTextRules(base, field.rules, messages);
+      if (field.type === "password" && field.complexity) {
+        for (const check of getPasswordChecks(field.complexity, messages)) {
+          schema = schema.refine((value) => check.test(value as string), check.label);
+        }
+      }
       return field.required ? schema : optionalEmptyable(schema);
     }
 

@@ -60,7 +60,17 @@ const textFieldSchema = baseFieldSchema.extend({ rules: textRulesSchema.optional
 const fieldSchemasByType: Record<FieldConfig["type"], z.ZodType> = {
   text: textFieldSchema,
   email: textFieldSchema,
-  password: textFieldSchema,
+  password: textFieldSchema.extend({
+    complexity: z
+      .strictObject({
+        uppercase: z.boolean().optional(),
+        lowercase: z.boolean().optional(),
+        number: z.boolean().optional(),
+        special: z.boolean().optional(),
+        minLength: z.number().int().positive().optional(),
+      })
+      .optional(),
+  }),
   textarea: textFieldSchema,
   number: baseFieldSchema.extend({
     min: z.number().optional(),
