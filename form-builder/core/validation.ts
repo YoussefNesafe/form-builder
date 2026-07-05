@@ -148,7 +148,7 @@ export function toZodSchema(field: FieldConfig, messages: Messages): FieldSchema
   }
 }
 
-function buildFieldsSchema(fields: FieldConfig[], messages: Messages): z.ZodObject {
+export function buildFieldsSchema(fields: FieldConfig[], messages: Messages): z.ZodObject {
   const shape: Record<string, z.ZodType> = {};
   for (const field of fields) {
     const schema = toZodSchema(field, messages);

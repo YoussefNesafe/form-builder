@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { evaluateCondition } from "./conditions";
+import { evaluateCondition, getVisibleFields, stripInvisibleValues } from "./conditions";
+import type { FieldConfig } from "./types";
 
 describe("evaluateCondition", () => {
   it("equals matches and mismatches", () => {
@@ -39,5 +40,23 @@ describe("evaluateCondition", () => {
   it("dot-path names resolve nested values", () => {
     expect(evaluateCondition({ field: "team.0.role", equals: "lead" }, { team: [{ role: "lead" }] })).toBe(true);
     expect(evaluateCondition({ field: "team.1.role", equals: "lead" }, { team: [{ role: "lead" }] })).toBe(false);
+  });
+});
+
+describe("visibility helpers", () => {
+  const fields: FieldConfig[] = [
+    { type: "checkbox", name: "other" },
+    { type: "text", name: "details", visibleWhen: { field: "other", equals: true } },
+    { type: "hidden", name: "utm", value: "x" },
+  ];
+
+  it("getVisibleFields filters by condition", () => {
+    expect(getVisibleFields(fields, { other: false }).map((f) => f.name)).toEqual(["other", "utm"]);
+    expect(getVisibleFields(fields, { other: true }).map((f) => f.name)).toEqual(["other", "details", "utm"]);
+  });
+
+  it("stripInvisibleValues drops hidden-by-condition values, keeps unknown keys", () => {
+    const values = { other: false, details: "stale", utm: "x", extra: 1 };
+    expect(stripInvisibleValues(fields, values)).toEqual({ other: false, utm: "x", extra: 1 });
   });
 });

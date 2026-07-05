@@ -34,7 +34,7 @@ type FormRendererProps = {
   className?: string;
 };
 ```
-Body: `useDynamicForm` → shadcn `<Form {...form}>` → `<form onSubmit={form.handleSubmit(onSubmit)} className="grid grid-cols-4 gap-4">`. Per field: registry lookup (`getField(field.type)`), unknown → dev: `<div className="col-span-4 border border-destructive p-2 text-destructive">Unknown field type "X"</div>`, prod: `null`. colSpan map: `{1:"col-span-1",2:"col-span-2",3:"col-span-3",4:"col-span-4"}` (static strings — Tailwind can't see dynamic classes), default 4. Each field wrapped in `FieldGate`.
+Body: `useDynamicForm` → RHF `<FormProvider {...form}>` → `<form onSubmit={form.handleSubmit(values => onSubmit(stripInvisibleValues(config.fields, values)))} className="grid grid-cols-4 gap-4">` (phase 4 revision: values persist in state; strip condition-hidden values at submit). Per field: registry lookup (`getField(field.type)`), unknown → dev: `<div className="col-span-4 border border-destructive p-2 text-destructive">Unknown field type "X"</div>`, prod: `null`. colSpan map: `{1:"col-span-1",2:"col-span-2",3:"col-span-3",4:"col-span-4"}` (static strings — Tailwind can't see dynamic classes), default 4. Each field wrapped in `FieldGate`.
 
 If `config.steps` present → delegate to `FormStepper` (Phase 7); until then ignore steps.
 

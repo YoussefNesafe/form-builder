@@ -1,4 +1,4 @@
-import type { Condition } from "./types";
+import type { Condition, FieldConfig, FormValues } from "./types";
 
 function getPath(values: Record<string, unknown>, path: string): unknown {
   return path.split(".").reduce<unknown>((current, key) => {
@@ -17,4 +17,14 @@ export function evaluateCondition(condition: Condition | undefined, values: Reco
   if ("in" in condition && !(condition.in ?? []).includes(value)) return false;
 
   return true;
+}
+
+export function getVisibleFields(fields: FieldConfig[], values: FormValues): FieldConfig[] {
+  return fields.filter((field) => evaluateCondition(field.visibleWhen, values));
+}
+
+/** Values of condition-hidden fields stay in RHF state but must not reach onSubmit. */
+export function stripInvisibleValues(fields: FieldConfig[], values: FormValues): FormValues {
+  const visibleNames = new Set(getVisibleFields(fields, values).map((field) => field.name));
+  return Object.fromEntries(Object.entries(values).filter(([name]) => visibleNames.has(name) || !fields.some((f) => f.name === name)));
 }
