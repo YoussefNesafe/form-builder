@@ -186,3 +186,7 @@ Existing libraries (RJSF, JSON Forms, SurveyJS, coltorapps/builder) were evaluat
 ## Portability Requirement
 
 This package must be copy-pasteable or npm-linkable into other Next.js projects with zero project-specific code inside `core/` or `fields/`. Any project-specific field types get registered from the consuming project via `registerField()`, not by editing this package.
+
+## Config Trust Model
+
+Configs are treated as **trusted-author content** (developers or vetted CMS editors), not end-user input. `validateFormConfig` runs in production too and rejects the common footguns — invalid/oversized `rules.pattern`, nested-quantifier ReDoS shapes like `(a+)+` (heuristic: bounded-repetition masks such as `(\d{4}[- ]?){3}\d{4}` are also rejected; rewrite without a quantified group), unsafe `rules.allow` character-class bodies, dotted field names, unknown country codes, non-`yyyy-MM-dd` date bounds. This is a guardrail, not a sandbox: a hostile config author can still degrade the experience. Hosts loading configs at runtime should wrap the form in an error boundary, since an invalid config throws during render by design.

@@ -1,6 +1,12 @@
 import { z } from "zod";
+import { getCountries } from "libphonenumber-js";
 import { getRegisteredTypes } from "./registry";
 import type { FieldConfig, FormConfig } from "./types";
+
+const countryCodeSchema = z.string().refine(
+  (code) => (getCountries() as string[]).includes(code),
+  { message: "not a valid ISO 3166-1 alpha-2 country code (e.g. \"AE\")" },
+);
 
 const conditionSchema = z
   .strictObject({
@@ -21,7 +27,11 @@ const optionSchema = z.strictObject({
 
 const baseFieldSchema = z.strictObject({
   type: z.string(),
-  name: z.string().min(1),
+  // Dots would be read as nested paths by RHF and the condition engine.
+  name: z
+    .string()
+    .min(1)
+    .refine((name) => !name.includes("."), { message: "field names must not contain dots" }),
   label: z.string().optional(),
   description: z.string().optional(),
   placeholder: z.string().optional(),
@@ -33,11 +43,39 @@ const baseFieldSchema = z.strictObject({
   colSpan: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]).optional(),
 });
 
+// Quantified group itself quantified — the classic catastrophic-backtracking
+// shape ((a+)+, (a*)+, (a{2,})*). Heuristic, not a proof: configs are expected
+// to come from trusted authors; this catches the common footgun.
+const NESTED_QUANTIFIER = /\([^)]*[+*}][^)]*\)[+*{]/;
+
+// The allow body is interpolated into [^...] — restrict it to plain
+// characters, ranges, and a short escape whitelist so a crafted body cannot
+// close the class or change its semantics.
+function isSafeCharClassBody(body: string): boolean {
+  if (body.startsWith("^")) return false;
+  for (let i = 0; i < body.length; i += 1) {
+    const char = body[i];
+    if (char === "[" || char === "]") return false;
+    if (char === "\\") {
+      const next = body[i + 1];
+      if (next === undefined || !/[dwsDWS\\\-.,'"]/.test(next)) return false;
+      i += 1;
+    }
+  }
+  try {
+    new RegExp(`[^${body}]`, "g");
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 const textRulesSchema = z.strictObject({
   minLength: z.number().int().nonnegative().optional(),
   maxLength: z.number().int().nonnegative().optional(),
   pattern: z
     .string()
+    .max(256, "pattern is too long (max 256 chars)")
     .optional()
     .refine(
       (pattern) => {
@@ -50,25 +88,19 @@ const textRulesSchema = z.strictObject({
         }
       },
       { message: "pattern is not a valid regular expression" },
-    ),
+    )
+    .refine((pattern) => pattern === undefined || !NESTED_QUANTIFIER.test(pattern), {
+      message: "pattern contains a nested quantifier (ReDoS risk)",
+    }),
   message: z.string().optional(),
   trim: z.boolean().optional(),
   allow: z
     .string()
     .min(1)
     .optional()
-    .refine(
-      (allow) => {
-        if (allow === undefined) return true;
-        try {
-          new RegExp(`[^${allow}]`);
-          return true;
-        } catch {
-          return false;
-        }
-      },
-      { message: "allow is not a valid character class body" },
-    ),
+    .refine((allow) => allow === undefined || isSafeCharClassBody(allow), {
+      message: "allow must be a plain character-class body (letters, digits, ranges, \\d \\w \\s escapes)",
+    }),
 });
 
 const textFieldSchema = baseFieldSchema.extend({ rules: textRulesSchema.optional() });
@@ -99,8 +131,8 @@ const fieldSchemasByType: Record<FieldConfig["type"], z.ZodType> = {
     dependsOn: z.string().min(1).optional(),
   }),
   phone: baseFieldSchema.extend({
-    defaultCountry: z.string().optional(),
-    preferredCountries: z.array(z.string()).optional(),
+    defaultCountry: countryCodeSchema.optional(),
+    preferredCountries: z.array(countryCodeSchema).optional(),
   }),
   select: baseFieldSchema.extend({
     options: z.array(optionSchema).min(1),
@@ -263,9 +295,10 @@ function validateSteps(config: FormConfig): void {
   }
 }
 
+// Runs in production too: configs may arrive from a CMS at runtime, and an
+// unvalidated pattern/allow string reaching new RegExp() inside the resolver
+// would brick the whole form. One-time cost per config (memoized by callers).
 export function validateFormConfig(config: FormConfig): void {
-  if (process.env.NODE_ENV === "production") return;
-
   const shell = formConfigShellSchema.safeParse(config);
   if (!shell.success) {
     throw new Error(`Invalid form config at ${formatIssues(shell.error.issues, config?.id ?? "config")}`);

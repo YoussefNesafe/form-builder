@@ -39,7 +39,16 @@ function applyTextRules(schema: z.ZodString, rules: TextRules | undefined, messa
   let result = schema;
   if (rules?.minLength !== undefined) result = result.min(rules.minLength, messages.minLength(rules.minLength));
   if (rules?.maxLength !== undefined) result = result.max(rules.maxLength, messages.maxLength(rules.maxLength));
-  if (rules?.pattern !== undefined) result = result.regex(new RegExp(rules.pattern), rules.message ?? messages.pattern);
+  if (rules?.pattern !== undefined) {
+    // Config validation rejects invalid patterns, but direct useDynamicForm
+    // callers can skip it — a bad pattern must not throw inside the resolver
+    // and brick the form. Skip the rule instead.
+    try {
+      result = result.regex(new RegExp(rules.pattern), rules.message ?? messages.pattern);
+    } catch {
+      // skip unparseable pattern
+    }
+  }
   return result;
 }
 

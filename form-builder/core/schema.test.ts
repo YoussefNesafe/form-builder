@@ -32,6 +32,57 @@ describe("validateFormConfig", () => {
       }),
     ).toThrow(/duplicate/i));
 
+  it("rejects field names containing dots", () =>
+    expect(() =>
+      validateFormConfig({ id: "t", fields: [{ type: "text", name: "a.b" }] }),
+    ).toThrow(/dots/));
+
+  it("rejects nested-quantifier patterns (ReDoS heuristic)", () =>
+    expect(() =>
+      validateFormConfig({
+        id: "t",
+        fields: [{ type: "text", name: "a", rules: { pattern: "(a+)+$" } }],
+      }),
+    ).toThrow(/nested quantifier/));
+
+  it("rejects patterns longer than 256 chars", () =>
+    expect(() =>
+      validateFormConfig({
+        id: "t",
+        fields: [{ type: "text", name: "a", rules: { pattern: "a".repeat(257) } }],
+      }),
+    ).toThrow(/too long/));
+
+  it("rejects allow bodies that escape the character class", () =>
+    expect(() =>
+      validateFormConfig({
+        id: "t",
+        fields: [{ type: "text", name: "a", rules: { allow: "\\d][\\s\\S" } }],
+      }),
+    ).toThrow(/character-class/));
+
+  it("accepts a plain allow body with ranges and escapes", () =>
+    validateFormConfig({
+      id: "t",
+      fields: [{ type: "text", name: "a", rules: { allow: "A-Za-z0-9 \\-" } }],
+    }));
+
+  it("rejects invalid phone country codes", () =>
+    expect(() =>
+      validateFormConfig({
+        id: "t",
+        fields: [{ type: "phone", name: "p", defaultCountry: "UAE" }],
+      }),
+    ).toThrow(/country code/));
+
+  it("rejects non yyyy-MM-dd date bounds", () =>
+    expect(() =>
+      validateFormConfig({
+        id: "t",
+        fields: [{ type: "date", name: "d", minDate: "2026-1-5" }],
+      }),
+    ).toThrow());
+
   it("rejects otp without length", () =>
     expect(() => validateFormConfig({ id: "t", fields: [{ type: "otp", name: "code" } as never] })).toThrow());
 

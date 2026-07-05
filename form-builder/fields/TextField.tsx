@@ -32,7 +32,14 @@ export function TextField({ field }: FieldComponentProps) {
       : null;
   // rules.allow blocks disallowed characters at input time (typing and paste).
   const allow = "rules" in config ? config.rules?.allow : undefined;
-  const blockedChars = useMemo(() => (allow ? new RegExp(`[^${allow}]`, "g") : null), [allow]);
+  const blockedChars = useMemo(() => {
+    if (!allow) return null;
+    try {
+      return new RegExp(`[^${allow}]`, "g");
+    } catch {
+      return null; // invalid class body: filtering off, zod pattern still validates
+    }
+  }, [allow]);
   const sanitize = (value: string) => (blockedChars ? value.replace(blockedChars, "") : value);
 
   return (
