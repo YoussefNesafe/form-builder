@@ -1,7 +1,14 @@
 import { registerField } from "../core/registry";
 import { CheckboxField } from "./CheckboxField";
+import { DateField } from "./DateField";
+import { FileField } from "./FileField";
+import { GroupField } from "./GroupField";
 import { HiddenField } from "./HiddenField";
+import { OtpField } from "./OtpField";
+import { PhoneField } from "./PhoneField";
 import { RadioField } from "./RadioField";
+import { SelectField } from "./SelectField";
+import { SliderField } from "./SliderField";
 import { StaticField } from "./StaticField";
 import { SubmitField } from "./SubmitField";
 import { TextField } from "./TextField";
@@ -15,8 +22,14 @@ export function registerBuiltInFields(): void {
   registerField("checkbox", CheckboxField);
   registerField("switch", CheckboxField);
   registerField("radio", RadioField);
+  registerField("select", SelectField);
+  registerField("otp", OtpField);
+  registerField("phone", PhoneField);
+  registerField("date", DateField);
+  registerField("slider", SliderField);
+  registerField("file", FileField);
+  registerField("group", GroupField);
   registerField("hidden", HiddenField);
   registerField("static", StaticField);
   registerField("submit", SubmitField);
-  // extended in Phase 6 as complex fields land
 }
