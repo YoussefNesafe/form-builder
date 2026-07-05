@@ -76,6 +76,10 @@ export function useOtpFlow(config: OtpFlowConfig) {
   const generation = useRef(0);
   // Last code handed to verify — stops the effect re-verifying a rejected code.
   const attempted = useRef<string | null>(null);
+  // Set when a reset dispatches: the auto-verify effect runs in the SAME
+  // commit with a stale closure (status still "sent", old code, attempted
+  // just nulled) and would verify the old code against the new dependency.
+  const resetPending = useRef(false);
 
   const code = (useWatch({ control, name: config.name }) as string) ?? "";
   const depValue = useWatch({
@@ -112,6 +116,7 @@ export function useOtpFlow(config: OtpFlowConfig) {
     if (state.status === "idle") return;
     generation.current += 1;
     attempted.current = null;
+    resetPending.current = true;
     otp?.invalidate?.(config.name);
     resetField(config.name, { defaultValue: "" });
     dispatch({ type: "RESET" });
@@ -125,6 +130,12 @@ export function useOtpFlow(config: OtpFlowConfig) {
   }, [counting]);
 
   useEffect(() => {
+    // Consumed exactly once: the RESET status change re-runs this effect in
+    // the same cycle, so the flag never leaks into later user actions.
+    if (resetPending.current) {
+      resetPending.current = false;
+      return;
+    }
     // Verify-only wiring (no send handler) has no "sent" phase — verify from idle.
     const eligible = state.status === "sent" || (!otp?.send && state.status === "idle");
     if (!otp?.verify || !eligible) return;

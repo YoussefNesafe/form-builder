@@ -130,6 +130,37 @@ describe("useOtpFlow", () => {
     expect(formRef.current!.getValues("code")).toBe("");
   });
 
+  it("does not re-verify a stale rejected code in the same commit as a dependency reset", async () => {
+    const send = vi.fn().mockResolvedValue(undefined);
+    const verify = vi.fn().mockResolvedValue(false);
+    const invalidate = vi.fn();
+    const formRef: { current?: UseFormReturn } = {};
+    const { result } = renderHook(() => useOtpFlow(config), {
+      wrapper: makeWrapper({ otp: { send, verify, invalidate }, isFieldValid: () => true }, formRef),
+    });
+
+    act(() => formRef.current!.setValue("phone", "+971501111111"));
+    await act(() => result.current.send());
+    act(() => formRef.current!.setValue("code", "1111"));
+    await waitFor(() => expect(result.current.error).toBe(defaultMessages.otpVerifyFailed));
+    expect(verify).toHaveBeenCalledTimes(1);
+
+    // Dep change while the rejected code is still full: the reset commit's
+    // stale-closure verify pass must NOT fire verify("1111") at the new dep.
+    act(() => formRef.current!.setValue("phone", "+971502222222"));
+    await waitFor(() => expect(result.current.status).toBe("idle"));
+    await act(() => vi.advanceTimersByTimeAsync(50));
+    expect(verify).toHaveBeenCalledTimes(1);
+    expect(formRef.current!.getValues("code")).toBe("");
+
+    // Flag consumed — the next legitimate flow still verifies.
+    await act(() => result.current.send());
+    verify.mockResolvedValue(true);
+    act(() => formRef.current!.setValue("code", "2222"));
+    await waitFor(() => expect(result.current.status).toBe("verified"));
+    expect(verify).toHaveBeenCalledTimes(2);
+  });
+
   it("drops an in-flight verify that resolves after the dependency changed", async () => {
     const send = vi.fn().mockResolvedValue(undefined);
     let resolveVerify: (ok: boolean) => void = () => {};

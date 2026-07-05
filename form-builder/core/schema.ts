@@ -285,6 +285,25 @@ function validateSteps(config: FormConfig): void {
     }
   }
 
+  // An otp field on a different step than its dependsOn source can be edited
+  // while the otp field is unmounted; the stale-snapshot reconcile only runs
+  // on remount, so keep the pair on one step unless that is understood.
+  if (process.env.NODE_ENV !== "production") {
+    const stepOf = new Map<string, number>();
+    config.steps.forEach((step, index) => step.fieldNames.forEach((name) => stepOf.set(name, index)));
+    for (const field of config.fields) {
+      const dependsOn = field.type === "otp" ? (field as { dependsOn?: string }).dependsOn : undefined;
+      if (dependsOn === undefined) continue;
+      const otpStep = stepOf.get(field.name);
+      const depStep = stepOf.get(dependsOn);
+      if (otpStep !== undefined && depStep !== undefined && otpStep !== depStep) {
+        console.warn(
+          `form-builder: otp field "${field.name}" (step ${otpStep + 1}) depends on "${dependsOn}" (step ${depStep + 1}) — editing the source while the otp field is unmounted defers re-verification until the otp step remounts`,
+        );
+      }
+    }
+  }
+
   // A validated field missing from every step can never be corrected by the
   // user — the form becomes permanently unsubmittable with invisible errors.
   for (const field of config.fields) {

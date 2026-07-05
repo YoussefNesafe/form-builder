@@ -166,6 +166,24 @@ describe("validateFormConfig", () => {
       }),
     ).toThrow(/name/));
 
+  it("warns when an otp field and its dependsOn source sit on different steps", async () => {
+    const { vi } = await import("vitest");
+    const spy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    validateFormConfig({
+      id: "t",
+      fields: [
+        { type: "phone", name: "phone" },
+        { type: "otp", name: "code", length: 6, dependsOn: "phone" },
+      ],
+      steps: [
+        { title: "one", fieldNames: ["phone"] },
+        { title: "two", fieldNames: ["code"] },
+      ],
+    });
+    expect(spy).toHaveBeenCalledWith(expect.stringContaining("depends on"));
+    spy.mockRestore();
+  });
+
   it("rejects steps referencing unknown fieldNames", () =>
     expect(() =>
       validateFormConfig({ ...valid, steps: [{ title: "s1", fieldNames: ["nope"] }] }),
