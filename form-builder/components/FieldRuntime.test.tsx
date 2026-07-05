@@ -88,4 +88,24 @@ describe("renderField", () => {
     render(<Host />);
     expect(screen.getByText(/Unknown field type/)).toBeTruthy();
   });
+
+  it("applies the field width classes to the grid cell wrapper", async () => {
+    const { renderField } = await import("./renderField");
+    const { registerField } = await import("../core/registry");
+    const { FormProvider: RHFProvider, useForm: useRHForm } = await import("react-hook-form");
+    registerField("width-probe", () => <input />);
+    function Host() {
+      const form = useRHForm();
+      return (
+        <RHFProvider {...form}>
+          {renderField({ type: "width-probe", name: "w", width: { tablet: "half" } })}
+        </RHFProvider>
+      );
+    }
+    const { container } = render(<Host />);
+    const cell = container.firstElementChild;
+    expect(cell?.className).toContain("col-span-4");
+    expect(cell?.className).toContain("tablet:col-span-2");
+    expect(cell?.className).toContain("desktop:col-span-4");
+  });
 });

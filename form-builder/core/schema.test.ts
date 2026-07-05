@@ -32,6 +32,30 @@ describe("validateFormConfig", () => {
       }),
     ).toThrow(/duplicate/i));
 
+  it("accepts width as a plain value and as a per-breakpoint object", () =>
+    expect(() =>
+      validateFormConfig({
+        id: "t",
+        fields: [
+          { type: "text", name: "a", width: "half" },
+          { type: "text", name: "b", width: { tablet: "half", desktop: "full" } },
+        ],
+      }),
+    ).not.toThrow());
+
+  it("rejects invalid width values", () =>
+    expect(() =>
+      validateFormConfig({ id: "t", fields: [{ type: "text", name: "a", width: "third" as never }] }),
+    ).toThrow());
+
+  it("rejects unknown width breakpoints", () =>
+    expect(() =>
+      validateFormConfig({
+        id: "t",
+        fields: [{ type: "text", name: "a", width: { phablet: "half" } as never }],
+      }),
+    ).toThrow());
+
   it("rejects field names containing dots", () =>
     expect(() =>
       validateFormConfig({ id: "t", fields: [{ type: "text", name: "a.b" }] }),

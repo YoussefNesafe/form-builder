@@ -9,6 +9,8 @@ export type {
   TextRules,
   PasswordComplexity,
   ButtonVariant,
+  FieldWidth,
+  ResponsiveFieldWidth,
   FormValues,
 } from "./core/types";
 export { BUILT_IN_FIELD_TYPES, isBuiltInField } from "./core/types";

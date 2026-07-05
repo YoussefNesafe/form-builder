@@ -26,6 +26,16 @@ export type Condition = {
   in?: unknown[];
 };
 
+export type FieldWidth = "half" | "full";
+
+/**
+ * Field width per breakpoint. A plain string applies to every breakpoint;
+ * the object form sets each breakpoint independently (unset = full).
+ */
+export type ResponsiveFieldWidth =
+  | FieldWidth
+  | { mobile?: FieldWidth; tablet?: FieldWidth; desktop?: FieldWidth };
+
 export type BaseField = {
   name: string;
   label?: string;
@@ -37,7 +47,7 @@ export type BaseField = {
   disabledWhen?: Condition;
   // Field stays disabled until the named otp field is verified.
   enabledWhenVerified?: string;
-  colSpan?: 1 | 2 | 3 | 4;
+  width?: ResponsiveFieldWidth;
 };
 
 export const BUILT_IN_FIELD_TYPES = [

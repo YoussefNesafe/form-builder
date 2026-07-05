@@ -25,6 +25,17 @@ const optionSchema = z.strictObject({
   disabled: z.boolean().optional(),
 });
 
+const fieldWidthValueSchema = z.enum(["half", "full"]);
+
+const fieldWidthSchema = z.union([
+  fieldWidthValueSchema,
+  z.strictObject({
+    mobile: fieldWidthValueSchema.optional(),
+    tablet: fieldWidthValueSchema.optional(),
+    desktop: fieldWidthValueSchema.optional(),
+  }),
+]);
+
 const baseFieldSchema = z.strictObject({
   type: z.string(),
   // Dots would be read as nested paths by RHF and the condition engine.
@@ -40,7 +51,7 @@ const baseFieldSchema = z.strictObject({
   visibleWhen: conditionSchema.optional(),
   disabledWhen: conditionSchema.optional(),
   enabledWhenVerified: z.string().min(1).optional(),
-  colSpan: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]).optional(),
+  width: fieldWidthSchema.optional(),
 });
 
 // Quantified group itself quantified — the classic catastrophic-backtracking

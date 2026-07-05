@@ -17,7 +17,7 @@ const config: FormConfig = {
       name: "firstName",
       placeholder: "First Name",
       required: true,
-      colSpan: 2,
+      width: { tablet: "half", desktop: "half" },
       rules: nameRules,
     },
     {
@@ -25,7 +25,7 @@ const config: FormConfig = {
       name: "lastName",
       placeholder: "Last Name",
       required: true,
-      colSpan: 2,
+      width: { tablet: "half", desktop: "half" },
       rules: nameRules,
     },
     { type: "email", name: "email", placeholder: "Email", required: true },
