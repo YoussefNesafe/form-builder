@@ -68,6 +68,7 @@ const config: FormConfig = {
       label: "Verification Code (OTP)",
       length: 6,
       required: true,
+      dependsOn: "phone",
     },
     {
       type: "static",

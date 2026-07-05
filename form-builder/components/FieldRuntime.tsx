@@ -11,9 +11,17 @@ export type OtpRuntime = {
   // Resolves true when the code is accepted; the host wrapper records it in
   // the verified registry so validation passes.
   verify?: (fieldName: string, code: string) => Promise<boolean>;
+  // Drops the registry entry — call when the verified code no longer applies
+  // (e.g. its source phone number changed).
+  invalidate?: (fieldName: string) => void;
 };
 
-type FieldRuntime = { disabled: boolean; messages: Messages; otp?: OtpRuntime };
+type FieldRuntime = {
+  disabled: boolean;
+  messages: Messages;
+  otp?: OtpRuntime;
+  isFieldValid?: (fieldName: string, value: unknown) => boolean;
+};
 
 export const FieldRuntimeContext = createContext<FieldRuntime>({
   disabled: false,

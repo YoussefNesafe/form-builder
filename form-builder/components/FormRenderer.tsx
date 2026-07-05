@@ -3,7 +3,8 @@
 import { useCallback, useMemo, useRef } from "react";
 import { FormProvider } from "react-hook-form";
 import type { Messages } from "../core/messages";
-import type { FormConfig, FormValues } from "../core/types";
+import { isBuiltInField, type FormConfig, type FormValues } from "../core/types";
+import { toZodSchema } from "../core/validation";
 import { useDynamicForm } from "../hooks/useDynamicForm";
 import { FieldRuntimeContext, type OtpRuntime } from "./FieldRuntime";
 import { FormStepper } from "./FormStepper";
@@ -51,12 +52,32 @@ export function FormRenderer({
             return ok;
           }
         : undefined,
+      invalidate: (fieldName) => {
+        verifiedCodes.current.delete(fieldName);
+      },
     };
   }, [onSendOtp, onVerifyOtp, form]);
 
+  // Standalone per-field validity, independent of form error state — lets a
+  // field gate its own behavior on a sibling (otp dependsOn).
+  const fieldSchemas = useMemo(() => {
+    const schemas = new Map<string, ReturnType<typeof toZodSchema>>();
+    for (const field of config.fields) {
+      if (isBuiltInField(field)) schemas.set(field.name, toZodSchema(field, mergedMessages));
+    }
+    return schemas;
+  }, [config, mergedMessages]);
+  const isFieldValid = useCallback(
+    (fieldName: string, value: unknown) => {
+      const schema = fieldSchemas.get(fieldName);
+      return schema ? schema.safeParse(value).success : true;
+    },
+    [fieldSchemas],
+  );
+
   const runtime = useMemo(
-    () => ({ disabled: false, messages: mergedMessages, otp }),
-    [mergedMessages, otp],
+    () => ({ disabled: false, messages: mergedMessages, otp, isFieldValid }),
+    [mergedMessages, otp, isFieldValid],
   );
 
   return (

@@ -66,7 +66,10 @@ const fieldSchemasByType: Record<FieldConfig["type"], z.ZodType> = {
     max: z.number().optional(),
     step: z.number().optional(),
   }),
-  otp: baseFieldSchema.extend({ length: z.number().int().positive() }),
+  otp: baseFieldSchema.extend({
+    length: z.number().int().positive(),
+    dependsOn: z.string().min(1).optional(),
+  }),
   phone: baseFieldSchema.extend({
     defaultCountry: z.string().optional(),
     preferredCountries: z.array(z.string()).optional(),
@@ -156,6 +159,18 @@ function validateFields(fields: unknown[], path: string): void {
 
     if (type === "group") {
       validateFields((raw as { fields: unknown[] }).fields, `${fieldPath}.fields`);
+    }
+  });
+
+  // Same-level check only: group rows get runtime-prefixed names, so a
+  // cross-level dependsOn could never resolve anyway.
+  fields.forEach((raw, index) => {
+    const dependsOn = (raw as { type?: unknown; dependsOn?: unknown }).dependsOn;
+    if ((raw as { type?: unknown }).type !== "otp" || dependsOn === undefined) return;
+    if (!seenNames.has(dependsOn as string) || dependsOn === (raw as { name: string }).name) {
+      throw new Error(
+        `Invalid form config at ${path}[${index}]: otp dependsOn references unknown field "${String(dependsOn)}"`,
+      );
     }
   });
 }

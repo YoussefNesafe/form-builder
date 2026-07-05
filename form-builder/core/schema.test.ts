@@ -35,6 +35,23 @@ describe("validateFormConfig", () => {
   it("rejects otp without length", () =>
     expect(() => validateFormConfig({ id: "t", fields: [{ type: "otp", name: "code" } as never] })).toThrow());
 
+  it("accepts otp dependsOn referencing a sibling field", () =>
+    validateFormConfig({
+      id: "t",
+      fields: [
+        { type: "phone", name: "phone" },
+        { type: "otp", name: "code", length: 6, dependsOn: "phone" },
+      ],
+    }));
+
+  it("rejects otp dependsOn referencing an unknown field", () =>
+    expect(() =>
+      validateFormConfig({
+        id: "t",
+        fields: [{ type: "otp", name: "code", length: 6, dependsOn: "ghost" }],
+      }),
+    ).toThrow(/dependsOn/));
+
   it("recurses into groups", () =>
     expect(() =>
       validateFormConfig({

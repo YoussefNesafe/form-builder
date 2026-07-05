@@ -19,6 +19,7 @@ export { FormSection } from "./components/FormSection";
 export { FieldWrapper, fieldAriaDescribedBy } from "./ui/FieldWrapper";
 export { useFieldRuntime, useFieldDisabled } from "./components/FieldRuntime";
 export { useDynamicForm, buildDefaultValues } from "./hooks/useDynamicForm";
+export { useOtpFlow, type OtpFlowConfig, type OtpFlowStatus } from "./hooks/useOtpFlow";
 export type { OtpVerifiedChecker } from "./core/validation";
 export type { OtpRuntime } from "./components/FieldRuntime";
 export { stripInvisibleValues } from "./core/conditions";

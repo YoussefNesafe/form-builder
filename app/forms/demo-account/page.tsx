@@ -17,7 +17,7 @@ const config: FormConfig = {
       rules: { minLength: 8 },
     },
     { type: "phone", name: "phone", label: "Phone Number", defaultCountry: "AE", required: true },
-    { type: "otp", name: "otp", label: "Verification Code (OTP)", length: 6, required: true },
+    { type: "otp", name: "otp", label: "Verification Code (OTP)", length: 6, required: true, dependsOn: "phone" },
     {
       type: "static",
       name: "consent",

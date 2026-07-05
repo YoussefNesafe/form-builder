@@ -52,7 +52,7 @@ export const BUILT_IN_FIELD_TYPES = [
 export type FieldConfig =
   | (BaseField & { type: "text" | "email" | "password" | "textarea"; rules?: TextRules })
   | (BaseField & { type: "number"; min?: number; max?: number; step?: number })
-  | (BaseField & { type: "otp"; length: number })
+  | (BaseField & { type: "otp"; length: number; dependsOn?: string })
   | (BaseField & { type: "phone"; defaultCountry?: string; preferredCountries?: string[] })
   | (BaseField & { type: "select"; options: Option[]; searchable?: boolean; multiple?: boolean })
   | (BaseField & { type: "radio"; options: Option[] })
