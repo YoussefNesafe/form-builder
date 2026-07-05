@@ -162,13 +162,11 @@ export function PhoneField({ field }: FieldComponentProps) {
             countrySelectComponent={CountrySelect}
             countrySelectProps={{ "aria-label": messages.country }}
             className={cn(
-              "flex h-9 w-full items-center gap-1 rounded-md border border-input bg-transparent transition-[color,box-shadow]",
-              "focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50 dark:bg-input/30",
+              "flex h-9 w-full items-center gap-1 rounded-md border border-input bg-transparent transition-colors",
+              "focus-within:border-ring dark:bg-input/30",
               disabled && "opacity-50",
-              fieldState.error &&
-                "border-destructive ring-3 ring-destructive/20 focus-within:border-destructive focus-within:ring-destructive/20 dark:ring-destructive/40",
-              isValid &&
-                "border-green-600 ring-3 ring-green-600/20 focus-within:border-green-600 focus-within:ring-green-600/20 dark:border-green-500",
+              fieldState.error && "border-destructive focus-within:border-destructive",
+              isValid && "border-green-600 focus-within:border-green-600 dark:border-green-500",
             )}
             numberInputProps={{
               "aria-invalid": !!fieldState.error,

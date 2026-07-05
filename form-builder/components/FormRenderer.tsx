@@ -27,9 +27,12 @@ export function FormRenderer({ config, onSubmit, messages, className }: FormRend
           {config.steps?.length ? (
             <FormStepper config={config} />
           ) : (
-            // shadow-none on descendants: flat bordered controls; rings
-            // (focus/error/valid) use separate ring vars and survive.
-            <div className="grid grid-cols-4 gap-4 [&_*]:shadow-none">{config.fields.map(renderField)}</div>
+            // Flat controls: no shadows, no ring halos — states communicate
+            // via border color only. Important var override outbeats
+            // focus-visible ring utilities.
+            <div className="grid grid-cols-4 gap-4 [&_*]:shadow-none [&_*]:[--tw-ring-shadow:0_0_#0000]!">
+              {config.fields.map(renderField)}
+            </div>
           )}
         </form>
       </FieldRuntimeContext.Provider>
