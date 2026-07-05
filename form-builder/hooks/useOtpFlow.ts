@@ -63,9 +63,14 @@ export type OtpFlowConfig = {
  * onSendOtp/onVerifyOtp), so the same hook drives any OTP presentation.
  */
 export function useOtpFlow(config: OtpFlowConfig) {
-  const { messages, otp, isFieldValid } = useFieldRuntime();
+  const { messages, otp, isFieldValid, verifiedFields } = useFieldRuntime();
   const { control, resetField, trigger } = useFormContext();
-  const [state, dispatch] = useReducer(reducer, initialState);
+  // The verified registry outlives this component (wizard steps and
+  // visibleWhen toggles unmount fields) — rehydrate instead of restarting at
+  // idle, or the UI would show a locked "Send OTP" for an already-verified code.
+  const [state, dispatch] = useReducer(reducer, initialState, (initial) =>
+    verifiedFields?.has(config.name) ? { ...initial, status: "verified" as const } : initial,
+  );
 
   // Stamps async operations; a bumped generation orphans in-flight results.
   const generation = useRef(0);
@@ -80,6 +85,23 @@ export function useOtpFlow(config: OtpFlowConfig) {
   });
   const canSend =
     !config.dependsOn || (isFieldValid ? isFieldValid(config.dependsOn, depValue) : true);
+
+  // Rehydrated as verified, but the dependency changed while this field was
+  // unmounted (wizard step, visibleWhen toggle) — the registry snapshot no
+  // longer matches, so the old code must not stand for the new value.
+  const reconciled = useRef(false);
+  useEffect(() => {
+    if (reconciled.current) return;
+    reconciled.current = true;
+    if (state.status !== "verified") return;
+    if (otp?.isVerifiedFor && !otp.isVerifiedFor(config.name, depValue)) {
+      generation.current += 1;
+      attempted.current = null;
+      otp.invalidate?.(config.name);
+      resetField(config.name, { defaultValue: "" });
+      dispatch({ type: "RESET" });
+    }
+  }, [state.status, otp, config.name, depValue, resetField]);
 
   // Dependency changed after the flow started → everything about the sent
   // code is stale: clear inputs, drop the verified registry entry, start over.
@@ -111,7 +133,7 @@ export function useOtpFlow(config: OtpFlowConfig) {
     const stamp = generation.current;
     dispatch({ type: "VERIFY" });
     otp
-      .verify(config.name, code)
+      .verify(config.name, code, depValue)
       .then((ok) => {
         if (stamp !== generation.current) return;
         if (ok) {
@@ -126,7 +148,7 @@ export function useOtpFlow(config: OtpFlowConfig) {
         if (stamp !== generation.current) return;
         dispatch({ type: "VERIFY_FAILED", message: messages.otpVerifyFailed });
       });
-  }, [otp, state.status, code, config.length, config.name, messages.otpVerifyFailed, trigger]);
+  }, [otp, state.status, code, depValue, config.length, config.name, messages.otpVerifyFailed, trigger]);
 
   const send = async () => {
     if (!otp?.send || !canSend || state.status === "sending" || state.status === "verified") return;

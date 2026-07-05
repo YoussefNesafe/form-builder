@@ -61,6 +61,41 @@ describe("validateFormConfig", () => {
       ],
     }));
 
+  it("allows plain otp inside groups but rejects verification wiring there", () => {
+    validateFormConfig({
+      id: "t",
+      fields: [{ type: "group", name: "g", fields: [{ type: "otp", name: "code", length: 4 }] }],
+    });
+    expect(() =>
+      validateFormConfig({
+        id: "t",
+        fields: [
+          {
+            type: "group",
+            name: "g",
+            fields: [
+              { type: "phone", name: "phone" },
+              { type: "otp", name: "code", length: 4, dependsOn: "phone" },
+            ],
+          },
+        ],
+      }),
+    ).toThrow(/not supported inside groups/);
+    expect(() =>
+      validateFormConfig({
+        id: "t",
+        fields: [
+          { type: "otp", name: "outer", length: 4 },
+          {
+            type: "group",
+            name: "g",
+            fields: [{ type: "text", name: "t", enabledWhenVerified: "outer" }],
+          },
+        ],
+      }),
+    ).toThrow(/not supported inside groups/);
+  });
+
   it("rejects enabledWhenVerified referencing a non-otp field", () =>
     expect(() =>
       validateFormConfig({

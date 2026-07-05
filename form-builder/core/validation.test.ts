@@ -279,6 +279,36 @@ describe("date", () => {
     expect(schema.safeParse("2026-06-01").success).toBe(true);
   });
 
+  it("required single date surfaces the required message when missing", () => {
+    const schema = schemaFor({ type: "date", name: "d", required: true });
+    const missing = schema.safeParse(undefined);
+    expect(missing.success).toBe(false);
+    if (!missing.success) expect(missing.error.issues[0].message).toBe(messages.required);
+  });
+
+  it("exact boundary days pass regardless of timezone (date-part compare)", () => {
+    const schema = schemaFor({
+      type: "date",
+      name: "d",
+      required: true,
+      minDate: "2026-01-01",
+      maxDate: "2026-12-31",
+    });
+    // Picks are stored as plain dates; boundaries must be inclusive.
+    expect(schema.safeParse("2026-01-01").success).toBe(true);
+    expect(schema.safeParse("2026-12-31").success).toBe(true);
+    expect(schema.safeParse("2025-12-31").success).toBe(false);
+    expect(schema.safeParse("2027-01-01").success).toBe(false);
+    // Legacy full-ISO values still compare by date part.
+    expect(schema.safeParse("2026-12-31T20:00:00.000Z").success).toBe(true);
+  });
+
+  it("range rejects to before from by date part", () => {
+    const schema = schemaFor({ type: "date", name: "d", range: true, required: true });
+    expect(schema.safeParse({ from: "2026-01-05", to: "2026-01-01" }).success).toBe(false);
+    expect(schema.safeParse({ from: "2026-01-05", to: "2026-01-05" }).success).toBe(true);
+  });
+
   it("range needs from and to, errors land at field root with required message", () => {
     const schema = schemaFor({ type: "date", name: "d", range: true, required: true });
     expect(schema.safeParse({ from: "2026-01-01", to: "2026-01-05" }).success).toBe(true);

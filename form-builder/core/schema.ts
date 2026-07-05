@@ -112,8 +112,10 @@ const fieldSchemasByType: Record<FieldConfig["type"], z.ZodType> = {
   switch: baseFieldSchema.extend({ options: z.array(optionSchema).optional() }),
   date: baseFieldSchema.extend({
     range: z.boolean().optional(),
-    minDate: z.string().optional(),
-    maxDate: z.string().optional(),
+    // Strict yyyy-MM-dd: lexicographic boundary compare and the calendar
+    // matchers both require zero-padded date-only strings.
+    minDate: z.iso.date().optional(),
+    maxDate: z.iso.date().optional(),
   }),
   slider: baseFieldSchema.extend({
     min: z.number(),
@@ -155,7 +157,7 @@ function formatIssues(issues: z.core.$ZodIssue[], path: string): string {
   return issues.map((issue) => `${path}${issue.path.length ? "." + issue.path.join(".") : ""}: ${issue.message}`).join("; ");
 }
 
-function validateFields(fields: unknown[], path: string): void {
+function validateFields(fields: unknown[], path: string, insideGroup = false): void {
   const seenNames = new Set<string>();
 
   fields.forEach((raw, index) => {
@@ -165,6 +167,21 @@ function validateFields(fields: unknown[], path: string): void {
 
     if (!isBuiltIn && (typeof type !== "string" || !getRegisteredTypes().includes(type))) {
       throw new Error(`Invalid form config at ${fieldPath}: unknown field type "${String(type)}"`);
+    }
+
+    // Group rows get runtime-prefixed names; verification wiring (registry
+    // keys, dependsOn watches) cannot resolve there — reject instead of
+    // silently misbehaving.
+    if (insideGroup) {
+      const wiring = raw as { dependsOn?: unknown; enabledWhenVerified?: unknown };
+      if (type === "otp" && wiring.dependsOn !== undefined) {
+        throw new Error(`Invalid form config at ${fieldPath}: otp dependsOn is not supported inside groups`);
+      }
+      if (wiring.enabledWhenVerified !== undefined) {
+        throw new Error(
+          `Invalid form config at ${fieldPath}: enabledWhenVerified is not supported inside groups`,
+        );
+      }
     }
 
     // Custom registered types: validate the BaseField contract only — their
@@ -186,7 +203,7 @@ function validateFields(fields: unknown[], path: string): void {
     seenNames.add(name);
 
     if (type === "group") {
-      validateFields((raw as { fields: unknown[] }).fields, `${fieldPath}.fields`);
+      validateFields((raw as { fields: unknown[] }).fields, `${fieldPath}.fields`, true);
     }
   });
 

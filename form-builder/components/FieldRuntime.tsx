@@ -9,11 +9,15 @@ import type { AnyFieldConfig } from "../core/types";
 export type OtpRuntime = {
   send?: (fieldName: string) => Promise<void>;
   // Resolves true when the code is accepted; the host wrapper records it in
-  // the verified registry so validation passes.
-  verify?: (fieldName: string, code: string) => Promise<boolean>;
+  // the verified registry so validation passes. depValue snapshots what the
+  // code was verified FOR (e.g. the phone number) so a remounting field can
+  // detect that its dependency changed while it was unmounted.
+  verify?: (fieldName: string, code: string, depValue?: unknown) => Promise<boolean>;
   // Drops the registry entry — call when the verified code no longer applies
   // (e.g. its source phone number changed).
   invalidate?: (fieldName: string) => void;
+  // False when the registry entry was verified against a different depValue.
+  isVerifiedFor?: (fieldName: string, depValue: unknown) => boolean;
 };
 
 type FieldRuntime = {

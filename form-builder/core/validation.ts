@@ -43,15 +43,28 @@ function applyTextRules(schema: z.ZodString, rules: TextRules | undefined, messa
   return result;
 }
 
+// Date values are calendar dates ("yyyy-MM-dd"). Boundary checks compare the
+// date part lexicographically (valid for ISO dates) — comparing epoch instants
+// would mix local-midnight picks with UTC-midnight config bounds and reject
+// legal boundary days in any non-UTC timezone.
+function datePart(value: string): string {
+  return value.slice(0, 10);
+}
+
 function isoDateSchema(field: Extract<FieldConfig, { type: "date" }>, messages: Messages): z.ZodType<string> {
-  let schema = z.string().refine((value) => !Number.isNaN(Date.parse(value)), messages.invalidDate);
+  let schema = z
+    .string({ error: field.required ? messages.required : undefined })
+    .refine(
+      (value) => /^\d{4}-\d{2}-\d{2}(T|$)/.test(value) && !Number.isNaN(Date.parse(datePart(value))),
+      messages.invalidDate,
+    );
   if (field.minDate !== undefined) {
-    const minTime = Date.parse(field.minDate);
-    schema = schema.refine((value) => Date.parse(value) >= minTime, messages.min(field.minDate));
+    const min = datePart(field.minDate);
+    schema = schema.refine((value) => datePart(value) >= min, messages.min(field.minDate));
   }
   if (field.maxDate !== undefined) {
-    const maxTime = Date.parse(field.maxDate);
-    schema = schema.refine((value) => Date.parse(value) <= maxTime, messages.max(field.maxDate));
+    const max = datePart(field.maxDate);
+    schema = schema.refine((value) => datePart(value) <= max, messages.max(field.maxDate));
   }
   return schema;
 }
@@ -159,7 +172,7 @@ export function toZodSchema(
           .object({ from: iso, to: iso.optional() }, { error: messages.required })
           .refine((range) => range.to !== undefined, messages.required)
           .refine(
-            (range) => range.to === undefined || Date.parse(range.from) <= Date.parse(range.to),
+            (range) => range.to === undefined || datePart(range.from) <= datePart(range.to),
             messages.invalidDate,
           );
         return field.required ? schema : schema.optional();

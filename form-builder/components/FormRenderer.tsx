@@ -30,12 +30,14 @@ export function FormRenderer({
 }: FormRendererProps) {
   // Codes accepted by onVerifyOtp, keyed by field name. Validation compares
   // the current value against this, so editing a verified code re-invalidates.
-  const verifiedCodes = useRef(new Map<string, string>());
+  // dep snapshots what the code was verified for (stale-dependency detection
+  // across unmounts).
+  const verifiedCodes = useRef(new Map<string, { code: string; dep: unknown }>());
   // State mirror of the registry keys: enabledWhenVerified gating must
   // re-render when verification lands, which a ref alone cannot trigger.
   const [verifiedFields, setVerifiedFields] = useState<ReadonlySet<string>>(new Set());
   const otpVerified = useCallback(
-    (fieldName: string, code: string) => verifiedCodes.current.get(fieldName) === code,
+    (fieldName: string, code: string) => verifiedCodes.current.get(fieldName)?.code === code,
     [],
   );
 
@@ -49,15 +51,19 @@ export function FormRenderer({
     return {
       send: onSendOtp ? (fieldName) => onSendOtp(fieldName, form.getValues()) : undefined,
       verify: onVerifyOtp
-        ? async (fieldName, code) => {
+        ? async (fieldName, code, depValue) => {
             const ok = await onVerifyOtp(fieldName, code);
             if (ok) {
-              verifiedCodes.current.set(fieldName, code);
+              verifiedCodes.current.set(fieldName, { code, dep: depValue });
               setVerifiedFields((prev) => new Set(prev).add(fieldName));
             }
             return ok;
           }
         : undefined,
+      isVerifiedFor: (fieldName, depValue) => {
+        const entry = verifiedCodes.current.get(fieldName);
+        return !entry || Object.is(entry.dep, depValue);
+      },
       invalidate: (fieldName) => {
         verifiedCodes.current.delete(fieldName);
         setVerifiedFields((prev) => {

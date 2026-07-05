@@ -18,10 +18,18 @@ type DateFieldConfig = Extract<FieldConfig, { type: "date" }>;
 
 type IsoRange = { from?: string; to?: string };
 
+// Values are calendar dates ("yyyy-MM-dd"), never instants. Parsing via
+// Date.parse would read them as UTC midnight and shift the day in any
+// non-UTC timezone — construct local dates from the parts instead.
 function parseIso(value: string | undefined): Date | undefined {
   if (!value) return undefined;
-  const time = Date.parse(value);
-  return Number.isNaN(time) ? undefined : new Date(time);
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(value);
+  if (!match) return undefined;
+  return new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+}
+
+function toDateString(date: Date): string {
+  return format(date, "yyyy-MM-dd");
 }
 
 function dayMatcher(config: DateFieldConfig): Matcher[] | undefined {
@@ -114,7 +122,7 @@ export function DateField({ field }: FieldComponentProps) {
                     onSelect={(range) => {
                       rhf.onChange(
                         range?.from
-                          ? { from: range.from.toISOString(), ...(range.to && { to: range.to.toISOString() }) }
+                          ? { from: toDateString(range.from), ...(range.to && { to: toDateString(range.to) }) }
                           : undefined,
                       );
                       if (range?.from && range?.to) setOpen(false);
@@ -127,7 +135,7 @@ export function DateField({ field }: FieldComponentProps) {
                     {...calendarNavigation(config)}
                     selected={parseIso(rhf.value as string | undefined)}
                     onSelect={(date) => {
-                      rhf.onChange(date ? date.toISOString() : undefined);
+                      rhf.onChange(date ? toDateString(date) : undefined);
                       setOpen(false);
                     }}
                     disabled={dayMatcher(config)}
