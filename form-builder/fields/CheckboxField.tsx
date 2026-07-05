@@ -9,7 +9,7 @@ import { Field, FieldDescription, FieldError, FieldLabel } from "@/components/ui
 import type { FieldComponentProps } from "../core/registry";
 import type { FieldConfig, Option } from "../core/types";
 import { useFieldDisabled } from "../components/FieldRuntime";
-import { FieldWrapper } from "../ui/FieldWrapper";
+import { FieldWrapper, fieldAriaDescribedBy } from "../ui/FieldWrapper";
 import { RequiredMark } from "../ui/RequiredMark";
 
 type CheckboxFieldConfig = Extract<FieldConfig, { type: "checkbox" | "switch" }>;
@@ -43,13 +43,23 @@ export function CheckboxField({ field }: FieldComponentProps) {
               disabled={disabled}
               error={fieldState.error}
             >
-              <div className="flex flex-col gap-2">
-                {config.options?.map((option) => {
+              {/* Group-level description/error association, mirroring RadioField —
+                  per-item describedby would re-announce on every checkbox. */}
+              <div
+                role="group"
+                aria-describedby={fieldAriaDescribedBy(id, {
+                  description: config.description,
+                  error: fieldState.error,
+                })}
+                className="flex flex-col gap-2"
+              >
+                {config.options?.map((option, index) => {
                   const optionId = `${id}-${option.value}`;
                   const checked = Array.isArray(rhf.value) && (rhf.value as Option["value"][]).includes(option.value);
                   return (
                     <div key={option.value} className="flex items-center gap-2">
                       <Checkbox
+                        ref={index === 0 ? rhf.ref : undefined}
                         id={optionId}
                         checked={checked}
                         disabled={disabled || option.disabled}
@@ -71,10 +81,15 @@ export function CheckboxField({ field }: FieldComponentProps) {
           <Field data-disabled={disabled || undefined}>
             <Field orientation="horizontal">
               <ToggleControl
+                ref={rhf.ref}
                 id={id}
                 checked={!!rhf.value}
                 disabled={disabled}
                 aria-invalid={!!fieldState.error}
+                aria-describedby={fieldAriaDescribedBy(id, {
+                  description: config.description,
+                  error: fieldState.error,
+                })}
                 onCheckedChange={(checked) => rhf.onChange(checked === true)}
                 onBlur={rhf.onBlur}
               />
@@ -85,8 +100,10 @@ export function CheckboxField({ field }: FieldComponentProps) {
                 </FieldLabel>
               )}
             </Field>
-            {config.description && <FieldDescription>{config.description}</FieldDescription>}
-            <FieldError errors={fieldState.error ? [fieldState.error] : undefined} />
+            {config.description && (
+              <FieldDescription id={`${id}-description`}>{config.description}</FieldDescription>
+            )}
+            <FieldError id={`${id}-error`} errors={fieldState.error ? [fieldState.error] : undefined} />
           </Field>
         );
       }}

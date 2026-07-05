@@ -55,6 +55,16 @@ export function TextField({ field }: FieldComponentProps) {
           : [];
         const showChecklist =
           failing.length > 0 && (fieldState.isDirty || fieldState.isTouched);
+        // The checklist replaces the error element, so describedby must point
+        // at whichever is actually rendered — never at a missing -error id.
+        const wrapperError = showChecklist ? undefined : fieldState.error;
+        const describedBy =
+          [
+            fieldAriaDescribedBy(id, { description: config.description, error: wrapperError }),
+            showChecklist ? `${id}-rules` : undefined,
+          ]
+            .filter(Boolean)
+            .join(" ") || undefined;
 
         // trim rule also normalizes the visible value on blur, not only the
         // parsed payload.
@@ -73,7 +83,7 @@ export function TextField({ field }: FieldComponentProps) {
           description={config.description}
           required={config.required}
           disabled={disabled}
-          error={showChecklist ? undefined : fieldState.error}
+          error={wrapperError}
         >
           {config.type === "textarea" ? (
             <Textarea
@@ -84,10 +94,7 @@ export function TextField({ field }: FieldComponentProps) {
               id={id}
               disabled={disabled}
               aria-invalid={!!fieldState.error}
-              aria-describedby={fieldAriaDescribedBy(id, {
-                description: config.description,
-                error: fieldState.error,
-              })}
+              aria-describedby={describedBy}
               value={(rhf.value as string) ?? ""}
             />
           ) : (
@@ -105,10 +112,7 @@ export function TextField({ field }: FieldComponentProps) {
                 id={id}
                 disabled={disabled}
                 aria-invalid={!!fieldState.error}
-                aria-describedby={fieldAriaDescribedBy(id, {
-                  description: config.description,
-                  error: fieldState.error,
-                })}
+                aria-describedby={describedBy}
                 value={(rhf.value as string | number) ?? ""}
                 onChange={(event) =>
                   config.type === "number"
@@ -132,7 +136,7 @@ export function TextField({ field }: FieldComponentProps) {
             </div>
           )}
           {showChecklist && (
-            <div aria-live="polite" className="grid grid-cols-2 gap-x-4 gap-y-1">
+            <div id={`${id}-rules`} aria-live="polite" className="grid grid-cols-2 gap-x-4 gap-y-1">
               {failing.map((check) => (
                 <span key={check.key} className="flex items-center gap-1 text-xs text-destructive">
                   <CircleX aria-hidden className="size-3.5 shrink-0" />

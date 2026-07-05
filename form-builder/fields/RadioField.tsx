@@ -43,11 +43,16 @@ export function RadioField({ field }: FieldComponentProps) {
               error: fieldState.error,
             })}
           >
-            {config.options.map((option) => {
+            {config.options.map((option, index) => {
               const optionId = `${id}-${option.value}`;
               return (
                 <div key={option.value} className="flex items-center gap-2">
-                  <RadioGroupItem id={optionId} value={String(option.value)} disabled={option.disabled} />
+                  <RadioGroupItem
+                    ref={index === 0 ? rhf.ref : undefined}
+                    id={optionId}
+                    value={String(option.value)}
+                    disabled={option.disabled}
+                  />
                   <Label htmlFor={optionId}>{option.label}</Label>
                 </div>
               );

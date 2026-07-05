@@ -33,6 +33,7 @@ export function SliderField({ field }: FieldComponentProps) {
           >
             <div className="flex items-center gap-3">
               <Slider
+                ref={rhf.ref}
                 id={id}
                 min={config.min}
                 max={config.max}

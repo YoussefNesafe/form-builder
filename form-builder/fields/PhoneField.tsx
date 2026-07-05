@@ -169,6 +169,7 @@ export function PhoneField({ field }: FieldComponentProps) {
               isValid && "border-green-600 focus-within:border-green-600 dark:border-green-500",
             )}
             numberInputProps={{
+              ref: rhf.ref,
               "aria-invalid": !!fieldState.error,
               "aria-describedby": fieldAriaDescribedBy(id, {
                 description: config.description,

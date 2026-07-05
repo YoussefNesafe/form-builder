@@ -85,6 +85,7 @@ export function FileField({ field }: FieldComponentProps) {
               onBlur={rhf.onBlur}
             />
             <Button
+              ref={rhf.ref}
               type="button"
               variant="outline"
               disabled={disabled}

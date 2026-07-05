@@ -56,6 +56,7 @@ export function SelectField({ field }: FieldComponentProps) {
           <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
               <Button
+                ref={rhf.ref}
                 id={id}
                 type="button"
                 variant="outline"
@@ -128,6 +129,7 @@ export function SelectField({ field }: FieldComponentProps) {
             disabled={disabled}
           >
             <SelectTrigger
+              ref={rhf.ref}
               id={id}
               aria-invalid={!!fieldState.error}
               aria-describedby={describedBy}

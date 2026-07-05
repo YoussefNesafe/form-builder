@@ -24,11 +24,13 @@ type OtpFieldConfig = Extract<FieldConfig, { type: "otp" }>;
 function OtpControl({
   config,
   rhf,
+  inputRef,
   fieldState,
   disabled,
 }: {
   config: OtpFieldConfig;
   rhf: ControllerRenderProps<FieldValues, string>;
+  inputRef: React.Ref<HTMLInputElement>;
   fieldState: ControllerFieldState;
   disabled: boolean;
 }) {
@@ -102,6 +104,7 @@ function OtpControl({
         )}
 
         <InputOTP
+          ref={inputRef}
           id={id}
           maxLength={config.length}
           value={(rhf.value as string) ?? ""}
@@ -146,7 +149,7 @@ export function OtpField({ field }: FieldComponentProps) {
       name={config.name}
       control={control}
       render={({ field: rhf, fieldState }) => (
-        <OtpControl config={config} rhf={rhf} fieldState={fieldState} disabled={disabled} />
+        <OtpControl config={config} rhf={rhf} inputRef={rhf.ref} fieldState={fieldState} disabled={disabled} />
       )}
     />
   );

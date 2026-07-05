@@ -31,6 +31,7 @@ export type Messages = {
   passwordMinLength: (n: number) => string;
   next: string;
   back: string;
+  steps: string;
   submit: string;
   country: string;
   addRow: string;
@@ -70,6 +71,7 @@ export const defaultMessages: Messages = {
   passwordMinLength: (n) => `Min. ${n} char.`,
   next: "Next",
   back: "Back",
+  steps: "Steps",
   submit: "Submit",
   country: "Country",
   addRow: "Add",

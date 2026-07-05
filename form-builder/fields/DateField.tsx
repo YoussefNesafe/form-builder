@@ -93,6 +93,7 @@ export function DateField({ field }: FieldComponentProps) {
             <Popover open={open} onOpenChange={setOpen}>
               <PopoverTrigger asChild>
                 <Button
+                  ref={rhf.ref}
                   id={id}
                   type="button"
                   variant="outline"

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useFormContext } from "react-hook-form";
 import { useStore } from "zustand";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,18 @@ export function FormStepper({ config }: { config: FormConfig }) {
   const { messages } = useFieldRuntime();
   const [store] = useState(() => createStepperStore(steps.length));
   const step = useStore(store, (state) => state.step);
+
+  // Focus the step list on navigation so keyboard/SR users land at the new
+  // step instead of staying on the Next/Back button.
+  const stepListRef = useRef<HTMLOListElement>(null);
+  const mounted = useRef(false);
+  useEffect(() => {
+    if (!mounted.current) {
+      mounted.current = true;
+      return;
+    }
+    stepListRef.current?.focus();
+  }, [step]);
 
   const fieldsByName = useMemo(
     () => new Map(config.fields.map((field) => [field.name, field])),
@@ -37,12 +49,25 @@ export function FormStepper({ config }: { config: FormConfig }) {
     // Gate on trigger(), never formState.isValid — the condition-aware
     // resolver computes isValid across ALL steps.
     const valid = await form.trigger(steps[step].fieldNames);
-    if (valid) store.getState().next();
+    if (valid) {
+      store.getState().next();
+      return;
+    }
+    // Move focus to the first field that failed so the error is announced.
+    // getFieldState reads live state — formState from render is a stale
+    // snapshot inside this handler.
+    const firstInvalid = steps[step].fieldNames.find((name) => form.getFieldState(name).invalid);
+    if (firstInvalid) form.setFocus(firstInvalid);
   };
 
   return (
     <div className="flex flex-col gap-6">
-      <ol className="flex items-center gap-4">
+      <ol
+        ref={stepListRef}
+        tabIndex={-1}
+        aria-label={messages.steps}
+        className="flex items-center gap-4 outline-none"
+      >
         {steps.map((s, index) => (
           <li
             key={index}
