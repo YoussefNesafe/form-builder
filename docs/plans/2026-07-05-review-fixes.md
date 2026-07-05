@@ -136,6 +136,8 @@
 
 ## Deferred (documented, not implemented)
 
+- Task 5.3 slimmed: the schema-side registry contract is pinned in validation tests and the flow side in useOtpFlow tests with mocked IO; the remaining ~30 lines of FormRenderer glue (registry set/delete, Object.is dep snapshot, getValues into onSendOtp) rely on browser verification — jsdom + input-otp render tests were judged flaky-prone.
+
 - Per-field schema caching / context splitting (perf — only needed >50 visible fields).
 - Chained-visibility fixed-point evaluation (documented limitation, matches UI/resolver agreement).
 - `defaultValues` prefill prop, `registerField` toSchema option (features, not fixes).
