@@ -46,4 +46,33 @@ describe("validateFormConfig", () => {
     expect(() =>
       validateFormConfig({ ...valid, steps: [{ title: "s1", fieldNames: ["nope"] }] }),
     ).toThrow(/nope/));
+
+  it("rejects unknown props (typo guard)", () =>
+    expect(() =>
+      validateFormConfig({
+        id: "t",
+        fields: [{ type: "file", name: "cv", maxSize: 5 } as never],
+      }),
+    ).toThrow(/maxSize/));
+
+  it("rejects hidden field without value", () =>
+    expect(() =>
+      validateFormConfig({ id: "t", fields: [{ type: "hidden", name: "token" } as never] }),
+    ).toThrow(/value/));
+
+  it("rejects condition without any operator", () =>
+    expect(() =>
+      validateFormConfig({
+        id: "t",
+        fields: [{ type: "text", name: "a", visibleWhen: { field: "b" } }],
+      }),
+    ).toThrow(/operator/i));
+
+  it("rejects invalid regex pattern", () =>
+    expect(() =>
+      validateFormConfig({
+        id: "t",
+        fields: [{ type: "text", name: "a", rules: { pattern: "[unclosed" } }],
+      }),
+    ).toThrow(/pattern/i));
 });

@@ -1,20 +1,25 @@
 import { z } from "zod";
 import type { FieldConfig, FormConfig } from "./types";
 
-const conditionSchema = z.object({
-  field: z.string().min(1),
-  equals: z.unknown().optional(),
-  notEquals: z.unknown().optional(),
-  in: z.array(z.unknown()).optional(),
-});
+const conditionSchema = z
+  .strictObject({
+    field: z.string().min(1),
+    equals: z.unknown().optional(),
+    notEquals: z.unknown().optional(),
+    in: z.array(z.unknown()).optional(),
+  })
+  .refine((cond) => "equals" in cond || "notEquals" in cond || "in" in cond, {
+    message: "condition needs at least one operator (equals, notEquals, in)",
+  });
 
-const optionSchema = z.object({
+const optionSchema = z.strictObject({
   label: z.string(),
   value: z.union([z.string(), z.number()]),
   disabled: z.boolean().optional(),
 });
 
-const baseFieldSchema = z.object({
+const baseFieldSchema = z.strictObject({
+  type: z.string(),
   name: z.string().min(1),
   label: z.string().optional(),
   description: z.string().optional(),
@@ -26,19 +31,35 @@ const baseFieldSchema = z.object({
   colSpan: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]).optional(),
 });
 
-const textRulesSchema = z.object({
+const textRulesSchema = z.strictObject({
   minLength: z.number().int().nonnegative().optional(),
   maxLength: z.number().int().nonnegative().optional(),
-  pattern: z.string().optional(),
+  pattern: z
+    .string()
+    .optional()
+    .refine(
+      (pattern) => {
+        if (pattern === undefined) return true;
+        try {
+          new RegExp(pattern);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      { message: "pattern is not a valid regular expression" },
+    ),
   message: z.string().optional(),
 });
 
+const textFieldSchema = baseFieldSchema.extend({ rules: textRulesSchema.optional() });
+
 // Group fields are validated shallowly here; validateFields recurses per level.
 const fieldSchemasByType: Record<FieldConfig["type"], z.ZodType> = {
-  text: baseFieldSchema.extend({ rules: textRulesSchema.optional() }),
-  email: baseFieldSchema.extend({ rules: textRulesSchema.optional() }),
-  password: baseFieldSchema.extend({ rules: textRulesSchema.optional() }),
-  textarea: baseFieldSchema.extend({ rules: textRulesSchema.optional() }),
+  text: textFieldSchema,
+  email: textFieldSchema,
+  password: textFieldSchema,
+  textarea: textFieldSchema,
   number: baseFieldSchema.extend({
     min: z.number().optional(),
     max: z.number().optional(),
@@ -114,6 +135,10 @@ function validateFields(fields: unknown[], path: string): void {
     const result = fieldSchemasByType[type as FieldConfig["type"]].safeParse(raw);
     if (!result.success) {
       throw new Error(`Invalid form config at ${formatIssues(result.error.issues, fieldPath)}`);
+    }
+
+    if (type === "hidden" && !("value" in (raw as object))) {
+      throw new Error(`Invalid form config at ${fieldPath}: hidden field requires a value`);
     }
 
     const name = (raw as { name: string }).name;
