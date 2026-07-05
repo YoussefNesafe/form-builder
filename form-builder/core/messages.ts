@@ -3,8 +3,8 @@ export type Messages = {
   email: string;
   minLength: (n: number) => string;
   maxLength: (n: number) => string;
-  min: (n: number) => string;
-  max: (n: number) => string;
+  min: (limit: number | string) => string;
+  max: (limit: number | string) => string;
   pattern: string;
   fileSize: (mb: number) => string;
   otpLength: (n: number) => string;

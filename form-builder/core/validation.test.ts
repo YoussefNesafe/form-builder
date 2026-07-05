@@ -1,0 +1,255 @@
+import { describe, expect, it } from "vitest";
+import { buildFormSchema, toZodSchema } from "./validation";
+import { defaultMessages, mergeMessages } from "./messages";
+import type { FieldConfig, FormConfig } from "./types";
+
+const messages = defaultMessages;
+
+function schemaFor(field: FieldConfig) {
+  const schema = toZodSchema(field, messages);
+  if (!schema) throw new Error("expected schema");
+  return schema;
+}
+
+describe("text", () => {
+  it("required fails empty, passes value", () => {
+    const schema = schemaFor({ type: "text", name: "a", required: true });
+    expect(schema.safeParse("").success).toBe(false);
+    expect(schema.safeParse("x").success).toBe(true);
+  });
+
+  it("optional passes undefined and empty string", () => {
+    const schema = schemaFor({ type: "text", name: "a" });
+    expect(schema.safeParse(undefined).success).toBe(true);
+    expect(schema.safeParse("").success).toBe(true);
+  });
+
+  it("minLength/maxLength enforced with messages", () => {
+    const schema = schemaFor({ type: "text", name: "a", required: true, rules: { minLength: 3, maxLength: 5 } });
+    const short = schema.safeParse("ab");
+    expect(short.success).toBe(false);
+    if (!short.success) expect(short.error.issues[0].message).toBe(messages.minLength(3));
+    expect(schema.safeParse("abcdef").success).toBe(false);
+    expect(schema.safeParse("abcd").success).toBe(true);
+  });
+
+  it("pattern enforced, custom message surfaces", () => {
+    const schema = schemaFor({
+      type: "text",
+      name: "a",
+      required: true,
+      rules: { pattern: "^[a-z]+$", message: "lowercase only" },
+    });
+    const result = schema.safeParse("ABC");
+    expect(result.success).toBe(false);
+    if (!result.success) expect(result.error.issues[0].message).toBe("lowercase only");
+  });
+
+  it("optional with rules still passes empty", () => {
+    const schema = schemaFor({ type: "text", name: "a", rules: { minLength: 3 } });
+    expect(schema.safeParse("").success).toBe(true);
+    expect(schema.safeParse("ab").success).toBe(false);
+  });
+});
+
+describe("email", () => {
+  it("enforces format", () => {
+    const schema = schemaFor({ type: "email", name: "e", required: true });
+    expect(schema.safeParse("nope").success).toBe(false);
+    expect(schema.safeParse("a@b.co").success).toBe(true);
+  });
+});
+
+describe("number", () => {
+  it("min/max enforced", () => {
+    const schema = schemaFor({ type: "number", name: "n", required: true, min: 2, max: 4 });
+    expect(schema.safeParse(1).success).toBe(false);
+    expect(schema.safeParse(5).success).toBe(false);
+    expect(schema.safeParse(3).success).toBe(true);
+  });
+
+  it("required rejects undefined, optional accepts", () => {
+    expect(schemaFor({ type: "number", name: "n", required: true }).safeParse(undefined).success).toBe(false);
+    expect(schemaFor({ type: "number", name: "n" }).safeParse(undefined).success).toBe(true);
+  });
+});
+
+describe("otp", () => {
+  it("requires exact length", () => {
+    const schema = schemaFor({ type: "otp", name: "o", length: 6, required: true });
+    expect(schema.safeParse("12345").success).toBe(false);
+    expect(schema.safeParse("123456").success).toBe(true);
+  });
+});
+
+describe("phone", () => {
+  it("required non-empty", () => {
+    const schema = schemaFor({ type: "phone", name: "p", required: true });
+    expect(schema.safeParse("").success).toBe(false);
+    expect(schema.safeParse("+31612345678").success).toBe(true);
+  });
+});
+
+describe("select", () => {
+  it("single scalar", () => {
+    const schema = schemaFor({
+      type: "select",
+      name: "s",
+      required: true,
+      options: [{ label: "One", value: 1 }],
+    });
+    expect(schema.safeParse(1).success).toBe(true);
+    expect(schema.safeParse(undefined).success).toBe(false);
+  });
+
+  it("multiple is array, required needs one entry", () => {
+    const schema = schemaFor({
+      type: "select",
+      name: "s",
+      required: true,
+      multiple: true,
+      options: [{ label: "One", value: 1 }],
+    });
+    expect(schema.safeParse([]).success).toBe(false);
+    expect(schema.safeParse([1]).success).toBe(true);
+  });
+});
+
+describe("checkbox / switch", () => {
+  it("required boolean checkbox must be true", () => {
+    const schema = schemaFor({ type: "checkbox", name: "c", required: true });
+    expect(schema.safeParse(false).success).toBe(false);
+    expect(schema.safeParse(true).success).toBe(true);
+  });
+
+  it("checkbox group is array", () => {
+    const schema = schemaFor({
+      type: "checkbox",
+      name: "c",
+      required: true,
+      options: [{ label: "A", value: "a" }],
+    });
+    expect(schema.safeParse([]).success).toBe(false);
+    expect(schema.safeParse(["a"]).success).toBe(true);
+  });
+
+  it("switch is boolean", () => {
+    const schema = schemaFor({ type: "switch", name: "s" });
+    expect(schema.safeParse(true).success).toBe(true);
+    expect(schema.safeParse(false).success).toBe(true);
+  });
+});
+
+describe("date", () => {
+  it("single parses ISO string, rejects garbage", () => {
+    const schema = schemaFor({ type: "date", name: "d", required: true });
+    expect(schema.safeParse("2026-07-05T00:00:00.000Z").success).toBe(true);
+    expect(schema.safeParse("not-a-date").success).toBe(false);
+  });
+
+  it("minDate/maxDate enforced", () => {
+    const schema = schemaFor({
+      type: "date",
+      name: "d",
+      required: true,
+      minDate: "2026-01-01",
+      maxDate: "2026-12-31",
+    });
+    expect(schema.safeParse("2025-06-01").success).toBe(false);
+    expect(schema.safeParse("2027-06-01").success).toBe(false);
+    expect(schema.safeParse("2026-06-01").success).toBe(true);
+  });
+
+  it("range needs from and to", () => {
+    const schema = schemaFor({ type: "date", name: "d", range: true, required: true });
+    expect(schema.safeParse({ from: "2026-01-01", to: "2026-01-05" }).success).toBe(true);
+    expect(schema.safeParse({ from: "2026-01-01" }).success).toBe(false);
+  });
+});
+
+describe("slider", () => {
+  it("clamps to min/max", () => {
+    const schema = schemaFor({ type: "slider", name: "s", min: 0, max: 10 });
+    expect(schema.safeParse(-1).success).toBe(false);
+    expect(schema.safeParse(11).success).toBe(false);
+    expect(schema.safeParse(5).success).toBe(true);
+  });
+});
+
+describe("file", () => {
+  it("accepts File, enforces maxSizeMB", () => {
+    const schema = schemaFor({ type: "file", name: "f", required: true, maxSizeMB: 1 });
+    const small = new File(["x"], "small.txt");
+    const big = new File([new ArrayBuffer(2 * 1024 * 1024)], "big.bin");
+    expect(schema.safeParse(small).success).toBe(true);
+    expect(schema.safeParse(big).success).toBe(false);
+  });
+
+  it("multiple is array of Files", () => {
+    const schema = schemaFor({ type: "file", name: "f", required: true, multiple: true });
+    expect(schema.safeParse([new File(["x"], "a.txt")]).success).toBe(true);
+    expect(schema.safeParse([]).success).toBe(false);
+  });
+});
+
+describe("hidden", () => {
+  it("passes anything through", () => {
+    const schema = schemaFor({ type: "hidden", name: "h", value: "tok" });
+    expect(schema.safeParse("whatever").success).toBe(true);
+    expect(schema.safeParse(123).success).toBe(true);
+  });
+});
+
+describe("static / submit excluded", () => {
+  it("toZodSchema returns null", () => {
+    expect(toZodSchema({ type: "static", name: "s", content: "hi" }, messages)).toBeNull();
+    expect(toZodSchema({ type: "submit", name: "go", text: "Go" }, messages)).toBeNull();
+  });
+
+  it("buildFormSchema shape lacks those keys", () => {
+    const config: FormConfig = {
+      id: "t",
+      fields: [
+        { type: "text", name: "a" },
+        { type: "static", name: "s", content: "hi" },
+        { type: "submit", name: "go", text: "Go" },
+      ],
+    };
+    const schema = buildFormSchema(config, messages);
+    const parsed = schema.safeParse({ a: "x" });
+    expect(parsed.success).toBe(true);
+    expect(Object.keys(schema.shape)).toEqual(["a"]);
+  });
+});
+
+describe("group", () => {
+  const group: FieldConfig = {
+    type: "group",
+    name: "team",
+    min: 1,
+    max: 2,
+    fields: [{ type: "text", name: "member", required: true }],
+  };
+
+  it("array of row objects with inner rules", () => {
+    const schema = schemaFor(group);
+    expect(schema.safeParse([{ member: "a" }]).success).toBe(true);
+    expect(schema.safeParse([{ member: "" }]).success).toBe(false);
+  });
+
+  it("min/max rows enforced", () => {
+    const schema = schemaFor(group);
+    expect(schema.safeParse([]).success).toBe(false);
+    expect(schema.safeParse([{ member: "a" }, { member: "b" }, { member: "c" }]).success).toBe(false);
+  });
+});
+
+describe("custom messages", () => {
+  it("override default", () => {
+    const custom = mergeMessages({ required: "verplicht" });
+    const schema = toZodSchema({ type: "text", name: "a", required: true }, custom);
+    const result = schema!.safeParse("");
+    expect(result.success).toBe(false);
+    if (!result.success) expect(result.error.issues[0].message).toBe("verplicht");
+  });
+});
