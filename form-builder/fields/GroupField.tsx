@@ -50,12 +50,12 @@ export function GroupField({ field }: FieldComponentProps) {
       disabled={disabled}
       error={groupError}
     >
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-[16px] tablet:gap-[16px] desktop:gap-[16px]">
         {rows.map((row, index) => (
-          <div key={row.id} className="flex flex-col gap-4">
+          <div key={row.id} className="flex flex-col gap-[16px] tablet:gap-[16px] desktop:gap-[16px]">
             {index > 0 && <Separator />}
-            <div className="grid grid-cols-4 items-start gap-4">
-              <div className="col-span-3 grid grid-cols-4 gap-4">
+            <div className="grid grid-cols-4 items-start gap-[16px] tablet:gap-[16px] desktop:gap-[16px]">
+              <div className="col-span-3 grid grid-cols-12 gap-[16px] tablet:gap-[16px] desktop:gap-[16px]">
                 {config.fields.map((inner) => renderField(withNamePrefix(inner, `${config.name}.${index}`)))}
               </div>
               <Button
@@ -66,7 +66,7 @@ export function GroupField({ field }: FieldComponentProps) {
                 aria-label={messages.removeRow(index + 1)}
                 onClick={() => remove(index)}
               >
-                <Trash2 className="size-4" />
+                <Trash2 className="size-[16px] tablet:size-[16px] desktop:size-[16px]" />
               </Button>
             </div>
           </div>
@@ -78,7 +78,7 @@ export function GroupField({ field }: FieldComponentProps) {
           onClick={() => append(buildDefaultValues(config.fields))}
           className="w-fit"
         >
-          <Plus className="me-2 size-4" />
+          <Plus className="me-[8px] tablet:me-[8px] desktop:me-[8px] size-[16px] tablet:size-[16px] desktop:size-[16px]" />
           {config.placeholder ?? messages.addRow}
         </Button>
       </div>

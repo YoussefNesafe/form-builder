@@ -5,7 +5,7 @@ import { Slot } from "radix-ui"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "group/button inline-flex shrink-0 items-center justify-center rounded-[10px] tablet:rounded-[10px] desktop:rounded-[10px] border border-transparent bg-clip-padding text-[14px] tablet:text-[14px] desktop:text-[14px] font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 tablet:focus-visible:ring-3 desktop:focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 tablet:aria-invalid:ring-3 desktop:aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-[16px] tablet:[&_svg:not([class*='size-'])]:size-[16px] desktop:[&_svg:not([class*='size-'])]:size-[16px]",
   {
     variants: {
       variant: {
@@ -22,16 +22,16 @@ const buttonVariants = cva(
       },
       size: {
         default:
-          "h-8 gap-1.5 px-2.5 has-data-[icon=inline-end]:pe-2 has-data-[icon=inline-start]:ps-2",
-        xs: "h-6 gap-1 rounded-[min(var(--radius-md),10px)] px-2 text-xs in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pe-1.5 has-data-[icon=inline-start]:ps-1.5 [&_svg:not([class*='size-'])]:size-3",
-        sm: "h-7 gap-1 rounded-[min(var(--radius-md),12px)] px-2.5 text-[0.8rem] in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pe-1.5 has-data-[icon=inline-start]:ps-1.5 [&_svg:not([class*='size-'])]:size-3.5",
-        lg: "h-9 gap-1.5 px-2.5 has-data-[icon=inline-end]:pe-2 has-data-[icon=inline-start]:ps-2",
-        icon: "size-8",
+          "h-[32px] tablet:h-[32px] desktop:h-[32px] gap-[6px] tablet:gap-[6px] desktop:gap-[6px] px-[10px] tablet:px-[10px] desktop:px-[10px] has-data-[icon=inline-end]:pe-[8px] tablet:has-data-[icon=inline-end]:pe-[8px] desktop:has-data-[icon=inline-end]:pe-[8px] has-data-[icon=inline-start]:ps-[8px] tablet:has-data-[icon=inline-start]:ps-[8px] desktop:has-data-[icon=inline-start]:ps-[8px]",
+        xs: "h-[24px] tablet:h-[24px] desktop:h-[24px] gap-[4px] tablet:gap-[4px] desktop:gap-[4px] rounded-[8px] tablet:rounded-[8px] desktop:rounded-[8px] px-[8px] tablet:px-[8px] desktop:px-[8px] text-[12px] tablet:text-[12px] desktop:text-[12px] in-data-[slot=button-group]:rounded-[10px] tablet:in-data-[slot=button-group]:rounded-[10px] desktop:in-data-[slot=button-group]:rounded-[10px] has-data-[icon=inline-end]:pe-[6px] tablet:has-data-[icon=inline-end]:pe-[6px] desktop:has-data-[icon=inline-end]:pe-[6px] has-data-[icon=inline-start]:ps-[6px] tablet:has-data-[icon=inline-start]:ps-[6px] desktop:has-data-[icon=inline-start]:ps-[6px] [&_svg:not([class*='size-'])]:size-[12px] tablet:[&_svg:not([class*='size-'])]:size-[12px] desktop:[&_svg:not([class*='size-'])]:size-[12px]",
+        sm: "h-[28px] tablet:h-[28px] desktop:h-[28px] gap-[4px] tablet:gap-[4px] desktop:gap-[4px] rounded-[8px] tablet:rounded-[8px] desktop:rounded-[8px] px-[10px] tablet:px-[10px] desktop:px-[10px] text-[12.8px] tablet:text-[12.8px] desktop:text-[12.8px] in-data-[slot=button-group]:rounded-[10px] tablet:in-data-[slot=button-group]:rounded-[10px] desktop:in-data-[slot=button-group]:rounded-[10px] has-data-[icon=inline-end]:pe-[6px] tablet:has-data-[icon=inline-end]:pe-[6px] desktop:has-data-[icon=inline-end]:pe-[6px] has-data-[icon=inline-start]:ps-[6px] tablet:has-data-[icon=inline-start]:ps-[6px] desktop:has-data-[icon=inline-start]:ps-[6px] [&_svg:not([class*='size-'])]:size-[14px] tablet:[&_svg:not([class*='size-'])]:size-[14px] desktop:[&_svg:not([class*='size-'])]:size-[14px]",
+        lg: "h-[36px] tablet:h-[36px] desktop:h-[36px] gap-[6px] tablet:gap-[6px] desktop:gap-[6px] px-[10px] tablet:px-[10px] desktop:px-[10px] has-data-[icon=inline-end]:pe-[8px] tablet:has-data-[icon=inline-end]:pe-[8px] desktop:has-data-[icon=inline-end]:pe-[8px] has-data-[icon=inline-start]:ps-[8px] tablet:has-data-[icon=inline-start]:ps-[8px] desktop:has-data-[icon=inline-start]:ps-[8px]",
+        icon: "size-[32px] tablet:size-[32px] desktop:size-[32px]",
         "icon-xs":
-          "size-6 rounded-[min(var(--radius-md),10px)] in-data-[slot=button-group]:rounded-lg [&_svg:not([class*='size-'])]:size-3",
+          "size-[24px] tablet:size-[24px] desktop:size-[24px] rounded-[8px] tablet:rounded-[8px] desktop:rounded-[8px] in-data-[slot=button-group]:rounded-[10px] tablet:in-data-[slot=button-group]:rounded-[10px] desktop:in-data-[slot=button-group]:rounded-[10px] [&_svg:not([class*='size-'])]:size-[12px] tablet:[&_svg:not([class*='size-'])]:size-[12px] desktop:[&_svg:not([class*='size-'])]:size-[12px]",
         "icon-sm":
-          "size-7 rounded-[min(var(--radius-md),12px)] in-data-[slot=button-group]:rounded-lg",
-        "icon-lg": "size-9",
+          "size-[28px] tablet:size-[28px] desktop:size-[28px] rounded-[8px] tablet:rounded-[8px] desktop:rounded-[8px] in-data-[slot=button-group]:rounded-[10px] tablet:in-data-[slot=button-group]:rounded-[10px] desktop:in-data-[slot=button-group]:rounded-[10px]",
+        "icon-lg": "size-[36px] tablet:size-[36px] desktop:size-[36px]",
       },
     },
     defaultVariants: {

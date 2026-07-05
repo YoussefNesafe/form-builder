@@ -51,13 +51,13 @@ export function CheckboxField({ field }: FieldComponentProps) {
                   description: config.description,
                   error: fieldState.error,
                 })}
-                className="flex flex-col gap-2"
+                className="flex flex-col gap-[8px] tablet:gap-[8px] desktop:gap-[8px]"
               >
                 {config.options?.map((option, index) => {
                   const optionId = `${id}-${option.value}`;
                   const checked = Array.isArray(rhf.value) && (rhf.value as Option["value"][]).includes(option.value);
                   return (
-                    <div key={option.value} className="flex items-center gap-2">
+                    <div key={option.value} className="flex items-center gap-[8px] tablet:gap-[8px] desktop:gap-[8px]">
                       <Checkbox
                         ref={index === 0 ? rhf.ref : undefined}
                         id={optionId}

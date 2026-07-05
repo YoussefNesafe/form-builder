@@ -90,24 +90,24 @@ export function FileField({ field }: FieldComponentProps) {
               onClick={() => inputRef.current?.click()}
               className="w-fit"
             >
-              <Upload className="me-2 size-4" />
+              <Upload className="me-[8px] tablet:me-[8px] desktop:me-[8px] size-[16px] tablet:size-[16px] desktop:size-[16px]" />
               {config.placeholder ?? config.label}
             </Button>
             {files.length > 0 && (
-              <ul className="flex flex-col gap-1 text-sm">
+              <ul className="flex flex-col gap-[4px] tablet:gap-[4px] desktop:gap-[4px] text-[14px] tablet:text-[14px] desktop:text-[14px]">
                 {files.map((file, index) => (
-                  <li key={`${file.name}-${index}`} className="flex items-center gap-2">
+                  <li key={`${file.name}-${index}`} className="flex items-center gap-[8px] tablet:gap-[8px] desktop:gap-[8px]">
                     <span className="truncate">{file.name}</span>
                     <span className="text-muted-foreground">{formatSize(file.size)}</span>
                     <Button
                       type="button"
                       variant="ghost"
                       size="icon"
-                      className="size-6"
+                      className="size-[24px] tablet:size-[24px] desktop:size-[24px]"
                       aria-label={messages.removeFile(file.name)}
                       onClick={() => removeFile(index)}
                     >
-                      <X className="size-3" />
+                      <X className="size-[12px] tablet:size-[12px] desktop:size-[12px]" />
                     </Button>
                   </li>
                 ))}

@@ -106,7 +106,7 @@ export function TextField({ field }: FieldComponentProps) {
                 min={config.type === "number" ? config.min : undefined}
                 max={config.type === "number" ? config.max : undefined}
                 step={config.type === "number" ? config.step : undefined}
-                className={isPassword ? "pe-10" : undefined}
+                className={isPassword ? "pe-[40px] tablet:pe-[40px] desktop:pe-[40px]" : undefined}
                 {...rhf}
                 onBlur={handleBlur}
                 id={id}
@@ -127,7 +127,7 @@ export function TextField({ field }: FieldComponentProps) {
                   size="icon"
                   disabled={disabled}
                   aria-label={showPassword ? messages.hidePassword : messages.showPassword}
-                  className="absolute end-0 top-0 h-full px-3"
+                  className="absolute end-0 top-0 h-full px-[12px] tablet:px-[12px] desktop:px-[12px]"
                   onClick={() => setShowPassword((previous) => !previous)}
                 >
                   {showPassword ? <EyeOff /> : <Eye />}
@@ -136,10 +136,10 @@ export function TextField({ field }: FieldComponentProps) {
             </div>
           )}
           {showChecklist && (
-            <div id={`${id}-rules`} aria-live="polite" className="grid grid-cols-2 gap-x-4 gap-y-1">
+            <div id={`${id}-rules`} aria-live="polite" className="grid grid-cols-2 gap-x-[16px] tablet:gap-x-[16px] desktop:gap-x-[16px] gap-y-[4px] tablet:gap-y-[4px] desktop:gap-y-[4px]">
               {failing.map((check) => (
-                <span key={check.key} className="flex items-center gap-1 text-xs text-destructive">
-                  <CircleX aria-hidden className="size-3.5 shrink-0" />
+                <span key={check.key} className="flex items-center gap-[4px] tablet:gap-[4px] desktop:gap-[4px] text-[12px] tablet:text-[12px] desktop:text-[12px] text-destructive">
+                  <CircleX aria-hidden className="size-[14px] tablet:size-[14px] desktop:size-[14px] shrink-0" />
                   {check.label}
                 </span>
               ))}

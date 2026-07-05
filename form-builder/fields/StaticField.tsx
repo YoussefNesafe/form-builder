@@ -11,9 +11,17 @@ export function StaticField({ field }: FieldComponentProps) {
 
   switch (config.as) {
     case "h1":
-      return <h1 className="text-3xl font-semibold">{config.content}</h1>;
+      return (
+        <h1 className="text-[30px] tablet:text-[30px] desktop:text-[30px] font-semibold">
+          {config.content}
+        </h1>
+      );
     case "h2":
-      return <h2 className="text-xl font-semibold">{config.content}</h2>;
+      return (
+        <h2 className="text-[20px] tablet:text-[20px] desktop:text-[20px] font-semibold">
+          {config.content}
+        </h2>
+      );
     case "divider":
       return <Separator />;
     default:

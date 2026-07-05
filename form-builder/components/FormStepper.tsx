@@ -62,25 +62,25 @@ export function FormStepper({ config }: { config: FormConfig }) {
   };
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-[24px] tablet:gap-[24px] desktop:gap-[24px]">
       <ol
         ref={stepListRef}
         tabIndex={-1}
         aria-label={messages.steps}
-        className="flex items-center gap-4 outline-none"
+        className="flex items-center gap-[16px] tablet:gap-[16px] desktop:gap-[16px] outline-none"
       >
         {steps.map((s, index) => (
           <li
             key={index}
             aria-current={index === step ? "step" : undefined}
             className={cn(
-              "flex items-center gap-2 text-sm",
+              "flex items-center gap-[8px] tablet:gap-[8px] desktop:gap-[8px] text-[14px] tablet:text-[14px] desktop:text-[14px]",
               index === step ? "font-medium text-foreground" : "text-muted-foreground",
             )}
           >
             <span
               className={cn(
-                "flex size-6 items-center justify-center rounded-full border text-xs",
+                "flex size-[24px] tablet:size-[24px] desktop:size-[24px] items-center justify-center rounded-full border text-[12px] tablet:text-[12px] desktop:text-[12px]",
                 index === step && "border-primary bg-primary text-primary-foreground",
                 index < step && "border-primary text-primary",
               )}

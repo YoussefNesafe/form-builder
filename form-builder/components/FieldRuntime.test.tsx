@@ -103,9 +103,9 @@ describe("renderField", () => {
       );
     }
     const { container } = render(<Host />);
-    const cell = container.firstElementChild;
-    expect(cell?.className).toContain("col-span-4");
-    expect(cell?.className).toContain("tablet:col-span-2");
-    expect(cell?.className).toContain("desktop:col-span-4");
+    const tokens = (container.firstElementChild?.className ?? "").split(/\s+/);
+    expect(tokens).toContain("col-span-12");
+    expect(tokens).toContain("tablet:col-span-6");
+    expect(tokens).toContain("desktop:col-span-12");
   });
 });

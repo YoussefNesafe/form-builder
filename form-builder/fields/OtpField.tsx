@@ -63,9 +63,9 @@ function OtpControl({
     >
       {/* Reference layout: send button leads (fills the start half), detached
           rounded code boxes follow. Mobile stacks button above the boxes. */}
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-start">
+      <div className="flex flex-col gap-[8px] tablet:gap-[8px] desktop:gap-[8px] tablet:flex-row desktop:flex-row tablet:items-start desktop:items-start">
         {flow.showSend && (
-          <div className="flex w-full flex-col items-stretch gap-1 sm:flex-1">
+          <div className="flex w-full flex-col items-stretch gap-[4px] tablet:gap-[4px] desktop:gap-[4px] tablet:flex-1 desktop:flex-1">
             <Button
               type="button"
               variant="outline"
@@ -76,11 +76,11 @@ function OtpControl({
                 verified && "border-green-600 text-green-600 dark:border-green-500 dark:text-green-500",
               )}
             >
-              {verified && <Check className="size-4" />}
+              {verified && <Check className="size-[16px] tablet:size-[16px] desktop:size-[16px]" />}
               {sendLabel}
             </Button>
             {flow.showResend && (
-              <p className="text-center text-xs text-muted-foreground">
+              <p className="text-center text-[12px] tablet:text-[12px] desktop:text-[12px] text-muted-foreground">
                 {messages.otpDidntReceive}{" "}
                 {flow.seconds > 0 ? (
                   <>
@@ -120,14 +120,14 @@ function OtpControl({
             error,
           })}
         >
-          <InputOTPGroup className="w-full justify-between gap-2 sm:w-auto sm:justify-start">
+          <InputOTPGroup className="w-full justify-between gap-[8px] tablet:gap-[8px] desktop:gap-[8px] tablet:w-auto desktop:w-auto tablet:justify-start desktop:justify-start">
             {Array.from({ length: config.length }, (_, index) => (
               <InputOTPSlot
                 key={index}
                 index={index}
                 aria-invalid={!!error}
                 className={cn(
-                  "rounded-md border dark:bg-input/30",
+                  "rounded-[8px] tablet:rounded-[8px] desktop:rounded-[8px] border dark:bg-input/30",
                   verified && "border-green-600 dark:border-green-500",
                 )}
               />

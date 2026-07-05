@@ -8,8 +8,10 @@ type FormSectionProps = {
 
 export function FormSection({ title, description, children }: FormSectionProps) {
   return (
-    <section className="space-y-4">
-      {title && <h2 className="text-xl font-semibold">{title}</h2>}
+    <section className="space-y-[16px] tablet:space-y-[16px] desktop:space-y-[16px]">
+      {title && (
+        <h2 className="text-[20px] tablet:text-[20px] desktop:text-[20px] font-semibold">{title}</h2>
+      )}
       {description && <p className="text-muted-foreground">{description}</p>}
       {children}
     </section>

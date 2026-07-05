@@ -38,14 +38,14 @@ describe("validateFormConfig", () => {
         id: "t",
         fields: [
           { type: "text", name: "a", width: "half" },
-          { type: "text", name: "b", width: { tablet: "half", desktop: "full" } },
+          { type: "text", name: "b", width: { tablet: "third", desktop: "quarter" } },
         ],
       }),
     ).not.toThrow());
 
   it("rejects invalid width values", () =>
     expect(() =>
-      validateFormConfig({ id: "t", fields: [{ type: "text", name: "a", width: "third" as never }] }),
+      validateFormConfig({ id: "t", fields: [{ type: "text", name: "a", width: "double" as never }] }),
     ).toThrow());
 
   it("rejects unknown width breakpoints", () =>

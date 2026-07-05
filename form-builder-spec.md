@@ -94,7 +94,7 @@ type Condition = {
   in?: unknown[];
 };
 
-type FieldWidth = "half" | "full";
+type FieldWidth = "full" | "half" | "third" | "quarter";
 type ResponsiveFieldWidth =
   | FieldWidth
   | { mobile?: FieldWidth; tablet?: FieldWidth; desktop?: FieldWidth };
@@ -108,7 +108,7 @@ type BaseField = {
   disabled?: boolean;
   visibleWhen?: Condition;
   disabledWhen?: Condition;
-  // "half" | "full", or per-breakpoint { mobile?, tablet?, desktop? }.
+  // A FieldWidth value, or per-breakpoint { mobile?, tablet?, desktop? }.
   // Default full; unset breakpoints fall back to full.
   width?: ResponsiveFieldWidth;
 };

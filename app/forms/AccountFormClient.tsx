@@ -48,7 +48,7 @@ export function AccountFormClient({ config }: { config: FormConfig }) {
     console.log({ values });
   };
   return (
-    <div className="mx-auto max-w-xl space-y-8 p-8">
+    <div className="mx-auto max-w-[576px] tablet:max-w-[576px] desktop:max-w-[576px] space-y-[32px] tablet:space-y-[32px] desktop:space-y-[32px] p-[32px] tablet:p-[32px] desktop:p-[32px]">
       <FormRenderer config={config} onSubmit={onSubmit} otp={otp} />
     </div>
   );

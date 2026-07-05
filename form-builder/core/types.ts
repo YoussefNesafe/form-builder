@@ -26,7 +26,7 @@ export type Condition = {
   in?: unknown[];
 };
 
-export type FieldWidth = "half" | "full";
+export type FieldWidth = "full" | "half" | "third" | "quarter";
 
 /**
  * Field width per breakpoint. A plain string applies to every breakpoint;

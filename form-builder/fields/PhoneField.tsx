@@ -30,7 +30,7 @@ function BareInput({ className, ...props }: React.ComponentProps<"input">) {
     <input
       {...props}
       className={cn(
-        "h-full w-full min-w-0 bg-transparent pe-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed",
+        "h-full w-full min-w-0 bg-transparent pe-[12px] tablet:pe-[12px] desktop:pe-[12px] text-[14px] tablet:text-[14px] desktop:text-[14px] outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed",
         className,
       )}
     />
@@ -42,7 +42,7 @@ function CountryFlag({ country }: { country?: string }) {
   const Flag = country ? flags[country as Country] : undefined;
   if (!Flag) return <span aria-hidden>🌐</span>;
   return (
-    <span aria-hidden className="inline-flex w-5 overflow-hidden rounded-xs">
+    <span aria-hidden className="inline-flex w-[20px] tablet:w-[20px] desktop:w-[20px] overflow-hidden rounded-[2px] tablet:rounded-[2px] desktop:rounded-[2px]">
       <Flag title="" />
     </span>
   );
@@ -80,13 +80,13 @@ function CountrySelect({ value, onChange, options, disabled, className, emptyMes
           aria-expanded={open}
           aria-label={rest["aria-label"]}
           disabled={disabled}
-          className={cn("h-full shrink-0 gap-1 rounded-e-none ps-3 pe-2 font-normal", className)}
+          className={cn("h-full shrink-0 gap-[4px] tablet:gap-[4px] desktop:gap-[4px] rounded-e-none ps-[12px] tablet:ps-[12px] desktop:ps-[12px] pe-[8px] tablet:pe-[8px] desktop:pe-[8px] font-normal", className)}
         >
           <CountryFlag country={value} />
-          <ChevronDown className="size-3.5 shrink-0 opacity-50" />
+          <ChevronDown className="size-[14px] tablet:size-[14px] desktop:size-[14px] shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-72 p-0" align="start">
+      <PopoverContent className="w-[288px] tablet:w-[288px] desktop:w-[288px] p-0" align="start">
         <Command
           filter={(itemValue, search) => (itemValue.toLowerCase().includes(search.toLowerCase()) ? 1 : 0)}
         >
@@ -106,13 +106,13 @@ function CountrySelect({ value, onChange, options, disabled, className, emptyMes
                     }}
                   >
                     <Check
-                      className={cn("me-2 size-4", option.value === value ? "opacity-100" : "opacity-0")}
+                      className={cn("me-[8px] tablet:me-[8px] desktop:me-[8px] size-[16px] tablet:size-[16px] desktop:size-[16px]", option.value === value ? "opacity-100" : "opacity-0")}
                     />
-                    <span className="me-2">
+                    <span className="me-[8px] tablet:me-[8px] desktop:me-[8px]">
                       <CountryFlag country={option.value} />
                     </span>
                     <span className="truncate">{option.label}</span>
-                    <span className="ms-auto ps-2 text-muted-foreground">{code}</span>
+                    <span className="ms-auto ps-[8px] tablet:ps-[8px] desktop:ps-[8px] text-muted-foreground">{code}</span>
                   </CommandItem>
                 );
               })}
@@ -164,7 +164,7 @@ export function PhoneField({ field }: FieldComponentProps) {
             countrySelectComponent={CountrySelect}
             countrySelectProps={{ "aria-label": messages.country, emptyMessage: messages.noOptions }}
             className={cn(
-              "flex h-9 w-full items-center gap-1 rounded-md border border-input bg-transparent transition-colors",
+              "flex h-[36px] tablet:h-[36px] desktop:h-[36px] w-full items-center gap-[4px] tablet:gap-[4px] desktop:gap-[4px] rounded-[8px] tablet:rounded-[8px] desktop:rounded-[8px] border border-input bg-transparent transition-colors",
               "focus-within:border-ring dark:bg-input/30",
               disabled && "opacity-50",
               fieldState.error && "border-destructive focus-within:border-destructive",

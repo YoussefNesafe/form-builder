@@ -25,7 +25,7 @@ const optionSchema = z.strictObject({
   disabled: z.boolean().optional(),
 });
 
-const fieldWidthValueSchema = z.enum(["half", "full"]);
+const fieldWidthValueSchema = z.enum(["full", "half", "third", "quarter"]);
 
 const fieldWidthSchema = z.union([
   fieldWidthValueSchema,
