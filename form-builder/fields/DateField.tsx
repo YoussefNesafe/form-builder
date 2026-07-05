@@ -31,6 +31,22 @@ function dayMatcher(config: DateFieldConfig): Matcher[] | undefined {
   return matchers.length ? matchers : undefined;
 }
 
+/**
+ * Month/year dropdowns instead of endless prev/next clicks — a birthday field
+ * with maxDate would otherwise need hundreds of navigation clicks.
+ */
+function calendarNavigation(config: DateFieldConfig) {
+  const min = parseIso(config.minDate);
+  const max = parseIso(config.maxDate);
+  const now = new Date();
+  return {
+    captionLayout: "dropdown" as const,
+    startMonth: min ?? new Date(now.getFullYear() - 100, 0),
+    endMonth: max ?? new Date(now.getFullYear() + 10, 11),
+    defaultMonth: max && max < now ? max : undefined,
+  };
+}
+
 export function DateField({ field }: FieldComponentProps) {
   const config = field as DateFieldConfig;
   const { control } = useFormContext();
@@ -89,6 +105,7 @@ export function DateField({ field }: FieldComponentProps) {
                 {config.range ? (
                   <Calendar
                     mode="range"
+                    {...calendarNavigation(config)}
                     selected={(() => {
                       const range = (rhf.value as IsoRange | undefined) ?? {};
                       const from = parseIso(range.from);
@@ -107,6 +124,7 @@ export function DateField({ field }: FieldComponentProps) {
                 ) : (
                   <Calendar
                     mode="single"
+                    {...calendarNavigation(config)}
                     selected={parseIso(rhf.value as string | undefined)}
                     onSelect={(date) => {
                       rhf.onChange(date ? date.toISOString() : undefined);
