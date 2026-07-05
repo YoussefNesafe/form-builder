@@ -136,6 +136,21 @@ describe("password complexity", () => {
   });
 });
 
+describe("file", () => {
+  it("multiple: oversize file errors at the array root with the size message", () => {
+    const schema = schemaFor({ type: "file", name: "f", multiple: true, maxSizeMB: 1, required: true });
+    const big = new File([new ArrayBuffer(2 * 1024 * 1024)], "big.bin");
+    const result = schema.safeParse([big]);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0].path).toEqual([]);
+      expect(result.error.issues[0].message).toBe(messages.fileSize(1));
+    }
+    const small = new File([new ArrayBuffer(1024)], "small.bin");
+    expect(schema.safeParse([small]).success).toBe(true);
+  });
+});
+
 describe("otp", () => {
   it("requires exact length", () => {
     const schema = schemaFor({ type: "otp", name: "o", length: 6, required: true });

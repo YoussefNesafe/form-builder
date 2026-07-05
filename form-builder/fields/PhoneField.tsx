@@ -63,9 +63,10 @@ type CountrySelectProps = {
   disabled?: boolean;
   className?: string;
   "aria-label"?: string;
+  emptyMessage?: string;
 };
 
-function CountrySelect({ value, onChange, options, disabled, className, ...rest }: CountrySelectProps) {
+function CountrySelect({ value, onChange, options, disabled, className, emptyMessage, ...rest }: CountrySelectProps) {
   const [open, setOpen] = useState(false);
   const countries = options.filter((option) => option.value);
 
@@ -91,7 +92,7 @@ function CountrySelect({ value, onChange, options, disabled, className, ...rest 
         >
           <CommandInput placeholder={rest["aria-label"]} />
           <CommandList>
-            <CommandEmpty>—</CommandEmpty>
+            <CommandEmpty>{emptyMessage}</CommandEmpty>
             <CommandGroup>
               {countries.map((option) => {
                 const code = callingCode(option.value as string);
@@ -127,7 +128,7 @@ export function PhoneField({ field }: FieldComponentProps) {
   const config = field as PhoneFieldConfig;
   const { control } = useFormContext();
   const disabled = useFieldDisabled(config);
-  const { messages } = useFieldRuntime();
+  const { messages, locale } = useFieldRuntime();
   const id = useId();
 
   return (
@@ -158,9 +159,10 @@ export function PhoneField({ field }: FieldComponentProps) {
             countryOptionsOrder={config.preferredCountries as ComponentProps<typeof PhoneInput>["countryOptionsOrder"]}
             international
             countryCallingCodeEditable={false}
+            labels={locale?.countryLabels}
             inputComponent={BareInput}
             countrySelectComponent={CountrySelect}
-            countrySelectProps={{ "aria-label": messages.country }}
+            countrySelectProps={{ "aria-label": messages.country, emptyMessage: messages.noOptions }}
             className={cn(
               "flex h-9 w-full items-center gap-1 rounded-md border border-input bg-transparent transition-colors",
               "focus-within:border-ring dark:bg-input/30",

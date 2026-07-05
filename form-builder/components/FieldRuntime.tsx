@@ -20,6 +20,13 @@ export type OtpRuntime = {
   isVerifiedFor?: (fieldName: string, depValue: unknown) => boolean;
 };
 
+export type FormLocale = {
+  // date-fns Locale object — drives calendar month names and date display.
+  dateFns?: import("date-fns").Locale;
+  // Country display names for the phone field ({ AE: "الإمارات", ... }).
+  countryLabels?: Record<string, string>;
+};
+
 type FieldRuntime = {
   disabled: boolean;
   messages: Messages;
@@ -27,6 +34,7 @@ type FieldRuntime = {
   isFieldValid?: (fieldName: string, value: unknown) => boolean;
   // Names of otp fields whose current code passed verification.
   verifiedFields?: ReadonlySet<string>;
+  locale?: FormLocale;
 };
 
 export const FieldRuntimeContext = createContext<FieldRuntime>({

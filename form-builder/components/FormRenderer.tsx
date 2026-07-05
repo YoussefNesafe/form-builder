@@ -6,9 +6,10 @@ import type { Messages } from "../core/messages";
 import { isBuiltInField, type FormConfig, type FormValues } from "../core/types";
 import { toZodSchema } from "../core/validation";
 import { useDynamicForm } from "../hooks/useDynamicForm";
-import { FieldRuntimeContext, type OtpRuntime } from "./FieldRuntime";
+import { FieldRuntimeContext, type FormLocale, type OtpRuntime } from "./FieldRuntime";
 import { FormStepper } from "./FormStepper";
 import { renderField } from "./renderField";
+import { FLAT_GRID_CLASS } from "../ui/layout";
 
 type FormRendererProps = {
   config: FormConfig;
@@ -17,6 +18,7 @@ type FormRendererProps = {
   onSendOtp?: (fieldName: string, values: FormValues) => Promise<void>;
   onVerifyOtp?: (fieldName: string, code: string) => Promise<boolean>;
   messages?: Partial<Messages>;
+  locale?: FormLocale;
   className?: string;
 };
 
@@ -26,6 +28,7 @@ export function FormRenderer({
   onSendOtp,
   onVerifyOtp,
   messages,
+  locale,
   className,
 }: FormRendererProps) {
   // Codes accepted by onVerifyOtp, keyed by field name. Validation compares
@@ -94,8 +97,8 @@ export function FormRenderer({
   );
 
   const runtime = useMemo(
-    () => ({ disabled: false, messages: mergedMessages, otp, isFieldValid, verifiedFields }),
-    [mergedMessages, otp, isFieldValid, verifiedFields],
+    () => ({ disabled: false, messages: mergedMessages, otp, isFieldValid, verifiedFields, locale }),
+    [mergedMessages, otp, isFieldValid, verifiedFields, locale],
   );
 
   return (
@@ -105,12 +108,7 @@ export function FormRenderer({
           {config.steps?.length ? (
             <FormStepper config={config} />
           ) : (
-            // Flat controls: no shadows, no ring halos — states communicate
-            // via border color only. Important var override outbeats
-            // focus-visible ring utilities.
-            <div className="grid grid-cols-4 gap-4 [&_*]:shadow-none [&_*]:[--tw-ring-shadow:0_0_#0000]!">
-              {config.fields.map(renderField)}
-            </div>
+            <div className={FLAT_GRID_CLASS}>{config.fields.map(renderField)}</div>
           )}
         </form>
       </FieldRuntimeContext.Provider>

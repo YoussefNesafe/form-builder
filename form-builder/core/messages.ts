@@ -53,7 +53,7 @@ export const defaultMessages: Messages = {
   sendCode: "Send OTP",
   codeSent: "Code Sent",
   resend: "Resend",
-  otpDidntReceive: "Didn't receive otp?",
+  otpDidntReceive: "Didn't receive OTP?",
   resendIn: "Resend in",
   seconds: "seconds",
   otpVerified: "Verified",

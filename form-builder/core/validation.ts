@@ -198,11 +198,22 @@ export function toZodSchema(
     }
 
     case "file": {
-      const single = fileSchema(field, messages);
       if (field.multiple) {
-        const schema = z.array(single);
-        return field.required ? schema.min(1, messages.required) : schema.optional();
+        // Size check refines at the ARRAY root: a per-item refine would land
+        // the issue at `name.0`, where fieldState.error has no message.
+        const base = z.array(z.instanceof(File, { error: messages.required }));
+        const withMin = field.required ? base.min(1, messages.required) : base;
+        const maxBytes = field.maxSizeMB !== undefined ? field.maxSizeMB * 1024 * 1024 : undefined;
+        const schema =
+          maxBytes === undefined
+            ? withMin
+            : withMin.refine(
+                (files) => files.every((file) => file.size <= maxBytes),
+                messages.fileSize(field.maxSizeMB as number),
+              );
+        return field.required ? schema : schema.optional();
       }
+      const single = fileSchema(field, messages);
       return field.required ? single : single.optional();
     }
 

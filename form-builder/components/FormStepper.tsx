@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { FormConfig } from "../core/types";
 import { createStepperStore } from "../store/stepper";
+import { FLAT_GRID_CLASS } from "../ui/layout";
 import { useFieldRuntime } from "./FieldRuntime";
 import { renderField } from "./renderField";
 
@@ -91,7 +92,7 @@ export function FormStepper({ config }: { config: FormConfig }) {
         ))}
       </ol>
 
-      <div className="grid grid-cols-4 gap-4 [&_*]:shadow-none [&_*]:[--tw-ring-shadow:0_0_#0000]!">
+      <div className={FLAT_GRID_CLASS}>
         {currentFields.map(renderField)}
         {hiddenFields.map(renderField)}
       </div>
@@ -101,13 +102,9 @@ export function FormStepper({ config }: { config: FormConfig }) {
           {messages.back}
         </Button>
         {isLast ? (
-          submitField ? (
-            renderField(submitField)
-          ) : (
-            <Button type="submit" disabled={form.formState.isSubmitting || !form.formState.isValid}>
-              {messages.submit}
-            </Button>
-          )
+          // Fallback submit reuses SubmitField so validity gating never
+          // diverges between the two render paths.
+          renderField(submitField ?? { type: "submit", name: "__submit", text: messages.submit })
         ) : (
           <Button type="button" onClick={handleNext}>
             {messages.next}

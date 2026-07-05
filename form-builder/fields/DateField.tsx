@@ -11,7 +11,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { cn } from "@/lib/utils";
 import type { FieldComponentProps } from "../core/registry";
 import type { FieldConfig } from "../core/types";
-import { useFieldDisabled } from "../components/FieldRuntime";
+import { useFieldDisabled, useFieldRuntime } from "../components/FieldRuntime";
 import { FieldWrapper, fieldAriaDescribedBy } from "../ui/FieldWrapper";
 
 type DateFieldConfig = Extract<FieldConfig, { type: "date" }>;
@@ -59,8 +59,11 @@ export function DateField({ field }: FieldComponentProps) {
   const config = field as DateFieldConfig;
   const { control } = useFormContext();
   const disabled = useFieldDisabled(config);
+  const { locale } = useFieldRuntime();
   const id = useId();
   const [open, setOpen] = useState(false);
+  const dateFnsLocale = locale?.dateFns;
+  const display = (date: Date) => format(date, "PP", { locale: dateFnsLocale });
 
   return (
     <Controller
@@ -72,13 +75,13 @@ export function DateField({ field }: FieldComponentProps) {
               const range = (rhf.value as IsoRange | undefined) ?? {};
               const from = parseIso(range.from);
               const to = parseIso(range.to);
-              if (from && to) return `${format(from, "PP")} – ${format(to, "PP")}`;
-              if (from) return `${format(from, "PP")} – …`;
+              if (from && to) return `${display(from)} – ${display(to)}`;
+              if (from) return `${display(from)} –`;
               return config.placeholder ?? "";
             })()
           : (() => {
               const date = parseIso(rhf.value as string | undefined);
-              return date ? format(date, "PP") : (config.placeholder ?? "");
+              return date ? display(date) : (config.placeholder ?? "");
             })();
 
         return (
@@ -107,13 +110,14 @@ export function DateField({ field }: FieldComponentProps) {
                   className={cn("w-full justify-start font-normal", !label && "text-muted-foreground")}
                 >
                   <CalendarIcon className="me-2 size-4" />
-                  {label || "…"}
+                  {label}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
                 {config.range ? (
                   <Calendar
                     mode="range"
+                    locale={dateFnsLocale}
                     {...calendarNavigation(config)}
                     selected={(() => {
                       const range = (rhf.value as IsoRange | undefined) ?? {};
@@ -133,6 +137,7 @@ export function DateField({ field }: FieldComponentProps) {
                 ) : (
                   <Calendar
                     mode="single"
+                    locale={dateFnsLocale}
                     {...calendarNavigation(config)}
                     selected={parseIso(rhf.value as string | undefined)}
                     onSelect={(date) => {

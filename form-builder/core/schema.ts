@@ -219,6 +219,11 @@ function validateFields(fields: unknown[], path: string, insideGroup = false): v
     // Custom registered types: validate the BaseField contract only — their
     // extra props belong to the consuming component.
     const schema = isBuiltIn ? fieldSchemasByType[type as FieldConfig["type"]] : customFieldSchema;
+    if (!isBuiltIn && (raw as { required?: unknown }).required === true && process.env.NODE_ENV !== "production") {
+      console.warn(
+        `form-builder: custom field "${(raw as { name?: unknown }).name}" sets required, but custom field values pass validation as unknown — enforce it in the component or onSubmit`,
+      );
+    }
     const result = schema.safeParse(raw);
     if (!result.success) {
       throw new Error(`Invalid form config at ${formatIssues(result.error.issues, fieldPath)}`);

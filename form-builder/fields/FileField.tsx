@@ -18,7 +18,7 @@ function formatSize(bytes: number): string {
 
 export function FileField({ field }: FieldComponentProps) {
   const config = field as FileFieldConfig;
-  const { control, setError, clearErrors } = useFormContext();
+  const { control, trigger } = useFormContext();
   const disabled = useFieldDisabled(config);
   const { messages } = useFieldRuntime();
   const id = useId();
@@ -38,16 +38,11 @@ export function FileField({ field }: FieldComponentProps) {
             ? [rhf.value]
             : [];
 
+        // Oversize files go INTO form state and the schema reports them — a
+        // manual setError would be wiped by the next resolver run.
         const acceptFiles = (incoming: File[]) => {
-          if (config.maxSizeMB !== undefined) {
-            const maxBytes = config.maxSizeMB * 1024 * 1024;
-            if (incoming.some((file) => file.size > maxBytes)) {
-              setError(config.name, { type: "fileSize", message: messages.fileSize(config.maxSizeMB) });
-              return;
-            }
-          }
-          clearErrors(config.name);
           rhf.onChange(config.multiple ? [...files, ...incoming] : (incoming[0] ?? undefined));
+          void trigger(config.name);
         };
 
         const removeFile = (index: number) => {
@@ -57,6 +52,9 @@ export function FileField({ field }: FieldComponentProps) {
             rhf.onChange(undefined);
           }
           if (inputRef.current) inputRef.current.value = "";
+          // Clears a stale size error immediately — onTouched only
+          // revalidates on change after the field was blurred once.
+          void trigger(config.name);
         };
 
         return (

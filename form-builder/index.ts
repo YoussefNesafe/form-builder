@@ -18,7 +18,8 @@ export { FormRenderer } from "./components/FormRenderer";
 export { FormSection } from "./components/FormSection";
 // For custom field authors: match built-in chrome and runtime behavior.
 export { FieldWrapper, fieldAriaDescribedBy } from "./ui/FieldWrapper";
-export { useFieldRuntime, useFieldDisabled } from "./components/FieldRuntime";
+export { useFieldRuntime, useFieldDisabled, type FormLocale } from "./components/FieldRuntime";
+export { conditionMatches, evaluateCondition } from "./core/conditions";
 export { useDynamicForm, buildDefaultValues } from "./hooks/useDynamicForm";
 export { useOtpFlow, type OtpFlowConfig, type OtpFlowStatus } from "./hooks/useOtpFlow";
 export type { OtpVerifiedChecker } from "./core/validation";

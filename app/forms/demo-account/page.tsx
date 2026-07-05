@@ -1,4 +1,5 @@
 import type { FormConfig } from "@/form-builder";
+import { nameRules } from "../rules";
 import { AccountFormClient } from "../AccountFormClient";
 
 const config: FormConfig = {
@@ -17,7 +18,7 @@ const config: FormConfig = {
       placeholder: "First Name",
       required: true,
       colSpan: 2,
-      rules: { minLength: 2, pattern: "^[A-Za-z ]+$", trim: true, allow: "A-Za-z ", message: "Only letters and spaces are allowed" },
+      rules: nameRules,
     },
     {
       type: "text",
@@ -25,7 +26,7 @@ const config: FormConfig = {
       placeholder: "Last Name",
       required: true,
       colSpan: 2,
-      rules: { minLength: 2, pattern: "^[A-Za-z ]+$", trim: true, allow: "A-Za-z ", message: "Only letters and spaces are allowed" },
+      rules: nameRules,
     },
     { type: "email", name: "email", placeholder: "Email", required: true },
     {
