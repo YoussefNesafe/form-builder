@@ -29,6 +29,7 @@ const baseFieldSchema = z.strictObject({
   disabled: z.boolean().optional(),
   visibleWhen: conditionSchema.optional(),
   disabledWhen: conditionSchema.optional(),
+  enabledWhenVerified: z.string().min(1).optional(),
   colSpan: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]).optional(),
 });
 
@@ -162,15 +163,29 @@ function validateFields(fields: unknown[], path: string): void {
     }
   });
 
-  // Same-level check only: group rows get runtime-prefixed names, so a
-  // cross-level dependsOn could never resolve anyway.
+  // Same-level checks only: group rows get runtime-prefixed names, so
+  // cross-level references could never resolve anyway.
+  const typeByName = new Map(
+    fields.map((raw) => [(raw as { name: string }).name, (raw as { type?: unknown }).type]),
+  );
   fields.forEach((raw, index) => {
-    const dependsOn = (raw as { type?: unknown; dependsOn?: unknown }).dependsOn;
-    if ((raw as { type?: unknown }).type !== "otp" || dependsOn === undefined) return;
-    if (!seenNames.has(dependsOn as string) || dependsOn === (raw as { name: string }).name) {
-      throw new Error(
-        `Invalid form config at ${path}[${index}]: otp dependsOn references unknown field "${String(dependsOn)}"`,
-      );
+    const field = raw as { type?: unknown; name: string; dependsOn?: unknown; enabledWhenVerified?: unknown };
+
+    if (field.type === "otp" && field.dependsOn !== undefined) {
+      if (!seenNames.has(field.dependsOn as string) || field.dependsOn === field.name) {
+        throw new Error(
+          `Invalid form config at ${path}[${index}]: otp dependsOn references unknown field "${String(field.dependsOn)}"`,
+        );
+      }
+    }
+
+    if (field.enabledWhenVerified !== undefined) {
+      const target = field.enabledWhenVerified as string;
+      if (typeByName.get(target) !== "otp" || target === field.name) {
+        throw new Error(
+          `Invalid form config at ${path}[${index}]: enabledWhenVerified must reference a sibling otp field, got "${target}"`,
+        );
+      }
     }
   });
 }

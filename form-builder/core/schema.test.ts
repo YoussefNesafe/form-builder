@@ -52,6 +52,26 @@ describe("validateFormConfig", () => {
       }),
     ).toThrow(/dependsOn/));
 
+  it("accepts enabledWhenVerified referencing a sibling otp field", () =>
+    validateFormConfig({
+      id: "t",
+      fields: [
+        { type: "otp", name: "emailOtp", length: 6 },
+        { type: "phone", name: "phone", enabledWhenVerified: "emailOtp" },
+      ],
+    }));
+
+  it("rejects enabledWhenVerified referencing a non-otp field", () =>
+    expect(() =>
+      validateFormConfig({
+        id: "t",
+        fields: [
+          { type: "text", name: "email" },
+          { type: "phone", name: "phone", enabledWhenVerified: "email" },
+        ],
+      }),
+    ).toThrow(/enabledWhenVerified/));
+
   it("recurses into groups", () =>
     expect(() =>
       validateFormConfig({

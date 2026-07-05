@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useRef } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { FormProvider } from "react-hook-form";
 import type { Messages } from "../core/messages";
 import { isBuiltInField, type FormConfig, type FormValues } from "../core/types";
@@ -31,6 +31,9 @@ export function FormRenderer({
   // Codes accepted by onVerifyOtp, keyed by field name. Validation compares
   // the current value against this, so editing a verified code re-invalidates.
   const verifiedCodes = useRef(new Map<string, string>());
+  // State mirror of the registry keys: enabledWhenVerified gating must
+  // re-render when verification lands, which a ref alone cannot trigger.
+  const [verifiedFields, setVerifiedFields] = useState<ReadonlySet<string>>(new Set());
   const otpVerified = useCallback(
     (fieldName: string, code: string) => verifiedCodes.current.get(fieldName) === code,
     [],
@@ -48,12 +51,21 @@ export function FormRenderer({
       verify: onVerifyOtp
         ? async (fieldName, code) => {
             const ok = await onVerifyOtp(fieldName, code);
-            if (ok) verifiedCodes.current.set(fieldName, code);
+            if (ok) {
+              verifiedCodes.current.set(fieldName, code);
+              setVerifiedFields((prev) => new Set(prev).add(fieldName));
+            }
             return ok;
           }
         : undefined,
       invalidate: (fieldName) => {
         verifiedCodes.current.delete(fieldName);
+        setVerifiedFields((prev) => {
+          if (!prev.has(fieldName)) return prev;
+          const next = new Set(prev);
+          next.delete(fieldName);
+          return next;
+        });
       },
     };
   }, [onSendOtp, onVerifyOtp, form]);
@@ -76,8 +88,8 @@ export function FormRenderer({
   );
 
   const runtime = useMemo(
-    () => ({ disabled: false, messages: mergedMessages, otp, isFieldValid }),
-    [mergedMessages, otp, isFieldValid],
+    () => ({ disabled: false, messages: mergedMessages, otp, isFieldValid, verifiedFields }),
+    [mergedMessages, otp, isFieldValid, verifiedFields],
   );
 
   return (

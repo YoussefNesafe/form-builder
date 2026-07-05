@@ -21,6 +21,8 @@ type FieldRuntime = {
   messages: Messages;
   otp?: OtpRuntime;
   isFieldValid?: (fieldName: string, value: unknown) => boolean;
+  // Names of otp fields whose current code passed verification.
+  verifiedFields?: ReadonlySet<string>;
 };
 
 export const FieldRuntimeContext = createContext<FieldRuntime>({
@@ -57,7 +59,8 @@ export function FieldGate({ field, children }: { field: AnyFieldConfig; children
   const disabled =
     runtime.disabled ||
     !!field.disabled ||
-    (!!field.disabledWhen && conditionMatches(field.disabledWhen, disabledWatch));
+    (!!field.disabledWhen && conditionMatches(field.disabledWhen, disabledWatch)) ||
+    (!!field.enabledWhenVerified && !runtime.verifiedFields?.has(field.enabledWhenVerified));
 
   if (!visible) return null;
 

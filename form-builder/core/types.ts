@@ -25,6 +25,8 @@ export type BaseField = {
   disabled?: boolean;
   visibleWhen?: Condition;
   disabledWhen?: Condition;
+  // Field stays disabled until the named otp field is verified.
+  enabledWhenVerified?: string;
   colSpan?: 1 | 2 | 3 | 4;
 };
 
