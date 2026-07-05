@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useId, useMemo, useState } from "react";
 import { Controller, useFormContext } from "react-hook-form";
 import { CircleX, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -30,6 +30,10 @@ export function TextField({ field }: FieldComponentProps) {
     config.type === "password" && config.complexity
       ? getPasswordChecks(config.complexity, messages)
       : null;
+  // rules.allow blocks disallowed characters at input time (typing and paste).
+  const allow = "rules" in config ? config.rules?.allow : undefined;
+  const blockedChars = useMemo(() => (allow ? new RegExp(`[^${allow}]`, "g") : null), [allow]);
+  const sanitize = (value: string) => (blockedChars ? value.replace(blockedChars, "") : value);
 
   return (
     <Controller
@@ -68,6 +72,7 @@ export function TextField({ field }: FieldComponentProps) {
             <Textarea
               placeholder={config.placeholder}
               {...rhf}
+              onChange={(event) => rhf.onChange(sanitize(event.target.value))}
               onBlur={handleBlur}
               id={id}
               disabled={disabled}
@@ -101,7 +106,7 @@ export function TextField({ field }: FieldComponentProps) {
                 onChange={(event) =>
                   config.type === "number"
                     ? rhf.onChange(Number.isNaN(event.target.valueAsNumber) ? undefined : event.target.valueAsNumber)
-                    : rhf.onChange(event.target.value)
+                    : rhf.onChange(sanitize(event.target.value))
                 }
               />
               {isPassword && (

@@ -13,7 +13,7 @@ const config: FormConfig = {
       label: "First Name",
       required: true,
       colSpan: 2,
-      rules: { minLength: 2, pattern: "^[A-Za-z ]+$", trim: true, message: "Only letters and spaces are allowed" },
+      rules: { minLength: 2, pattern: "^[A-Za-z ]+$", trim: true, allow: "A-Za-z ", message: "Only letters and spaces are allowed" },
     },
     {
       type: "text",
@@ -21,7 +21,7 @@ const config: FormConfig = {
       label: "Last Name",
       required: true,
       colSpan: 2,
-      rules: { minLength: 2, pattern: "^[A-Za-z ]+$", trim: true, message: "Only letters and spaces are allowed" },
+      rules: { minLength: 2, pattern: "^[A-Za-z ]+$", trim: true, allow: "A-Za-z ", message: "Only letters and spaces are allowed" },
     },
     { type: "email", name: "email", label: "Email", required: true },
     {

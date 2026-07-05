@@ -6,6 +6,7 @@ export type TextRules = {
   pattern?: string; // string, not RegExp — JSON-serializable
   message?: string; // custom error for pattern
   trim?: boolean; // trim before validating; parsed payload is trimmed too
+  allow?: string; // character-class body (e.g. "A-Za-z ") — other chars are blocked while typing
 };
 
 export type PasswordComplexity = {

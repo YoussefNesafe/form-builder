@@ -53,6 +53,22 @@ const textRulesSchema = z.strictObject({
     ),
   message: z.string().optional(),
   trim: z.boolean().optional(),
+  allow: z
+    .string()
+    .min(1)
+    .optional()
+    .refine(
+      (allow) => {
+        if (allow === undefined) return true;
+        try {
+          new RegExp(`[^${allow}]`);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      { message: "allow is not a valid character class body" },
+    ),
 });
 
 const textFieldSchema = baseFieldSchema.extend({ rules: textRulesSchema.optional() });
