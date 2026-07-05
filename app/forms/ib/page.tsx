@@ -7,8 +7,22 @@ const config: FormConfig = {
   fields: [
     { type: "static", name: "heading", content: "Quick & Easy IB Registration", as: "h1" },
     { type: "static", name: "subheading", content: "Start by completing our simple registration form" },
-    { type: "text", name: "firstName", label: "First Name", required: true, colSpan: 2 },
-    { type: "text", name: "lastName", label: "Last Name", required: true, colSpan: 2 },
+    {
+      type: "text",
+      name: "firstName",
+      label: "First Name",
+      required: true,
+      colSpan: 2,
+      rules: { minLength: 2, pattern: "^[A-Za-z ]+$", trim: true, message: "Only letters and spaces are allowed" },
+    },
+    {
+      type: "text",
+      name: "lastName",
+      label: "Last Name",
+      required: true,
+      colSpan: 2,
+      rules: { minLength: 2, pattern: "^[A-Za-z ]+$", trim: true, message: "Only letters and spaces are allowed" },
+    },
     { type: "email", name: "email", label: "Email", required: true },
     {
       type: "select",

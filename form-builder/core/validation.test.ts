@@ -45,6 +45,30 @@ describe("text", () => {
     if (!result.success) expect(result.error.issues[0].message).toBe("lowercase only");
   });
 
+  it("trim: validates and outputs the trimmed value", () => {
+    const schema = schemaFor({
+      type: "text",
+      name: "a",
+      required: true,
+      rules: { minLength: 2, pattern: "^[A-Za-z ]+$", trim: true },
+    });
+    const parsed = schema.safeParse("  John Doe  ");
+    expect(parsed.success).toBe(true);
+    if (parsed.success) expect(parsed.data).toBe("John Doe");
+    // Whitespace-only trims to empty → fails required.
+    expect(schema.safeParse("   ").success).toBe(false);
+    // Trimmed length below minimum.
+    expect(schema.safeParse("  J  ").success).toBe(false);
+    expect(schema.safeParse("John1").success).toBe(false);
+  });
+
+  it("trim: whitespace-only stays valid-absent for optional fields", () => {
+    const schema = schemaFor({ type: "text", name: "a", rules: { minLength: 2, trim: true } });
+    const parsed = schema.safeParse("   ");
+    expect(parsed.success).toBe(true);
+    if (parsed.success) expect(parsed.data).toBeUndefined();
+  });
+
   it("optional with rules still passes empty", () => {
     const schema = schemaFor({ type: "text", name: "a", rules: { minLength: 3 } });
     expect(schema.safeParse("").success).toBe(true);

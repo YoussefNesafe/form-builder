@@ -28,6 +28,13 @@ function optionalClearable(schema: z.ZodType): z.ZodType {
   );
 }
 
+// Outermost so every check (including required min(1)) sees the trimmed
+// value — "   " fails required, and the parsed payload comes out trimmed.
+function withTrim(rules: TextRules | undefined, schema: z.ZodType): z.ZodType {
+  if (!rules?.trim) return schema;
+  return z.preprocess((value) => (typeof value === "string" ? value.trim() : value), schema);
+}
+
 function applyTextRules(schema: z.ZodString, rules: TextRules | undefined, messages: Messages): z.ZodString {
   let result = schema;
   if (rules?.minLength !== undefined) result = result.min(rules.minLength, messages.minLength(rules.minLength));
@@ -83,7 +90,7 @@ export function toZodSchema(
           schema = schema.refine((value) => check.test(value as string), check.label);
         }
       }
-      return field.required ? schema : optionalEmptyable(schema);
+      return withTrim(field.rules, field.required ? schema : optionalEmptyable(schema));
     }
 
     case "email": {
@@ -92,7 +99,7 @@ export function toZodSchema(
         (value) => z.email().safeParse(value).success,
         messages.email,
       );
-      return field.required ? schema : optionalEmptyable(schema);
+      return withTrim(field.rules, field.required ? schema : optionalEmptyable(schema));
     }
 
     case "number": {

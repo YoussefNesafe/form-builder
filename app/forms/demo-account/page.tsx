@@ -17,6 +17,7 @@ const config: FormConfig = {
       placeholder: "First Name",
       required: true,
       colSpan: 2,
+      rules: { minLength: 2, pattern: "^[A-Za-z ]+$", trim: true, message: "Only letters and spaces are allowed" },
     },
     {
       type: "text",
@@ -24,6 +25,7 @@ const config: FormConfig = {
       placeholder: "Last Name",
       required: true,
       colSpan: 2,
+      rules: { minLength: 2, pattern: "^[A-Za-z ]+$", trim: true, message: "Only letters and spaces are allowed" },
     },
     { type: "email", name: "email", placeholder: "Email", required: true },
     {

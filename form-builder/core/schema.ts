@@ -52,6 +52,7 @@ const textRulesSchema = z.strictObject({
       { message: "pattern is not a valid regular expression" },
     ),
   message: z.string().optional(),
+  trim: z.boolean().optional(),
 });
 
 const textFieldSchema = baseFieldSchema.extend({ rules: textRulesSchema.optional() });

@@ -5,6 +5,7 @@ export type TextRules = {
   maxLength?: number;
   pattern?: string; // string, not RegExp — JSON-serializable
   message?: string; // custom error for pattern
+  trim?: boolean; // trim before validating; parsed payload is trimmed too
 };
 
 export type PasswordComplexity = {
