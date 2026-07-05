@@ -16,6 +16,14 @@ function optionalEmptyable(schema: z.ZodType): z.ZodType {
   return z.preprocess((value) => (value === "" ? undefined : value), schema.optional());
 }
 
+function optionalClearable(schema: z.ZodType): z.ZodType {
+  // Cleared number inputs yield NaN, clearable selects/radios yield null.
+  return z.preprocess(
+    (value) => (value === null || value === "" || (typeof value === "number" && Number.isNaN(value)) ? undefined : value),
+    schema.optional(),
+  );
+}
+
 function applyTextRules(schema: z.ZodString, rules: TextRules | undefined, messages: Messages): z.ZodString {
   let result = schema;
   if (rules?.minLength !== undefined) result = result.min(rules.minLength, messages.minLength(rules.minLength));
@@ -24,7 +32,7 @@ function applyTextRules(schema: z.ZodString, rules: TextRules | undefined, messa
   return result;
 }
 
-function isoDateSchema(field: Extract<FieldConfig, { type: "date" }>, messages: Messages): z.ZodType {
+function isoDateSchema(field: Extract<FieldConfig, { type: "date" }>, messages: Messages): z.ZodType<string> {
   let schema = z.string().refine((value) => !Number.isNaN(Date.parse(value)), messages.invalidDate);
   if (field.minDate !== undefined) {
     const minTime = Date.parse(field.minDate);
@@ -76,7 +84,7 @@ export function toZodSchema(field: FieldConfig, messages: Messages): FieldSchema
       let schema = z.number({ error: messages.required });
       if (field.min !== undefined) schema = schema.min(field.min, messages.min(field.min));
       if (field.max !== undefined) schema = schema.max(field.max, messages.max(field.max));
-      return field.required ? schema : schema.optional();
+      return field.required ? schema : optionalClearable(schema);
     }
 
     case "otp": {
@@ -95,12 +103,12 @@ export function toZodSchema(field: FieldConfig, messages: Messages): FieldSchema
         const schema = z.array(value);
         return field.required ? schema.min(1, messages.required) : schema.optional();
       }
-      return field.required ? value : value.optional();
+      return field.required ? value : optionalClearable(value);
     }
 
     case "radio": {
       const value = optionValueSchema(field.options);
-      return field.required ? value : value.optional();
+      return field.required ? value : optionalClearable(value);
     }
 
     case "checkbox": {
@@ -116,7 +124,9 @@ export function toZodSchema(field: FieldConfig, messages: Messages): FieldSchema
 
     case "date": {
       if (field.range) {
-        const schema = z.object({ from: isoDateSchema(field, messages), to: isoDateSchema(field, messages) });
+        const schema = z
+          .object({ from: isoDateSchema(field, messages), to: isoDateSchema(field, messages) })
+          .refine((range) => Date.parse(range.from) <= Date.parse(range.to), messages.invalidDate);
         return field.required ? schema : schema.optional();
       }
       const schema = isoDateSchema(field, messages);
@@ -124,6 +134,7 @@ export function toZodSchema(field: FieldConfig, messages: Messages): FieldSchema
     }
 
     case "slider": {
+      // Always required: the slider always has a value (defaults to min).
       let schema = z.number({ error: messages.required });
       schema = schema.min(field.min, messages.min(field.min)).max(field.max, messages.max(field.max));
       return schema;

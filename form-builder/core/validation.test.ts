@@ -72,6 +72,12 @@ describe("number", () => {
     expect(schemaFor({ type: "number", name: "n", required: true }).safeParse(undefined).success).toBe(false);
     expect(schemaFor({ type: "number", name: "n" }).safeParse(undefined).success).toBe(true);
   });
+
+  it("optional treats NaN and null as absent (cleared input)", () => {
+    const schema = schemaFor({ type: "number", name: "n" });
+    expect(schema.safeParse(Number.NaN).success).toBe(true);
+    expect(schema.safeParse(null).success).toBe(true);
+  });
 });
 
 describe("otp", () => {
@@ -112,6 +118,12 @@ describe("select", () => {
     });
     expect(schema.safeParse([]).success).toBe(false);
     expect(schema.safeParse([1]).success).toBe(true);
+  });
+
+  it("optional single accepts undefined and null (cleared select)", () => {
+    const schema = schemaFor({ type: "select", name: "s", options: [{ label: "One", value: 1 }] });
+    expect(schema.safeParse(undefined).success).toBe(true);
+    expect(schema.safeParse(null).success).toBe(true);
   });
 });
 
@@ -164,6 +176,11 @@ describe("date", () => {
     const schema = schemaFor({ type: "date", name: "d", range: true, required: true });
     expect(schema.safeParse({ from: "2026-01-01", to: "2026-01-05" }).success).toBe(true);
     expect(schema.safeParse({ from: "2026-01-01" }).success).toBe(false);
+  });
+
+  it("range rejects from after to", () => {
+    const schema = schemaFor({ type: "date", name: "d", range: true, required: true });
+    expect(schema.safeParse({ from: "2026-02-01", to: "2026-01-01" }).success).toBe(false);
   });
 });
 

@@ -18,7 +18,7 @@ Factory per form instance (design decision — no global singleton). React bindi
 **Steps 2/4/5:** fail → implement → pass → commit `feat: add stepper store factory`.
 
 ## Task 7.2: components/FormStepper.tsx
-Receives `config` (with `steps`), `form`, `messages`. Renders: step header (titles, current highlighted, `aria-current="step"`), only current step's fields (lookup by `fieldNames`), Prev/Next Buttons. Next: `await form.trigger(currentStepFieldNames)` → advance only if valid. Last step shows config's `submit` field (or default submit button if none). Hidden fields always registered regardless of step. `FormRenderer` delegates here when `config.steps` present (wire the delegation left open in Task 5.2).
+Receives `config` (with `steps`), `form`, `messages`. Renders: step header (titles, current highlighted, `aria-current="step"`), only current step's fields (lookup by `fieldNames`), Prev/Next Buttons. Next: `await form.trigger(currentStepFieldNames)` → advance only if valid. Phase 4 finding: NEVER gate on `formState.isValid` — the condition-aware resolver computes it across ALL visible fields on every step; only the `trigger()` return value is step-scoped. Last step shows config's `submit` field (or default submit button if none). Hidden fields always registered regardless of step. `FormRenderer` delegates here when `config.steps` present (wire the delegation left open in Task 5.2).
 
 Commit: `feat: add multi-step form stepper with zustand`.
 

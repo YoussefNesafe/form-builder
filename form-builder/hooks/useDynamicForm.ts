@@ -57,6 +57,12 @@ export function buildDefaultValues(fields: FieldConfig[]): FormValues {
  * Validates only currently visible fields: values persist in RHF state when a
  * field is condition-hidden or on another wizard step (shouldUnregister stays
  * false), but hidden-by-condition fields never block submission.
+ *
+ * Consequences (verified against RHF 7.80 + resolvers 5.4):
+ * - handleSubmit passes the zod-PARSED payload to onSubmit — strip-mode drops
+ *   condition-hidden values and keys unknown to the visible schema.
+ * - formState.isValid reflects the whole visible schema across all wizard
+ *   steps; steppers must gate on trigger(stepFieldNames), not isValid.
  */
 function conditionAwareResolver(config: FormConfig, messages: Messages): Resolver<FormValues> {
   return (values, context, options) => {

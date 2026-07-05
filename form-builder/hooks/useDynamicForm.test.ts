@@ -91,6 +91,51 @@ describe("useDynamicForm", () => {
     expect(onSubmit).toHaveBeenCalled();
   });
 
+  it("condition-hidden value is absent from submit payload (schema strip-mode)", async () => {
+    const conditionalConfig: FormConfig = {
+      id: "c",
+      fields: [
+        { type: "checkbox", name: "other" },
+        { type: "text", name: "details", visibleWhen: { field: "other", equals: true } },
+      ],
+    };
+    const { result } = renderHook(() => useDynamicForm(conditionalConfig));
+    const onSubmit = vi.fn();
+    await act(async () => {
+      result.current.form.setValue("details", "stale");
+    });
+    await act(async () => {
+      await result.current.form.handleSubmit(onSubmit)();
+    });
+    expect(onSubmit).toHaveBeenCalled();
+    expect("details" in onSubmit.mock.calls[0][0]).toBe(false);
+  });
+
+  it("pins v1 limitation: condition-hidden field INSIDE a group still validates", async () => {
+    const groupConfig: FormConfig = {
+      id: "g",
+      fields: [
+        {
+          type: "group",
+          name: "team",
+          min: 1,
+          fields: [
+            { type: "checkbox", name: "hasRole" },
+            { type: "text", name: "role", required: true, visibleWhen: { field: "hasRole", equals: true } },
+          ],
+        },
+      ],
+    };
+    const { result } = renderHook(() => useDynamicForm(groupConfig));
+    const onSubmit = vi.fn();
+    await act(async () => {
+      await result.current.form.handleSubmit(onSubmit)();
+    });
+    // Documented v1 limitation — inner conditions are not skipped by validation.
+    // When row-scoped condition support lands, flip this assertion.
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
   it("condition-visible required field blocks submit", async () => {
     const conditionalConfig: FormConfig = {
       id: "c",

@@ -23,6 +23,8 @@ shadcn `Slider`: `min max step`, value `[n]` ↔ scalar in form. Current value d
 `<input type="file" className="sr-only">` + shadcn `Button` label trigger; `accept`, `multiple`. Client-side `maxSizeMB` check → RHF `setError` on violation. Selected files listed (name + size + remove). Value: `File | File[]`. Note in code: file values are NOT JSON-serializable — consumers handle upload in `onSubmit`.
 
 ## Task 6.7: GroupField.tsx (recursive)
+
+Phase 4 review obligation: design says group-row conditions "scope to their own row", but `evaluateCondition` resolves paths globally. When rendering inner fields, prefix condition field paths with `team.${index}.` (same prefixing as names) before passing to `FieldGate`. Validation-side skipping of inner conditions stays a documented v1 limitation (pinned by test in useDynamicForm.test.ts).
 `useFieldArray({ name: field.name })`. Renders per row: nested grid, recursion — inner fields rendered through same registry/`FieldGate` path with names prefixed `${field.name}.${index}.${inner.name}` (helper `withNamePrefix(field, prefix)` — unit test the prefixing in small `group.test.ts`). Add-row Button (disabled at `max`), remove Button per row (disabled at `min`). New-row defaults from `buildDefaultValues` of inner fields (exported in Task 4.4).
 
 Commit: `feat: add recursive repeatable group field`.

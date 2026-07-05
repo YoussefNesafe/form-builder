@@ -14,7 +14,7 @@ export function evaluateCondition(condition: Condition | undefined, values: Reco
 
   if ("equals" in condition && value !== condition.equals) return false;
   if ("notEquals" in condition && value === condition.notEquals) return false;
-  if ("in" in condition && !(condition.in ?? []).includes(value)) return false;
+  if (condition.in !== undefined && !condition.in.includes(value)) return false;
 
   return true;
 }
@@ -23,7 +23,11 @@ export function getVisibleFields(fields: FieldConfig[], values: FormValues): Fie
   return fields.filter((field) => evaluateCondition(field.visibleWhen, values));
 }
 
-/** Values of condition-hidden fields stay in RHF state but must not reach onSubmit. */
+/**
+ * For headless getValues() consumers. The handleSubmit path does not need
+ * this: the condition-aware resolver's schema is strip-mode, so the parsed
+ * submit payload already excludes condition-hidden values.
+ */
 export function stripInvisibleValues(fields: FieldConfig[], values: FormValues): FormValues {
   const visibleNames = new Set(getVisibleFields(fields, values).map((field) => field.name));
   return Object.fromEntries(Object.entries(values).filter(([name]) => visibleNames.has(name) || !fields.some((f) => f.name === name)));
