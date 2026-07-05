@@ -64,7 +64,7 @@ export type OtpFlowConfig = {
  */
 export function useOtpFlow(config: OtpFlowConfig) {
   const { messages, otp, isFieldValid, verifiedFields } = useFieldRuntime();
-  const { control, resetField, trigger } = useFormContext();
+  const { control, resetField, trigger, getValues } = useFormContext();
   // The verified registry outlives this component (wizard steps and
   // visibleWhen toggles unmount fields) — rehydrate instead of restarting at
   // idle, or the UI would show a locked "Send OTP" for an already-verified code.
@@ -160,7 +160,7 @@ export function useOtpFlow(config: OtpFlowConfig) {
     const stamp = ++generation.current;
     dispatch({ type: "SEND", resend });
     try {
-      await otp.send(config.name);
+      await otp.send(config.name, getValues());
       if (stamp !== generation.current) return;
       dispatch({ type: "SENT", seconds: config.resendDelaySeconds ?? 30 });
     } catch {

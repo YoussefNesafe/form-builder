@@ -22,6 +22,12 @@ export { useFieldRuntime, useFieldDisabled, type FormLocale } from "./components
 export { conditionMatches, evaluateCondition } from "./core/conditions";
 export { useDynamicForm, buildDefaultValues } from "./hooks/useDynamicForm";
 export { useOtpFlow, type OtpFlowConfig, type OtpFlowStatus } from "./hooks/useOtpFlow";
+export {
+  useOtpController,
+  type OtpController,
+  type OtpFieldHandlers,
+  type UseOtpControllerOptions,
+} from "./hooks/useOtpController";
 export type { OtpVerifiedChecker } from "./core/validation";
 export type { OtpRuntime } from "./components/FieldRuntime";
 export { stripInvisibleValues } from "./core/conditions";

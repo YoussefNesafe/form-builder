@@ -4,10 +4,12 @@ import { createContext, useContext, type ReactNode } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { conditionMatches } from "../core/conditions";
 import { defaultMessages, type Messages } from "../core/messages";
-import type { AnyFieldConfig } from "../core/types";
+import type { AnyFieldConfig, FormValues } from "../core/types";
 
 export type OtpRuntime = {
-  send?: (fieldName: string) => Promise<void>;
+  // values = current form values at send time, supplied by the field flow —
+  // keeps the controller free of any form dependency.
+  send?: (fieldName: string, values: FormValues) => Promise<void>;
   // Resolves true when the code is accepted; the host wrapper records it in
   // the verified registry so validation passes. depValue snapshots what the
   // code was verified FOR (e.g. the phone number) so a remounting field can

@@ -1,12 +1,13 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo } from "react";
 import { FormProvider } from "react-hook-form";
 import type { Messages } from "../core/messages";
 import { isBuiltInField, type FormConfig, type FormValues } from "../core/types";
 import { toZodSchema } from "../core/validation";
 import { useDynamicForm } from "../hooks/useDynamicForm";
-import { FieldRuntimeContext, type FormLocale, type OtpRuntime } from "./FieldRuntime";
+import { useOtpController, type OtpController } from "../hooks/useOtpController";
+import { FieldRuntimeContext, type FormLocale } from "./FieldRuntime";
 import { FormStepper } from "./FormStepper";
 import { renderField } from "./renderField";
 import { FLAT_GRID_CLASS } from "../ui/layout";
@@ -14,9 +15,13 @@ import { FLAT_GRID_CLASS } from "../ui/layout";
 type FormRendererProps = {
   config: FormConfig;
   onSubmit: (values: FormValues) => void | Promise<void>;
-  // Throwing signals send failure to the field.
+  // Convenience wiring: one pair of handlers for every otp field, branched by
+  // fieldName. Throwing from send signals failure to the field.
   onSendOtp?: (fieldName: string, values: FormValues) => Promise<void>;
   onVerifyOtp?: (fieldName: string, code: string) => Promise<boolean>;
+  // Advanced wiring: bring your own controller (per-field handler map via
+  // useOtpController). Takes precedence over onSendOtp/onVerifyOtp.
+  otp?: OtpController;
   messages?: Partial<Messages>;
   locale?: FormLocale;
   className?: string;
@@ -27,57 +32,30 @@ export function FormRenderer({
   onSubmit,
   onSendOtp,
   onVerifyOtp,
+  otp: otpProp,
   messages,
   locale,
   className,
 }: FormRendererProps) {
-  // Codes accepted by onVerifyOtp, keyed by field name. Validation compares
-  // the current value against this, so editing a verified code re-invalidates.
-  // dep snapshots what the code was verified for (stale-dependency detection
-  // across unmounts).
-  const verifiedCodes = useRef(new Map<string, { code: string; dep: unknown }>());
-  // State mirror of the registry keys: enabledWhenVerified gating must
-  // re-render when verification lands, which a ref alone cannot trigger.
-  const [verifiedFields, setVerifiedFields] = useState<ReadonlySet<string>>(new Set());
-  const otpVerified = useCallback(
-    (fieldName: string, code: string) => verifiedCodes.current.get(fieldName)?.code === code,
-    [],
+  const legacyFallback = useMemo(
+    () => (onSendOtp || onVerifyOtp ? { send: onSendOtp, verify: onVerifyOtp } : undefined),
+    [onSendOtp, onVerifyOtp],
   );
+  // Called unconditionally (rules of hooks); inert when an external
+  // controller is supplied or no legacy handlers exist.
+  const internalController = useOtpController({ fallback: legacyFallback });
+  const controller = otpProp ?? internalController;
+  if (otpProp && legacyFallback && process.env.NODE_ENV !== "production") {
+    console.warn(
+      "FormRenderer: both an otp controller and onSendOtp/onVerifyOtp were supplied — the controller wins. Choose one wiring per mount; switching mid-session drops verified state.",
+    );
+  }
 
   const { form, messages: mergedMessages } = useDynamicForm(config, {
     messages,
-    otpVerified: onVerifyOtp ? otpVerified : undefined,
+    // Without a verify capability the checker would block every otp field.
+    otpVerified: controller.hasVerify ? controller.otpVerified : undefined,
   });
-
-  const otp = useMemo<OtpRuntime | undefined>(() => {
-    if (!onSendOtp && !onVerifyOtp) return undefined;
-    return {
-      send: onSendOtp ? (fieldName) => onSendOtp(fieldName, form.getValues()) : undefined,
-      verify: onVerifyOtp
-        ? async (fieldName, code, depValue) => {
-            const ok = await onVerifyOtp(fieldName, code);
-            if (ok) {
-              verifiedCodes.current.set(fieldName, { code, dep: depValue });
-              setVerifiedFields((prev) => new Set(prev).add(fieldName));
-            }
-            return ok;
-          }
-        : undefined,
-      isVerifiedFor: (fieldName, depValue) => {
-        const entry = verifiedCodes.current.get(fieldName);
-        return !entry || Object.is(entry.dep, depValue);
-      },
-      invalidate: (fieldName) => {
-        verifiedCodes.current.delete(fieldName);
-        setVerifiedFields((prev) => {
-          if (!prev.has(fieldName)) return prev;
-          const next = new Set(prev);
-          next.delete(fieldName);
-          return next;
-        });
-      },
-    };
-  }, [onSendOtp, onVerifyOtp, form]);
 
   // Standalone per-field validity, independent of form error state — lets a
   // field gate its own behavior on a sibling (otp dependsOn).
@@ -97,8 +75,15 @@ export function FormRenderer({
   );
 
   const runtime = useMemo(
-    () => ({ disabled: false, messages: mergedMessages, otp, isFieldValid, verifiedFields, locale }),
-    [mergedMessages, otp, isFieldValid, verifiedFields, locale],
+    () => ({
+      disabled: false,
+      messages: mergedMessages,
+      otp: controller.otp,
+      isFieldValid,
+      verifiedFields: controller.verifiedFields,
+      locale,
+    }),
+    [mergedMessages, controller.otp, controller.verifiedFields, isFieldValid, locale],
   );
 
   return (
