@@ -7,16 +7,17 @@ function getPath(values: Record<string, unknown>, path: string): unknown {
   }, values);
 }
 
-export function evaluateCondition(condition: Condition | undefined, values: Record<string, unknown>): boolean {
-  if (!condition) return true;
-
-  const value = getPath(values, condition.field);
-
+/** For callers that already resolved the source field's value (e.g. useWatch). */
+export function conditionMatches(condition: Condition, value: unknown): boolean {
   if ("equals" in condition && value !== condition.equals) return false;
   if ("notEquals" in condition && value === condition.notEquals) return false;
   if (condition.in !== undefined && !condition.in.includes(value)) return false;
-
   return true;
+}
+
+export function evaluateCondition(condition: Condition | undefined, values: Record<string, unknown>): boolean {
+  if (!condition) return true;
+  return conditionMatches(condition, getPath(values, condition.field));
 }
 
 export function getVisibleFields(fields: FieldConfig[], values: FormValues): FieldConfig[] {

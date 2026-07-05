@@ -4,11 +4,12 @@ import type { FieldConfig, FormConfig, Option, TextRules } from "./types";
 
 type FieldSchema = z.ZodType | null;
 
-function optionValueSchema(options: Option[]): z.ZodType {
+function optionValueSchema(options: Option[], requiredMessage?: string): z.ZodType {
+  const error = requiredMessage;
   const hasString = options.some((option) => typeof option.value === "string");
   const hasNumber = options.some((option) => typeof option.value === "number");
-  if (hasString && hasNumber) return z.union([z.string(), z.number()]);
-  return hasNumber ? z.number() : z.string();
+  if (hasString && hasNumber) return z.union([z.string(), z.number()], { error });
+  return hasNumber ? z.number({ error }) : z.string({ error });
 }
 
 function optionalEmptyable(schema: z.ZodType): z.ZodType {
@@ -98,16 +99,16 @@ export function toZodSchema(field: FieldConfig, messages: Messages): FieldSchema
     }
 
     case "select": {
-      const value = optionValueSchema(field.options);
       if (field.multiple) {
-        const schema = z.array(value);
+        const schema = z.array(optionValueSchema(field.options));
         return field.required ? schema.min(1, messages.required) : schema.optional();
       }
+      const value = optionValueSchema(field.options, field.required ? messages.required : undefined);
       return field.required ? value : optionalClearable(value);
     }
 
     case "radio": {
-      const value = optionValueSchema(field.options);
+      const value = optionValueSchema(field.options, field.required ? messages.required : undefined);
       return field.required ? value : optionalClearable(value);
     }
 

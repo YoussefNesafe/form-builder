@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import type { FieldComponentProps } from "../core/registry";
 import type { FieldConfig } from "../core/types";
-import { useFieldDisabled } from "../components/FieldRuntime";
+import { useFieldDisabled, useFieldRuntime } from "../components/FieldRuntime";
 import { FieldWrapper, fieldAriaDescribedBy } from "../ui/FieldWrapper";
 
 type TextFieldConfig = Extract<
@@ -20,6 +20,7 @@ export function TextField({ field }: FieldComponentProps) {
   const config = field as TextFieldConfig;
   const { control } = useFormContext();
   const disabled = useFieldDisabled(config);
+  const { messages } = useFieldRuntime();
   const id = useId();
   const [showPassword, setShowPassword] = useState(false);
 
@@ -82,7 +83,7 @@ export function TextField({ field }: FieldComponentProps) {
                   variant="ghost"
                   size="icon"
                   disabled={disabled}
-                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  aria-label={showPassword ? messages.hidePassword : messages.showPassword}
                   className="absolute end-0 top-0 h-full px-3"
                   onClick={() => setShowPassword((previous) => !previous)}
                 >

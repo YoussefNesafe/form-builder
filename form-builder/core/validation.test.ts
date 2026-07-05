@@ -105,7 +105,9 @@ describe("select", () => {
       options: [{ label: "One", value: 1 }],
     });
     expect(schema.safeParse(1).success).toBe(true);
-    expect(schema.safeParse(undefined).success).toBe(false);
+    const missing = schema.safeParse(undefined);
+    expect(missing.success).toBe(false);
+    if (!missing.success) expect(missing.error.issues[0].message).toBe(messages.required);
   });
 
   it("multiple is array, required needs one entry", () => {
@@ -124,6 +126,20 @@ describe("select", () => {
     const schema = schemaFor({ type: "select", name: "s", options: [{ label: "One", value: 1 }] });
     expect(schema.safeParse(undefined).success).toBe(true);
     expect(schema.safeParse(null).success).toBe(true);
+  });
+});
+
+describe("radio", () => {
+  it("required missing shows required message, not raw zod error", () => {
+    const schema = schemaFor({
+      type: "radio",
+      name: "r",
+      required: true,
+      options: [{ label: "One", value: 1 }],
+    });
+    const result = schema.safeParse(undefined);
+    expect(result.success).toBe(false);
+    if (!result.success) expect(result.error.issues[0].message).toBe(messages.required);
   });
 });
 
