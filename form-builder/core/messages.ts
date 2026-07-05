@@ -13,6 +13,7 @@ export type Messages = {
   hidePassword: string;
   next: string;
   back: string;
+  submit: string;
   country: string;
   addRow: string;
   removeRow: (row: number) => string;
@@ -35,6 +36,7 @@ export const defaultMessages: Messages = {
   hidePassword: "Hide password",
   next: "Next",
   back: "Back",
+  submit: "Submit",
   country: "Country",
   addRow: "Add",
   removeRow: (row) => `Remove row ${row}`,

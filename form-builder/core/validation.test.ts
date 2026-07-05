@@ -285,6 +285,18 @@ describe("group", () => {
   });
 });
 
+describe("custom field types", () => {
+  it("pass through schema as unknown", () => {
+    const config: FormConfig = {
+      id: "t",
+      fields: [{ type: "rating", name: "stars", max: 5 } as never],
+    };
+    const schema = buildFormSchema(config, messages);
+    expect(schema.safeParse({ stars: 4 }).success).toBe(true);
+    expect(schema.safeParse({}).success).toBe(true);
+  });
+});
+
 describe("custom messages", () => {
   it("override default", () => {
     const custom = mergeMessages({ required: "verplicht" });

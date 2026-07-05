@@ -1,7 +1,7 @@
 import type { ComponentType } from "react";
-import type { FieldConfig } from "./types";
+import type { AnyFieldConfig } from "./types";
 
-export type FieldComponentProps = { field: FieldConfig };
+export type FieldComponentProps = { field: AnyFieldConfig };
 
 const registry = new Map<string, ComponentType<FieldComponentProps>>();
 

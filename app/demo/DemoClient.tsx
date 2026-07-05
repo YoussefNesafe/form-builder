@@ -10,8 +10,14 @@ export function DemoClient({ config }: { config: FormConfig }) {
   const [rtl, setRtl] = useState(false);
   const [dark, setDark] = useState(false);
 
+  // documentElement, not a wrapper class: Radix portals content to body.
+  const toggleDark = () => {
+    document.documentElement.classList.toggle("dark", !dark);
+    setDark(!dark);
+  };
+
   return (
-    <div dir={rtl ? "rtl" : "ltr"} className={dark ? "dark bg-background text-foreground" : ""}>
+    <div dir={rtl ? "rtl" : "ltr"} className="bg-background text-foreground">
       <div className="mx-auto max-w-2xl space-y-8 p-8">
         <div className="flex gap-2">
           <button
@@ -21,11 +27,7 @@ export function DemoClient({ config }: { config: FormConfig }) {
           >
             {rtl ? "LTR" : "RTL"}
           </button>
-          <button
-            type="button"
-            className="rounded-md border px-3 py-1 text-sm"
-            onClick={() => setDark((previous) => !previous)}
-          >
+          <button type="button" className="rounded-md border px-3 py-1 text-sm" onClick={toggleDark}>
             {dark ? "Light" : "Dark"}
           </button>
         </div>

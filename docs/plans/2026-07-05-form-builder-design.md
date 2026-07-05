@@ -79,6 +79,8 @@ Boundaries:
 - shadcn primitives live in app-level `components/ui/`; `form-builder/` imports via alias.
 - **Portability contract:** consuming project must run the same `shadcn add` list (shadcn is copy-in code). Documented, not vendored — vendoring was considered and rejected (duplicates components.json flow, diverges from app theme).
   Actual list (shadcn 4.13, radix base): `button input textarea label select command popover radio-group checkbox switch calendar slider progress separator input-otp @shadcn/field` (+ `dialog`, `input-group` pulled in as dependencies). Note: the RHF-bound `form` component was removed from the registry — `field` primitives replace it; RHF wiring is done via `Controller` in `form-builder/` code.
+  The `shadcn` package must stay a devDependency: `app/globals.css` imports `"shadcn/tailwind.css"` at build time (prod build fails without it).
+- **Custom field contract (v1):** consumers register via `registerField(type, Component)`. Custom configs type as `CustomFieldConfig` (BaseField + arbitrary props), validate against the BaseField contract only, and pass through value validation as `z.unknown()` — the custom component owns richer validation. Default value comes from an optional `defaultValue` config prop. `FieldWrapper`, `useFieldRuntime`, and `useFieldDisabled` are exported so custom fields match built-in chrome, disabled composition, and localized strings.
 - Zustand stepper store is a factory per form instance — no global singleton, no cross-form collisions, extendable later.
 
 ## Core types

@@ -12,7 +12,7 @@ export type StepperStore = ReturnType<typeof createStepperStore>;
 
 /** Factory per form instance — no global singleton, no cross-form collisions. */
 export function createStepperStore(stepCount: number) {
-  const clamp = (step: number) => Math.min(Math.max(step, 0), stepCount - 1);
+  const clamp = (step: number) => Math.max(0, Math.min(step, stepCount - 1));
 
   return createStore<StepperState>((set) => ({
     step: 0,

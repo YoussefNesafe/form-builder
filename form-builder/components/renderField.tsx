@@ -1,7 +1,7 @@
 "use client";
 
 import { getField } from "../core/registry";
-import type { FieldConfig } from "../core/types";
+import type { AnyFieldConfig, FieldConfig } from "../core/types";
 import { FieldGate } from "./FieldRuntime";
 
 // Static strings — Tailwind cannot see dynamically built class names.
@@ -12,7 +12,7 @@ const colSpanClass: Record<NonNullable<FieldConfig["colSpan"]>, string> = {
   4: "col-span-4",
 };
 
-export function renderField(field: FieldConfig) {
+export function renderField(field: AnyFieldConfig) {
   const Component = getField(field.type);
 
   if (!Component) {

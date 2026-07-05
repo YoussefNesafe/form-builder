@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { getRegisteredTypes } from "./registry";
 import type { FieldConfig, FormConfig } from "./types";
 
 const conditionSchema = z
@@ -109,6 +110,8 @@ const fieldSchemasByType: Record<FieldConfig["type"], z.ZodType> = {
   }),
 };
 
+const customFieldSchema = z.looseObject(baseFieldSchema.shape);
+
 const formConfigShellSchema = z.object({
   id: z.string().min(1),
   title: z.string().optional(),
@@ -127,12 +130,16 @@ function validateFields(fields: unknown[], path: string): void {
   fields.forEach((raw, index) => {
     const fieldPath = `${path}[${index}]`;
     const type = (raw as { type?: unknown })?.type;
+    const isBuiltIn = typeof type === "string" && type in fieldSchemasByType;
 
-    if (typeof type !== "string" || !(type in fieldSchemasByType)) {
+    if (!isBuiltIn && (typeof type !== "string" || !getRegisteredTypes().includes(type))) {
       throw new Error(`Invalid form config at ${fieldPath}: unknown field type "${String(type)}"`);
     }
 
-    const result = fieldSchemasByType[type as FieldConfig["type"]].safeParse(raw);
+    // Custom registered types: validate the BaseField contract only — their
+    // extra props belong to the consuming component.
+    const schema = isBuiltIn ? fieldSchemasByType[type as FieldConfig["type"]] : customFieldSchema;
+    const result = schema.safeParse(raw);
     if (!result.success) {
       throw new Error(`Invalid form config at ${formatIssues(result.error.issues, fieldPath)}`);
     }
@@ -155,12 +162,29 @@ function validateFields(fields: unknown[], path: string): void {
 
 function validateSteps(config: FormConfig): void {
   if (!config.steps) return;
+
   const topLevelNames = new Set(config.fields.map((field) => field.name));
+  const stepped = new Set<string>();
   for (const step of config.steps) {
     for (const fieldName of step.fieldNames) {
       if (!topLevelNames.has(fieldName)) {
         throw new Error(`Invalid form config: step "${step.title}" references unknown field "${fieldName}"`);
       }
+      stepped.add(fieldName);
+    }
+  }
+
+  // A validated field missing from every step can never be corrected by the
+  // user — the form becomes permanently unsubmittable with invisible errors.
+  for (const field of config.fields) {
+    const exemptFromSteps = field.type === "hidden" || field.type === "submit";
+    if (!exemptFromSteps && !stepped.has(field.name)) {
+      throw new Error(`Invalid form config: field "${field.name}" is not assigned to any step`);
+    }
+    if (exemptFromSteps && stepped.has(field.name)) {
+      throw new Error(
+        `Invalid form config: ${field.type} field "${field.name}" must not be listed in steps (rendered automatically)`,
+      );
     }
   }
 }

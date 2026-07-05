@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { registerField } from "./registry";
 import { validateFormConfig } from "./schema";
 import type { FormConfig } from "./types";
 
@@ -75,4 +76,41 @@ describe("validateFormConfig", () => {
         fields: [{ type: "text", name: "a", rules: { pattern: "[unclosed" } }],
       }),
     ).toThrow(/pattern/i));
+
+  it("accepts custom registered field types (BaseField contract only)", () => {
+    registerField("rating", () => null);
+    expect(() =>
+      validateFormConfig({
+        id: "t",
+        fields: [{ type: "rating", name: "stars", max: 5 }],
+      }),
+    ).not.toThrow();
+  });
+
+  it("custom registered type still requires a name", () => {
+    registerField("rating", () => null);
+    expect(() =>
+      validateFormConfig({ id: "t", fields: [{ type: "rating" } as never] }),
+    ).toThrow(/name/);
+  });
+
+  it("rejects fields not assigned to any step", () =>
+    expect(() =>
+      validateFormConfig({
+        ...valid,
+        steps: [{ title: "s1", fieldNames: ["first", "color"] }],
+      }),
+    ).toThrow(/team/));
+
+  it("rejects hidden/submit fields listed in steps", () =>
+    expect(() =>
+      validateFormConfig({
+        id: "t",
+        fields: [
+          { type: "text", name: "a" },
+          { type: "submit", name: "go", text: "Go" },
+        ],
+        steps: [{ title: "s1", fieldNames: ["a", "go"] }],
+      }),
+    ).toThrow(/go/));
 });

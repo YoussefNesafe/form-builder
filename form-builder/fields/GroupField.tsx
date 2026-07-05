@@ -5,7 +5,7 @@ import { Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import type { FieldComponentProps } from "../core/registry";
-import type { Condition, FieldConfig } from "../core/types";
+import type { AnyFieldConfig, Condition, FieldConfig } from "../core/types";
 import { renderField } from "../components/renderField";
 import { useFieldDisabled, useFieldRuntime } from "../components/FieldRuntime";
 import { FieldWrapper } from "../ui/FieldWrapper";
@@ -18,7 +18,7 @@ function prefixCondition(condition: Condition | undefined, prefix: string): Cond
 }
 
 /** Row-scoped names and conditions: inner "role" becomes "team.0.role". */
-export function withNamePrefix(field: FieldConfig, prefix: string): FieldConfig {
+export function withNamePrefix(field: AnyFieldConfig, prefix: string): AnyFieldConfig {
   return {
     ...field,
     name: `${prefix}.${field.name}`,

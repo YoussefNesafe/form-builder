@@ -22,6 +22,8 @@ export function FormStepper({ config }: { config: FormConfig }) {
     [config],
   );
 
+  if (!steps.length) return null;
+
   const currentFields = steps[step].fieldNames
     .map((name) => fieldsByName.get(name))
     .filter((field) => field !== undefined);
@@ -43,7 +45,7 @@ export function FormStepper({ config }: { config: FormConfig }) {
       <ol className="flex items-center gap-4">
         {steps.map((s, index) => (
           <li
-            key={s.title}
+            key={index}
             aria-current={index === step ? "step" : undefined}
             className={cn(
               "flex items-center gap-2 text-sm",
@@ -77,7 +79,7 @@ export function FormStepper({ config }: { config: FormConfig }) {
           submitField ? (
             renderField(submitField)
           ) : (
-            <Button type="submit">{messages.next}</Button>
+            <Button type="submit">{messages.submit}</Button>
           )
         ) : (
           <Button type="button" onClick={handleNext}>

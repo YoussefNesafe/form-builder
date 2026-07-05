@@ -7,7 +7,8 @@ import { getVisibleFields } from "../core/conditions";
 import { mergeMessages, type Messages } from "../core/messages";
 import { validateFormConfig } from "../core/schema";
 import { buildFieldsSchema, buildFormSchema } from "../core/validation";
-import type { FieldConfig, FormConfig, FormValues } from "../core/types";
+import { isBuiltInField } from "../core/types";
+import type { AnyFieldConfig, FieldConfig, FormConfig, FormValues } from "../core/types";
 
 function defaultValueFor(field: FieldConfig): { value: unknown } | null {
   switch (field.type) {
@@ -44,10 +45,11 @@ function defaultValueFor(field: FieldConfig): { value: unknown } | null {
   }
 }
 
-export function buildDefaultValues(fields: FieldConfig[]): FormValues {
+export function buildDefaultValues(fields: AnyFieldConfig[]): FormValues {
   const defaults: FormValues = {};
   for (const field of fields) {
-    const entry = defaultValueFor(field);
+    // Custom registered types default to undefined unless config says otherwise.
+    const entry = isBuiltInField(field) ? defaultValueFor(field) : { value: field.defaultValue };
     if (entry) defaults[field.name] = entry.value;
   }
   return defaults;

@@ -2,12 +2,29 @@ import type { FormConfig } from "@/form-builder";
 import { DemoClient } from "./DemoClient";
 
 const config: FormConfig = {
-  id: "smoke",
+  id: "kitchen-sink",
   fields: [
-    { type: "static", name: "title", content: "Smoke Test", as: "h1" },
-    { type: "text", name: "firstName", label: "First name", required: true, colSpan: 2 },
+    { type: "static", name: "title", content: "Kitchen Sink", as: "h1" },
+    {
+      type: "text",
+      name: "firstName",
+      label: "First name",
+      required: true,
+      colSpan: 2,
+      rules: { pattern: "^[A-Za-z ]+$", message: "Letters and spaces only" },
+    },
     { type: "email", name: "email", label: "Email", required: true, colSpan: 2 },
     { type: "password", name: "secret", label: "Password", required: true, rules: { minLength: 8 } },
+    { type: "textarea", name: "bio", label: "Bio", placeholder: "A few words", colSpan: 4 },
+    { type: "number", name: "age", label: "Age", min: 18, max: 120, colSpan: 2 },
+    { type: "switch", name: "newsletter", label: "Newsletter", colSpan: 2 },
+    {
+      type: "text",
+      name: "nickname",
+      label: "Nickname (disabled while newsletter off)",
+      disabledWhen: { field: "newsletter", equals: false },
+      colSpan: 4,
+    },
     { type: "checkbox", name: "other", label: "Something else?" },
     {
       type: "text",
@@ -74,8 +91,11 @@ const config: FormConfig = {
     { type: "submit", name: "go", text: "Send" },
   ],
   steps: [
-    { title: "Account", fieldNames: ["title", "firstName", "email", "secret"] },
-    { title: "Profile", fieldNames: ["other", "details", "size", "color", "toppings", "code", "mobile"] },
+    { title: "Account", fieldNames: ["title", "firstName", "email", "secret", "bio", "age"] },
+    {
+      title: "Profile",
+      fieldNames: ["newsletter", "nickname", "other", "details", "size", "color", "toppings", "code", "mobile"],
+    },
     { title: "Extras", fieldNames: ["birthday", "stay", "level", "cv", "team"] },
   ],
 };

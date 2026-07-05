@@ -4,7 +4,7 @@ import { createContext, useContext, type ReactNode } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { conditionMatches } from "../core/conditions";
 import { defaultMessages, type Messages } from "../core/messages";
-import type { FieldConfig } from "../core/types";
+import type { AnyFieldConfig } from "../core/types";
 
 type FieldRuntime = { disabled: boolean; messages: Messages };
 
@@ -17,12 +17,12 @@ export function useFieldRuntime() {
   return useContext(FieldRuntimeContext);
 }
 
-export function useFieldDisabled(config: FieldConfig): boolean {
+export function useFieldDisabled(config: AnyFieldConfig): boolean {
   const runtime = useFieldRuntime();
   return !!config.disabled || runtime.disabled;
 }
 
-export function FieldGate({ field, children }: { field: FieldConfig; children: ReactNode }) {
+export function FieldGate({ field, children }: { field: AnyFieldConfig; children: ReactNode }) {
   const { control } = useFormContext();
   const runtime = useFieldRuntime();
 

@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { Messages } from "./messages";
-import type { FieldConfig, FormConfig, Option, TextRules } from "./types";
+import { isBuiltInField } from "./types";
+import type { AnyFieldConfig, FieldConfig, FormConfig, Option, TextRules } from "./types";
 
 type FieldSchema = z.ZodType | null;
 
@@ -167,10 +168,11 @@ export function toZodSchema(field: FieldConfig, messages: Messages): FieldSchema
   }
 }
 
-export function buildFieldsSchema(fields: FieldConfig[], messages: Messages): z.ZodObject {
+export function buildFieldsSchema(fields: AnyFieldConfig[], messages: Messages): z.ZodObject {
   const shape: Record<string, z.ZodType> = {};
   for (const field of fields) {
-    const schema = toZodSchema(field, messages);
+    // Custom registered types pass through — their component owns validation.
+    const schema = isBuiltInField(field) ? toZodSchema(field, messages) : z.unknown().optional();
     if (schema) shape[field.name] = schema;
   }
   return z.object(shape);

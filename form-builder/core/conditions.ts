@@ -1,4 +1,4 @@
-import type { Condition, FieldConfig, FormValues } from "./types";
+import type { AnyFieldConfig, Condition, FormValues } from "./types";
 
 function getPath(values: Record<string, unknown>, path: string): unknown {
   return path.split(".").reduce<unknown>((current, key) => {
@@ -20,7 +20,7 @@ export function evaluateCondition(condition: Condition | undefined, values: Reco
   return conditionMatches(condition, getPath(values, condition.field));
 }
 
-export function getVisibleFields(fields: FieldConfig[], values: FormValues): FieldConfig[] {
+export function getVisibleFields(fields: AnyFieldConfig[], values: FormValues): AnyFieldConfig[] {
   return fields.filter((field) => evaluateCondition(field.visibleWhen, values));
 }
 
@@ -29,7 +29,7 @@ export function getVisibleFields(fields: FieldConfig[], values: FormValues): Fie
  * this: the condition-aware resolver's schema is strip-mode, so the parsed
  * submit payload already excludes condition-hidden values.
  */
-export function stripInvisibleValues(fields: FieldConfig[], values: FormValues): FormValues {
+export function stripInvisibleValues(fields: AnyFieldConfig[], values: FormValues): FormValues {
   const visibleNames = new Set(getVisibleFields(fields, values).map((field) => field.name));
   return Object.fromEntries(Object.entries(values).filter(([name]) => visibleNames.has(name) || !fields.some((f) => f.name === name)));
 }
