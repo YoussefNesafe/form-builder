@@ -9,8 +9,8 @@ function getPath(values: Record<string, unknown>, path: string): unknown {
 
 /** For callers that already resolved the source field's value (e.g. useWatch). */
 export function conditionMatches(condition: Condition, value: unknown): boolean {
-  if ("equals" in condition && value !== condition.equals) return false;
-  if ("notEquals" in condition && value === condition.notEquals) return false;
+  if (condition.equals !== undefined && value !== condition.equals) return false;
+  if (condition.notEquals !== undefined && value === condition.notEquals) return false;
   if (condition.in !== undefined && !condition.in.includes(value)) return false;
   return true;
 }

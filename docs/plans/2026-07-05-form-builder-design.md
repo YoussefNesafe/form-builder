@@ -32,7 +32,7 @@ Spec: `form-builder-spec.md` (repo root)
 3. `hidden`/`static`/`submit` inherit irrelevant BaseField props → union kept as spec'd; irrelevant props ignored at render; config schema warns in dev.
 4. Group naming → RHF `useFieldArray`; values nest as `groupName[i].fieldName`; conditions inside a group scope to their own row.
 5. Disabled fields (`disabledWhen` true) keep value and stay validated — standard HTML semantics.
-6. ~~Invisible fields (`visibleWhen` false) are unregistered from RHF (`shouldUnregister`)~~ **Revised during Phase 4:** `shouldUnregister: true` also drops hidden-field defaults and wizard-step values on unmount. Instead: `shouldUnregister` stays false (values persist across steps/conditions); a condition-aware resolver validates only currently visible fields; `FormRenderer` strips condition-hidden values via `stripInvisibleValues` before calling `onSubmit`. Limitation (v1): conditions on fields *inside* groups are not skipped by validation.
+6. ~~Invisible fields (`visibleWhen` false) are unregistered from RHF (`shouldUnregister`)~~ **Revised during Phase 4:** `shouldUnregister: true` also drops hidden-field defaults and wizard-step values on unmount. Instead: `shouldUnregister` stays false (values persist across steps/conditions); a condition-aware resolver validates only currently visible fields; the submit payload is the resolver's zod-parsed strip-mode output, so condition-hidden values never reach `onSubmit` (verified against RHF 7.80 — `stripInvisibleValues` exists only for headless `getValues()` consumers). Limitation (v1): conditions on fields *inside* groups are not skipped by validation.
 
 ## Package layout
 

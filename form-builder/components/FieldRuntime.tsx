@@ -24,7 +24,7 @@ export function useFieldDisabled(config: FieldConfig): boolean {
 
 export function FieldGate({ field, children }: { field: FieldConfig; children: ReactNode }) {
   const { control } = useFormContext();
-  const { messages } = useFieldRuntime();
+  const runtime = useFieldRuntime();
 
   const visibleWatch = useWatch({
     control,
@@ -38,10 +38,17 @@ export function FieldGate({ field, children }: { field: FieldConfig; children: R
   });
 
   const visible = !field.visibleWhen || conditionMatches(field.visibleWhen, visibleWatch);
+  // Compose parent disabled: a disabled group must disable its children.
   const disabled =
-    !!field.disabled || (!!field.disabledWhen && conditionMatches(field.disabledWhen, disabledWatch));
+    runtime.disabled ||
+    !!field.disabled ||
+    (!!field.disabledWhen && conditionMatches(field.disabledWhen, disabledWatch));
 
   if (!visible) return null;
 
-  return <FieldRuntimeContext.Provider value={{ disabled, messages }}>{children}</FieldRuntimeContext.Provider>;
+  return (
+    <FieldRuntimeContext.Provider value={{ disabled, messages: runtime.messages }}>
+      {children}
+    </FieldRuntimeContext.Provider>
+  );
 }
