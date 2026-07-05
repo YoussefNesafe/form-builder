@@ -19,6 +19,8 @@ export function FieldGate({ field, children }: { field: FieldConfig; children: R
 ```
 Watches only the condition's source field — no full-form re-render. Verify `useWatch` `disabled` option exists in installed RHF version; if not, always watch and ignore.
 
+Phase 3 review follow-up: extend `FieldRuntimeContext` to `{ disabled, messages }` and have `FormRenderer` provide merged messages — `TextField` password toggle reads `messages.showPassword`/`hidePassword` instead of hardcoded English (approach-A i18n).
+
 Commit: `feat: add condition-driven field gate`.
 
 ## Task 5.2: components/FormRenderer.tsx

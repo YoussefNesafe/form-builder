@@ -8,8 +8,9 @@ import { Label } from "@/components/ui/label";
 import { Field, FieldDescription, FieldError, FieldLabel } from "@/components/ui/field";
 import type { FieldComponentProps } from "../core/registry";
 import type { FieldConfig, Option } from "../core/types";
-import { useFieldRuntime } from "../components/FieldRuntime";
+import { useFieldDisabled } from "../components/FieldRuntime";
 import { FieldWrapper } from "../ui/FieldWrapper";
+import { RequiredMark } from "../ui/RequiredMark";
 
 type CheckboxFieldConfig = Extract<FieldConfig, { type: "checkbox" | "switch" }>;
 
@@ -21,10 +22,9 @@ function toggleValue(current: unknown, value: Option["value"]): Option["value"][
 export function CheckboxField({ field }: FieldComponentProps) {
   const config = field as CheckboxFieldConfig;
   const { control } = useFormContext();
-  const runtime = useFieldRuntime();
+  const disabled = useFieldDisabled(config);
   const id = useId();
 
-  const disabled = !!config.disabled || runtime.disabled;
   const isGroup = config.type === "checkbox" && !!config.options?.length;
 
   return (
@@ -35,13 +35,15 @@ export function CheckboxField({ field }: FieldComponentProps) {
         if (isGroup) {
           return (
             <FieldWrapper
+              id={id}
+              asGroup
               label={config.label}
               description={config.description}
               required={config.required}
               disabled={disabled}
               error={fieldState.error}
             >
-              <div className="flex flex-col gap-2" role="group" aria-invalid={!!fieldState.error}>
+              <div className="flex flex-col gap-2">
                 {config.options?.map((option) => {
                   const optionId = `${id}-${option.value}`;
                   const checked = Array.isArray(rhf.value) && (rhf.value as Option["value"][]).includes(option.value);
@@ -51,7 +53,9 @@ export function CheckboxField({ field }: FieldComponentProps) {
                         id={optionId}
                         checked={checked}
                         disabled={disabled || option.disabled}
+                        aria-invalid={!!fieldState.error}
                         onCheckedChange={() => rhf.onChange(toggleValue(rhf.value, option.value))}
+                        onBlur={rhf.onBlur}
                       />
                       <Label htmlFor={optionId}>{option.label}</Label>
                     </div>
@@ -77,11 +81,7 @@ export function CheckboxField({ field }: FieldComponentProps) {
               {config.label && (
                 <FieldLabel htmlFor={id}>
                   {config.label}
-                  {config.required && (
-                    <span aria-hidden className="text-destructive ms-1">
-                      *
-                    </span>
-                  )}
+                  {config.required && <RequiredMark />}
                 </FieldLabel>
               )}
             </Field>

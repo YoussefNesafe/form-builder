@@ -8,31 +8,22 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import type { FieldComponentProps } from "../core/registry";
 import type { FieldConfig } from "../core/types";
-import { useFieldRuntime } from "../components/FieldRuntime";
-import { FieldWrapper } from "../ui/FieldWrapper";
+import { useFieldDisabled } from "../components/FieldRuntime";
+import { FieldWrapper, fieldAriaDescribedBy } from "../ui/FieldWrapper";
 
 type TextFieldConfig = Extract<
   FieldConfig,
   { type: "text" | "email" | "password" | "textarea" } | { type: "number" }
 >;
 
-const inputTypeByFieldType = {
-  text: "text",
-  email: "email",
-  password: "password",
-  number: "number",
-} as const;
-
 export function TextField({ field }: FieldComponentProps) {
   const config = field as TextFieldConfig;
   const { control } = useFormContext();
-  const runtime = useFieldRuntime();
+  const disabled = useFieldDisabled(config);
   const id = useId();
   const [showPassword, setShowPassword] = useState(false);
 
-  const disabled = !!config.disabled || runtime.disabled;
   const isPassword = config.type === "password";
-  const inputType = isPassword && showPassword ? "text" : inputTypeByFieldType[config.type as keyof typeof inputTypeByFieldType];
 
   return (
     <Controller
@@ -49,27 +40,35 @@ export function TextField({ field }: FieldComponentProps) {
         >
           {config.type === "textarea" ? (
             <Textarea
-              id={id}
               placeholder={config.placeholder}
+              {...rhf}
+              id={id}
               disabled={disabled}
               aria-invalid={!!fieldState.error}
-              {...rhf}
+              aria-describedby={fieldAriaDescribedBy(id, {
+                description: config.description,
+                error: fieldState.error,
+              })}
               value={(rhf.value as string) ?? ""}
             />
           ) : (
             <div className="relative">
               <Input
-                id={id}
-                type={inputType}
+                type={isPassword && showPassword ? "text" : config.type}
                 inputMode={config.type === "email" ? "email" : config.type === "number" ? "decimal" : undefined}
                 placeholder={config.placeholder}
-                disabled={disabled}
-                aria-invalid={!!fieldState.error}
                 min={config.type === "number" ? config.min : undefined}
                 max={config.type === "number" ? config.max : undefined}
                 step={config.type === "number" ? config.step : undefined}
                 className={isPassword ? "pe-10" : undefined}
                 {...rhf}
+                id={id}
+                disabled={disabled}
+                aria-invalid={!!fieldState.error}
+                aria-describedby={fieldAriaDescribedBy(id, {
+                  description: config.description,
+                  error: fieldState.error,
+                })}
                 value={(rhf.value as string | number) ?? ""}
                 onChange={(event) =>
                   config.type === "number"

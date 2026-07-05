@@ -14,6 +14,11 @@ export type Messages = {
   pattern: string;
   fileSize: (mb: number) => string;
   otpLength: (n: number) => string;
+  // UI strings (phase 3 review): password toggle aria-labels route through
+  // Messages so approach-A i18n covers them; delivered to fields via
+  // FieldRuntimeContext in Phase 5.
+  showPassword: string;
+  hidePassword: string;
 };
 export const defaultMessages: Messages = { /* plain English defaults */ };
 ```
@@ -71,6 +76,7 @@ Commit: `feat: add overridable validation messages`.
 - defaults: text→`""`, checkbox→`false`, checkbox group/multi-select→`[]`, number/date→`undefined`, slider→`min`, hidden→`config.value`, group→`min` rows of inner defaults
 - resolver wired: `trigger()` on empty required field → error with message from (possibly overridden) messages
 - static/submit produce no default keys
+- hidden value survives `handleSubmit` (phase 3 review: HiddenField never registers with RHF; with `shouldUnregister: true` assert the value still reaches the submitted payload, not just `getValues()`)
 
 **Step 2:** `yarn test` → FAIL.
 

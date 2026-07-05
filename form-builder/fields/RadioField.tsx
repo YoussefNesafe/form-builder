@@ -6,18 +6,16 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import type { FieldComponentProps } from "../core/registry";
 import type { FieldConfig } from "../core/types";
-import { useFieldRuntime } from "../components/FieldRuntime";
-import { FieldWrapper } from "../ui/FieldWrapper";
+import { useFieldDisabled } from "../components/FieldRuntime";
+import { FieldWrapper, fieldAriaDescribedBy } from "../ui/FieldWrapper";
 
 type RadioFieldConfig = Extract<FieldConfig, { type: "radio" }>;
 
 export function RadioField({ field }: FieldComponentProps) {
   const config = field as RadioFieldConfig;
   const { control } = useFormContext();
-  const runtime = useFieldRuntime();
+  const disabled = useFieldDisabled(config);
   const id = useId();
-
-  const disabled = !!config.disabled || runtime.disabled;
 
   return (
     <Controller
@@ -25,6 +23,8 @@ export function RadioField({ field }: FieldComponentProps) {
       control={control}
       render={({ field: rhf, fieldState }) => (
         <FieldWrapper
+          id={id}
+          asGroup
           label={config.label}
           description={config.description}
           required={config.required}
@@ -33,9 +33,15 @@ export function RadioField({ field }: FieldComponentProps) {
         >
           <RadioGroup
             value={String(rhf.value ?? "")}
-            onValueChange={rhf.onChange}
+            onValueChange={(selected) =>
+              rhf.onChange(config.options.find((option) => String(option.value) === selected)?.value)
+            }
+            onBlur={rhf.onBlur}
             disabled={disabled}
-            aria-invalid={!!fieldState.error}
+            aria-describedby={fieldAriaDescribedBy(id, {
+              description: config.description,
+              error: fieldState.error,
+            })}
           >
             {config.options.map((option) => {
               const optionId = `${id}-${option.value}`;
