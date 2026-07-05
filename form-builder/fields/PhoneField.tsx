@@ -134,7 +134,11 @@ export function PhoneField({ field }: FieldComponentProps) {
     <Controller
       name={config.name}
       control={control}
-      render={({ field: rhf, fieldState }) => (
+      render={({ field: rhf, fieldState }) => {
+        // Validation runs on blur (mode onTouched); green confirms a number
+        // that passed the libphonenumber check.
+        const isValid = fieldState.isTouched && !fieldState.error && !!rhf.value;
+        return (
         <FieldWrapper
           id={id}
           label={config.label}
@@ -161,7 +165,10 @@ export function PhoneField({ field }: FieldComponentProps) {
               "flex h-9 w-full items-center gap-1 rounded-md border border-input bg-transparent shadow-xs transition-[color,box-shadow]",
               "focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50 dark:bg-input/30",
               disabled && "opacity-50",
-              fieldState.error && "border-destructive ring-3 ring-destructive/20 dark:ring-destructive/40",
+              fieldState.error &&
+                "border-destructive ring-3 ring-destructive/20 focus-within:border-destructive focus-within:ring-destructive/20 dark:ring-destructive/40",
+              isValid &&
+                "border-green-600 ring-3 ring-green-600/20 focus-within:border-green-600 focus-within:ring-green-600/20 dark:border-green-500",
             )}
             numberInputProps={{
               "aria-invalid": !!fieldState.error,
@@ -172,7 +179,8 @@ export function PhoneField({ field }: FieldComponentProps) {
             }}
           />
         </FieldWrapper>
-      )}
+        );
+      }}
     />
   );
 }

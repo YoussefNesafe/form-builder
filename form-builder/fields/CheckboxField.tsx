@@ -68,7 +68,7 @@ export function CheckboxField({ field }: FieldComponentProps) {
 
         const ToggleControl = config.type === "switch" ? Switch : Checkbox;
         return (
-          <Field data-invalid={!!fieldState.error || undefined} data-disabled={disabled || undefined}>
+          <Field data-disabled={disabled || undefined}>
             <Field orientation="horizontal">
               <ToggleControl
                 id={id}

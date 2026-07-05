@@ -48,10 +48,7 @@ export function FieldWrapper({
   asGroup,
   children,
 }: FieldWrapperProps) {
-  const sharedClassName = cn(
-    fieldWrapperVariants({ size, state: error ? "error" : "default" }),
-    className,
-  );
+  const sharedClassName = cn(fieldWrapperVariants({ size }), className);
 
   const body = (
     <>
@@ -63,11 +60,7 @@ export function FieldWrapper({
 
   if (asGroup) {
     return (
-      <FieldSet
-        data-invalid={!!error || undefined}
-        data-disabled={disabled || undefined}
-        className={sharedClassName}
-      >
+      <FieldSet data-disabled={disabled || undefined} className={sharedClassName}>
         {label && (
           <FieldLegend variant="label">
             {label}
@@ -80,11 +73,7 @@ export function FieldWrapper({
   }
 
   return (
-    <Field
-      data-invalid={!!error || undefined}
-      data-disabled={disabled || undefined}
-      className={sharedClassName}
-    >
+    <Field data-disabled={disabled || undefined} className={sharedClassName}>
       {label && (
         <FieldLabel htmlFor={id}>
           {label}
