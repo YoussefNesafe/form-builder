@@ -57,7 +57,13 @@ function fileSchema(field: Extract<FieldConfig, { type: "file" }>, messages: Mes
   return schema;
 }
 
-export function toZodSchema(field: FieldConfig, messages: Messages): FieldSchema {
+export type OtpVerifiedChecker = (fieldName: string, code: string) => boolean;
+
+export function toZodSchema(
+  field: FieldConfig,
+  messages: Messages,
+  otpVerified?: OtpVerifiedChecker,
+): FieldSchema {
   switch (field.type) {
     case "static":
     case "submit":
@@ -91,7 +97,12 @@ export function toZodSchema(field: FieldConfig, messages: Messages): FieldSchema
     }
 
     case "otp": {
-      const schema = z.string().length(field.length, messages.otpLength(field.length));
+      let schema = z.string().length(field.length, messages.otpLength(field.length));
+      // Checker present only when the host wires onVerifyOtp — then the code
+      // must match the server-verified one, not merely have the right length.
+      if (otpVerified) {
+        schema = schema.refine((code) => otpVerified(field.name, code), messages.otpNotVerified);
+      }
       return field.required ? schema : optionalEmptyable(schema);
     }
 
@@ -161,6 +172,8 @@ export function toZodSchema(field: FieldConfig, messages: Messages): FieldSchema
     }
 
     case "group": {
+      // No otp checker inside rows: runtime names are row-prefixed, so the
+      // verified registry could never match — group otps stay length-only.
       const row = buildFieldsSchema(field.fields, messages);
       let schema = z.array(row);
       if (field.min !== undefined) schema = schema.min(field.min, messages.min(field.min));
@@ -170,16 +183,20 @@ export function toZodSchema(field: FieldConfig, messages: Messages): FieldSchema
   }
 }
 
-export function buildFieldsSchema(fields: AnyFieldConfig[], messages: Messages): z.ZodObject {
+export function buildFieldsSchema(
+  fields: AnyFieldConfig[],
+  messages: Messages,
+  otpVerified?: OtpVerifiedChecker,
+): z.ZodObject {
   const shape: Record<string, z.ZodType> = {};
   for (const field of fields) {
     // Custom registered types pass through — their component owns validation.
-    const schema = isBuiltInField(field) ? toZodSchema(field, messages) : z.unknown().optional();
+    const schema = isBuiltInField(field) ? toZodSchema(field, messages, otpVerified) : z.unknown().optional();
     if (schema) shape[field.name] = schema;
   }
   return z.object(shape);
 }
 
-export function buildFormSchema(config: FormConfig, messages: Messages): z.ZodObject {
-  return buildFieldsSchema(config.fields, messages);
+export function buildFormSchema(config: FormConfig, messages: Messages, otpVerified?: OtpVerifiedChecker): z.ZodObject {
+  return buildFieldsSchema(config.fields, messages, otpVerified);
 }

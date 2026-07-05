@@ -8,6 +8,14 @@ export type Messages = {
   pattern: string;
   fileSize: (mb: number) => string;
   otpLength: (n: number) => string;
+  sendCode: string;
+  codeSent: string;
+  resend: string;
+  resendIn: (seconds: number) => string;
+  otpVerified: string;
+  otpSendFailed: string;
+  otpVerifyFailed: string;
+  otpNotVerified: string;
   invalidDate: string;
   invalidPhone: string;
   showPassword: string;
@@ -32,6 +40,14 @@ export const defaultMessages: Messages = {
   pattern: "Invalid format",
   fileSize: (mb) => `File must be smaller than ${mb} MB`,
   otpLength: (n) => `Enter the ${n}-digit code`,
+  sendCode: "Send code",
+  codeSent: "Code sent",
+  resend: "Resend",
+  resendIn: (seconds) => `Resend in ${seconds}s`,
+  otpVerified: "Verified",
+  otpSendFailed: "Could not send the code. Try again.",
+  otpVerifyFailed: "Invalid code",
+  otpNotVerified: "Verify the code first",
   invalidDate: "Enter a valid date",
   invalidPhone: "Enter a valid phone number",
   showPassword: "Show password",

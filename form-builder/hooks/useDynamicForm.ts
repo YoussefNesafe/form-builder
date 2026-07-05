@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { getVisibleFields } from "../core/conditions";
 import { mergeMessages, type Messages } from "../core/messages";
 import { validateFormConfig } from "../core/schema";
-import { buildFieldsSchema, buildFormSchema } from "../core/validation";
+import { buildFieldsSchema, buildFormSchema, type OtpVerifiedChecker } from "../core/validation";
 import { isBuiltInField } from "../core/types";
 import type { AnyFieldConfig, FieldConfig, FormConfig, FormValues } from "../core/types";
 
@@ -66,20 +66,31 @@ export function buildDefaultValues(fields: AnyFieldConfig[]): FormValues {
  * - formState.isValid reflects the whole visible schema across all wizard
  *   steps; steppers must gate on trigger(stepFieldNames), not isValid.
  */
-function conditionAwareResolver(config: FormConfig, messages: Messages): Resolver<FormValues> {
+function conditionAwareResolver(
+  config: FormConfig,
+  messages: Messages,
+  otpVerified?: OtpVerifiedChecker,
+): Resolver<FormValues> {
   return (values, context, options) => {
-    const visibleSchema = buildFieldsSchema(getVisibleFields(config.fields, values), messages);
+    const visibleSchema = buildFieldsSchema(getVisibleFields(config.fields, values), messages, otpVerified);
     return zodResolver(visibleSchema)(values, context, options);
   };
 }
 
-export function useDynamicForm(config: FormConfig, opts?: { messages?: Partial<Messages> }) {
+export function useDynamicForm(
+  config: FormConfig,
+  opts?: { messages?: Partial<Messages>; otpVerified?: OtpVerifiedChecker },
+) {
   const messages = useMemo(() => mergeMessages(opts?.messages), [opts?.messages]);
+  const otpVerified = opts?.otpVerified;
   const schema = useMemo(() => {
     validateFormConfig(config);
-    return buildFormSchema(config, messages);
-  }, [config, messages]);
-  const resolver = useMemo(() => conditionAwareResolver(config, messages), [config, messages]);
+    return buildFormSchema(config, messages, otpVerified);
+  }, [config, messages, otpVerified]);
+  const resolver = useMemo(
+    () => conditionAwareResolver(config, messages, otpVerified),
+    [config, messages, otpVerified],
+  );
   const defaultValues = useMemo(() => buildDefaultValues(config.fields), [config]);
 
   // onTouched: errors surface on first blur, then revalidate per keystroke.

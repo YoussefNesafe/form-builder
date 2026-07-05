@@ -1,24 +1,63 @@
 "use client";
 
-import { useMemo } from "react";
+import { useCallback, useMemo, useRef } from "react";
 import { FormProvider } from "react-hook-form";
 import type { Messages } from "../core/messages";
 import type { FormConfig, FormValues } from "../core/types";
 import { useDynamicForm } from "../hooks/useDynamicForm";
-import { FieldRuntimeContext } from "./FieldRuntime";
+import { FieldRuntimeContext, type OtpRuntime } from "./FieldRuntime";
 import { FormStepper } from "./FormStepper";
 import { renderField } from "./renderField";
 
 type FormRendererProps = {
   config: FormConfig;
   onSubmit: (values: FormValues) => void | Promise<void>;
+  // Throwing signals send failure to the field.
+  onSendOtp?: (fieldName: string, values: FormValues) => Promise<void>;
+  onVerifyOtp?: (fieldName: string, code: string) => Promise<boolean>;
   messages?: Partial<Messages>;
   className?: string;
 };
 
-export function FormRenderer({ config, onSubmit, messages, className }: FormRendererProps) {
-  const { form, messages: mergedMessages } = useDynamicForm(config, { messages });
-  const runtime = useMemo(() => ({ disabled: false, messages: mergedMessages }), [mergedMessages]);
+export function FormRenderer({
+  config,
+  onSubmit,
+  onSendOtp,
+  onVerifyOtp,
+  messages,
+  className,
+}: FormRendererProps) {
+  // Codes accepted by onVerifyOtp, keyed by field name. Validation compares
+  // the current value against this, so editing a verified code re-invalidates.
+  const verifiedCodes = useRef(new Map<string, string>());
+  const otpVerified = useCallback(
+    (fieldName: string, code: string) => verifiedCodes.current.get(fieldName) === code,
+    [],
+  );
+
+  const { form, messages: mergedMessages } = useDynamicForm(config, {
+    messages,
+    otpVerified: onVerifyOtp ? otpVerified : undefined,
+  });
+
+  const otp = useMemo<OtpRuntime | undefined>(() => {
+    if (!onSendOtp && !onVerifyOtp) return undefined;
+    return {
+      send: onSendOtp ? (fieldName) => onSendOtp(fieldName, form.getValues()) : undefined,
+      verify: onVerifyOtp
+        ? async (fieldName, code) => {
+            const ok = await onVerifyOtp(fieldName, code);
+            if (ok) verifiedCodes.current.set(fieldName, code);
+            return ok;
+          }
+        : undefined,
+    };
+  }, [onSendOtp, onVerifyOtp, form]);
+
+  const runtime = useMemo(
+    () => ({ disabled: false, messages: mergedMessages, otp }),
+    [mergedMessages, otp],
+  );
 
   return (
     <FormProvider {...form}>

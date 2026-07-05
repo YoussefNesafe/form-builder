@@ -86,6 +86,24 @@ describe("otp", () => {
     expect(schema.safeParse("12345").success).toBe(false);
     expect(schema.safeParse("123456").success).toBe(true);
   });
+
+  it("requires a verified code when a checker is provided", () => {
+    const verified = new Map([["o", "123456"]]);
+    const schema = toZodSchema(
+      { type: "otp", name: "o", length: 6, required: true },
+      messages,
+      (name, code) => verified.get(name) === code,
+    );
+    expect(schema!.safeParse("123456").success).toBe(true);
+    const stale = schema!.safeParse("654321");
+    expect(stale.success).toBe(false);
+    if (!stale.success) expect(stale.error.issues[0].message).toBe(messages.otpNotVerified);
+  });
+
+  it("length-only without a checker", () => {
+    const schema = schemaFor({ type: "otp", name: "o", length: 6, required: true });
+    expect(schema.safeParse("654321").success).toBe(true);
+  });
 });
 
 describe("phone", () => {

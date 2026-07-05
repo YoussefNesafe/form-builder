@@ -6,7 +6,14 @@ import { conditionMatches } from "../core/conditions";
 import { defaultMessages, type Messages } from "../core/messages";
 import type { AnyFieldConfig } from "../core/types";
 
-type FieldRuntime = { disabled: boolean; messages: Messages };
+export type OtpRuntime = {
+  send?: (fieldName: string) => Promise<void>;
+  // Resolves true when the code is accepted; the host wrapper records it in
+  // the verified registry so validation passes.
+  verify?: (fieldName: string, code: string) => Promise<boolean>;
+};
+
+type FieldRuntime = { disabled: boolean; messages: Messages; otp?: OtpRuntime };
 
 export const FieldRuntimeContext = createContext<FieldRuntime>({
   disabled: false,
@@ -47,7 +54,7 @@ export function FieldGate({ field, children }: { field: AnyFieldConfig; children
   if (!visible) return null;
 
   return (
-    <FieldRuntimeContext.Provider value={{ disabled, messages: runtime.messages }}>
+    <FieldRuntimeContext.Provider value={{ ...runtime, disabled }}>
       {children}
     </FieldRuntimeContext.Provider>
   );
