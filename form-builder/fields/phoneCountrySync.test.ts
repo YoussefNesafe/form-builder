@@ -26,6 +26,8 @@ describe("applyCountryToPhoneValue", () => {
     expect(applyCountryToPhoneValue("+", "AE")).toBe("+971");
   });
 
+  // Accepted limitation, not a bug: unreachable through the UI (international
+  // mode keeps values +-prefixed), only possible via programmatic setValue.
   it("discards national-format digits typed without a calling code", () => {
     expect(applyCountryToPhoneValue("0501234567", "AE")).toBe("+971");
   });

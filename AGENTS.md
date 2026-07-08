@@ -39,6 +39,12 @@ Config-driven form engine (Next.js 16 / React 19 / RHF 7 / Zod 4 / Tailwind 4). 
 - Submit gating uses the verified-code registry checked by a schema refine — NOT form state. `dependsOn` reset relies on generation stamping + registry invalidation + a reset-pending ref (stale-verify race fix); don't simplify these away.
 - Config validator dev-warns when an otp field and its `dependsOn` source are on different wizard steps, and rejects group-nested otp wiring.
 
+## Phone country sync (`countryFrom`)
+
+- Phone configs may set `countryFrom: "<sibling single-select>"` (ISO alpha-2 option values); the phone re-syncs its country on every source change — source always wins, manual override stays possible until the next change. Validator enforces the wiring, rejects group nesting, dev-warns cross-step.
+- `useCountryFromSync` treats the first render after (re)mount as baseline (drafts not clobbered; cross-step changes deliberately skipped) and the seed sets no dirty/touched flags on purpose.
+- `ref={rhf.ref}` goes on `<PhoneInput>` itself, never `numberInputProps.ref` — the latter clobbers the lib's internal input ref, crashing focus-on-country-select and silently aborting manual country changes.
+
 ## Intentional decisions — do NOT "fix"
 
 - `shouldUnregister` stays `false`; the condition-aware resolver validates only visible fields; submit payload = zod strip-mode parsed output. Do not revert to `shouldUnregister: true` or a static schema.
