@@ -350,6 +350,9 @@ function validateSteps(config: FormConfig): void {
         );
       }
     }
+    // The sync effect treats the first render after remount as baseline (drafts
+    // must not be clobbered), so a source change made while the phone field is
+    // unmounted is skipped by design.
     for (const field of config.fields) {
       const countryFrom = field.type === "phone" ? (field as { countryFrom?: string }).countryFrom : undefined;
       if (countryFrom === undefined) continue;

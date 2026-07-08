@@ -1,7 +1,7 @@
 "use client";
 
-import { useId, useState, type ComponentProps } from "react";
-import { Controller, useFormContext } from "react-hook-form";
+import { useEffect, useId, useRef, useState, type ComponentProps } from "react";
+import { Controller, useFormContext, useWatch } from "react-hook-form";
 import PhoneInput, { getCountryCallingCode, type Country } from "react-phone-number-input";
 import flags from "react-phone-number-input/flags";
 import { Check, ChevronDown } from "lucide-react";
@@ -20,6 +20,7 @@ import type { FieldComponentProps } from "../core/registry";
 import type { FieldConfig } from "../core/types";
 import { useFieldDisabled, useFieldRuntime } from "../components/FieldRuntime";
 import { FieldWrapper, fieldAriaDescribedBy } from "../ui/FieldWrapper";
+import { applyCountryToPhoneValue } from "./phoneCountrySync";
 
 type PhoneFieldConfig = Extract<FieldConfig, { type: "phone" }>;
 
@@ -124,12 +125,58 @@ function CountrySelect({ value, onChange, options, disabled, className, emptyMes
   );
 }
 
+// Opt-in countryFrom sync: watch the source select and rewrite this field's
+// calling code on change. Same useWatch pattern as otp dependsOn. The source
+// always wins on change; the user can still override via the country select
+// until the next source change (per design).
+function useCountryFromSync(config: PhoneFieldConfig) {
+  const { control, getValues, setValue } = useFormContext();
+  const source = config.countryFrom;
+  // useWatch needs a name even when the feature is off; watching this field
+  // itself with disabled: true is a no-op placeholder.
+  const watched = useWatch({ control, name: source ?? config.name, disabled: !source });
+  const prev = useRef<unknown>(undefined);
+  const mounted = useRef(false);
+
+  useEffect(() => {
+    if (!source) return;
+    const iso = typeof watched === "string" && watched ? watched : undefined;
+    if (!mounted.current) {
+      // First render after (re)mount is baseline, not a change: a draft value
+      // must not be clobbered. Only an empty phone gets seeded.
+      mounted.current = true;
+      prev.current = watched;
+      if (iso && !getValues(config.name)) {
+        const next = applyCountryToPhoneValue("", iso);
+        if (next) setValue(config.name, next);
+      }
+      return;
+    }
+    if (watched === prev.current) return;
+    prev.current = watched;
+    if (!iso) return; // source cleared → keep current country
+    const raw = getValues(config.name);
+    const current = typeof raw === "string" ? raw : "";
+    const next = applyCountryToPhoneValue(current, iso);
+    if (next === null) {
+      if (process.env.NODE_ENV !== "production") {
+        console.warn(
+          `form-builder: phone "${config.name}" countryFrom received non-ISO value "${String(watched)}"`,
+        );
+      }
+      return;
+    }
+    if (next !== current) setValue(config.name, next, { shouldDirty: true });
+  }, [watched, source, config.name, getValues, setValue]);
+}
+
 export function PhoneField({ field }: FieldComponentProps) {
   const config = field as PhoneFieldConfig;
   const { control } = useFormContext();
   const disabled = useFieldDisabled(config);
   const { messages, locale } = useFieldRuntime();
   const id = useId();
+  useCountryFromSync(config);
 
   return (
     <Controller

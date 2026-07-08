@@ -25,4 +25,12 @@ describe("applyCountryToPhoneValue", () => {
   it("falls back to a bare calling code when the value has no parseable prefix", () => {
     expect(applyCountryToPhoneValue("+", "AE")).toBe("+971");
   });
+
+  it("discards national-format digits typed without a calling code", () => {
+    expect(applyCountryToPhoneValue("0501234567", "AE")).toBe("+971");
+  });
+
+  it("is a no-op across countries sharing a calling code", () => {
+    expect(applyCountryToPhoneValue("+12025550123", "CA")).toBe("+12025550123");
+  });
 });
