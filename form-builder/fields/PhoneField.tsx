@@ -203,6 +203,11 @@ export function PhoneField({ field }: FieldComponentProps) {
         >
           <PhoneInput
             id={id}
+            // RHF's ref must ride the lib's forwarded ref, which it merges
+            // with its internal input ref. A numberInputProps.ref would
+            // clobber that internal ref and break focus-on-country-select —
+            // the resulting crash aborts the country change entirely.
+            ref={rhf.ref}
             value={(rhf.value as string) || undefined}
             onChange={(value) => rhf.onChange(value ?? "")}
             onBlur={rhf.onBlur}
@@ -224,7 +229,6 @@ export function PhoneField({ field }: FieldComponentProps) {
               isValid && "border-green-600 focus-within:border-green-600 dark:border-green-500",
             )}
             numberInputProps={{
-              ref: rhf.ref,
               "aria-invalid": !!fieldState.error,
               "aria-describedby": fieldAriaDescribedBy(id, {
                 description: config.description,
