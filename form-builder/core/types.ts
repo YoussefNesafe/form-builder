@@ -76,7 +76,7 @@ export type FieldConfig =
   | (BaseField & { type: "password"; rules?: TextRules; complexity?: PasswordComplexity })
   | (BaseField & { type: "number"; min?: number; max?: number; step?: number })
   | (BaseField & { type: "otp"; length: number; dependsOn?: string })
-  | (BaseField & { type: "phone"; defaultCountry?: string; preferredCountries?: string[] })
+  | (BaseField & { type: "phone"; defaultCountry?: string; preferredCountries?: string[]; countryFrom?: string })
   | (BaseField & { type: "select"; options: Option[]; searchable?: boolean; multiple?: boolean })
   | (BaseField & { type: "radio"; options: Option[] })
   | (BaseField & { type: "checkbox" | "switch"; options?: Option[] }) // options => checkbox group

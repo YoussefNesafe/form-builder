@@ -279,3 +279,32 @@ describe("validateFormConfig", () => {
       }),
     ).toThrow(/go/));
 });
+
+describe("phone countryFrom", () => {
+  const residence = {
+    type: "select",
+    name: "residence",
+    options: [
+      { label: "United Arab Emirates", value: "AE" },
+      { label: "Egypt", value: "EG" },
+    ],
+  };
+
+  it("accepts a phone field with countryFrom referencing a sibling ISO select", () => {
+    expect(() =>
+      validateFormConfig({
+        id: "f",
+        fields: [residence, { type: "phone", name: "mobile", countryFrom: "residence" }],
+      } as FormConfig),
+    ).not.toThrow();
+  });
+
+  it("rejects an empty countryFrom", () => {
+    expect(() =>
+      validateFormConfig({
+        id: "f",
+        fields: [residence, { type: "phone", name: "mobile", countryFrom: "" }],
+      } as FormConfig),
+    ).toThrow(/countryFrom/);
+  });
+});

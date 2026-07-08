@@ -144,6 +144,7 @@ const fieldSchemasByType: Record<FieldConfig["type"], z.ZodType> = {
   phone: baseFieldSchema.extend({
     defaultCountry: countryCodeSchema.optional(),
     preferredCountries: z.array(countryCodeSchema).optional(),
+    countryFrom: z.string().min(1).optional(),
   }),
   select: baseFieldSchema.extend({
     options: z.array(optionSchema).min(1),
