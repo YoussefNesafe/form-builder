@@ -1,0 +1,34 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: yarn
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Lint
+        run: yarn lint
+
+      - name: Test
+        run: yarn test
+
+      - name: Audit production dependencies
+        run: yarn audit --groups dependencies --level high
+        continue-on-error: true
+
+      - name: Build
+        run: yarn build
