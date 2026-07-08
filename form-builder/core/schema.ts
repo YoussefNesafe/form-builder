@@ -311,7 +311,7 @@ function validateFields(fields: unknown[], path: string, insideGroup = false): v
       for (const option of sourceRaw.options ?? []) {
         if (typeof option.value !== "string" || !countries.includes(option.value)) {
           throw new Error(
-            `Invalid form config at ${path}[${index}]: countryFrom source "${source}" option value "${String(option.value)}" is not an ISO 3166-1 alpha-2 country code`,
+            `Invalid form config at ${path}[${index}]: phone countryFrom source "${source}" option value "${String(option.value)}" is not an ISO 3166-1 alpha-2 country code`,
           );
         }
       }
@@ -347,6 +347,17 @@ function validateSteps(config: FormConfig): void {
       if (otpStep !== undefined && depStep !== undefined && otpStep !== depStep) {
         console.warn(
           `form-builder: otp field "${field.name}" (step ${otpStep + 1}) depends on "${dependsOn}" (step ${depStep + 1}) — editing the source while the otp field is unmounted defers re-verification until the otp step remounts`,
+        );
+      }
+    }
+    for (const field of config.fields) {
+      const countryFrom = field.type === "phone" ? (field as { countryFrom?: string }).countryFrom : undefined;
+      if (countryFrom === undefined) continue;
+      const phoneStep = stepOf.get(field.name);
+      const sourceStep = stepOf.get(countryFrom);
+      if (phoneStep !== undefined && sourceStep !== undefined && phoneStep !== sourceStep) {
+        console.warn(
+          `form-builder: phone field "${field.name}" (step ${phoneStep + 1}) syncs country from "${countryFrom}" (step ${sourceStep + 1}) — source changes while the phone field is unmounted are not applied on remount`,
         );
       }
     }

@@ -362,6 +362,37 @@ describe("phone countryFrom", () => {
     ).toThrow(/ISO 3166-1 alpha-2/);
   });
 
+  it("rejects a source select with a numeric option value", () => {
+    expect(() =>
+      validateFormConfig({
+        id: "f",
+        fields: [
+          { type: "select", name: "residence", options: [{ label: "Egypt", value: 20 }] },
+          { type: "phone", name: "mobile", countryFrom: "residence" },
+        ],
+      } as FormConfig),
+    ).toThrow(/ISO 3166-1 alpha-2/);
+  });
+
+  it("dev-warns when phone and its countryFrom source are on different steps", async () => {
+    const { vi } = await import("vitest");
+    const spy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    validateFormConfig({
+      id: "f",
+      fields: [
+        residence,
+        { type: "phone", name: "mobile", countryFrom: "residence" },
+        { type: "submit", name: "go", text: "Go" },
+      ],
+      steps: [
+        { title: "One", fieldNames: ["residence"] },
+        { title: "Two", fieldNames: ["mobile"] },
+      ],
+    } as FormConfig);
+    expect(spy).toHaveBeenCalledWith(expect.stringContaining("syncs country from"));
+    spy.mockRestore();
+  });
+
   it("rejects countryFrom on a phone field inside a group", () => {
     expect(() =>
       validateFormConfig({
