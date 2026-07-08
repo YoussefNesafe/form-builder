@@ -124,6 +124,7 @@ type FieldConfig =
       type: "phone";
       defaultCountry?: string;
       preferredCountries?: string[];
+      countryFrom?: string; // sibling single-select whose option values are ISO alpha-2; source changes re-sync the phone country
     })
   | (BaseField & {
       type: "select";
