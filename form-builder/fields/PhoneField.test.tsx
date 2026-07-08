@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
+import { StrictMode } from "react";
 import { act, cleanup, render } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
-import { FormProvider, useForm, type UseFormReturn } from "react-hook-form";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { FormProvider, useForm, type Resolver, type UseFormReturn } from "react-hook-form";
 import { defaultMessages } from "../core/messages";
 import { FieldRuntimeContext } from "../components/FieldRuntime";
 import type { FieldConfig } from "../core/types";
@@ -13,12 +14,14 @@ function Harness({
   field,
   defaultValues,
   onForm,
+  resolver,
 }: {
   field: PhoneConfig;
   defaultValues: Record<string, unknown>;
   onForm: (form: UseFormReturn) => void;
+  resolver?: Resolver;
 }) {
-  const form = useForm({ defaultValues });
+  const form = useForm({ defaultValues, resolver });
   onForm(form);
   return (
     <FormProvider {...form}>
@@ -29,11 +32,20 @@ function Harness({
   );
 }
 
-function setup(field: PhoneConfig, defaultValues: Record<string, unknown>) {
+function setup(field: PhoneConfig, defaultValues: Record<string, unknown>, resolver?: Resolver) {
   let form!: UseFormReturn;
-  render(<Harness field={field} defaultValues={defaultValues} onForm={(f) => (form = f)} />);
+  render(
+    <Harness field={field} defaultValues={defaultValues} onForm={(f) => (form = f)} resolver={resolver} />,
+  );
   return () => form;
 }
+
+// Flags "mobile" invalid on every run — lets tests observe WHETHER the sync
+// effect triggered validation (an error appears only if the resolver ran).
+const alwaysInvalidMobile: Resolver = async () => ({
+  values: {},
+  errors: { mobile: { type: "always", message: "invalid" } },
+});
 
 const synced: PhoneConfig = { type: "phone", name: "mobile", countryFrom: "residence" };
 
@@ -73,5 +85,56 @@ describe("PhoneField countryFrom sync", () => {
     const form = setup({ type: "phone", name: "mobile" }, { residence: "EG", mobile: "+201001234567" });
     await act(async () => form().setValue("residence", "AE"));
     expect(form().getValues("mobile")).toBe("+201001234567");
+  });
+
+  it("StrictMode: seeds exactly once and still syncs once after the simulated remount", async () => {
+    let form!: UseFormReturn;
+    render(
+      <StrictMode>
+        <Harness field={synced} defaultValues={{ residence: "AE", mobile: "" }} onForm={(f) => (form = f)} />
+      </StrictMode>,
+    );
+    // Double-invoked effects must not turn the seed into a "change" — the
+    // value is exactly the seeded prefix, not a re-applied/normalized one.
+    expect(form.getValues("mobile")).toBe("+971");
+    await act(async () => form.setValue("residence", "EG"));
+    expect(form.getValues("mobile")).toBe("+20");
+  });
+
+  it("dev-warns once and keeps the value when the source emits a non-ISO value", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    try {
+      const form = setup(synced, { residence: "EG", mobile: "+201001234567" });
+      await act(async () => form().setValue("residence", "ZZ"));
+      expect(form().getValues("mobile")).toBe("+201001234567");
+      expect(warn).toHaveBeenCalledTimes(1);
+      expect(warn.mock.calls[0][0]).toContain('non-ISO value "ZZ"');
+    } finally {
+      warn.mockRestore();
+    }
+  });
+
+  it("mount seed leaves the field pristine (not dirty, not touched)", () => {
+    const form = setup(synced, { residence: "AE", mobile: "" });
+    expect(form().getValues("mobile")).toBe("+971");
+    const state = form().getFieldState("mobile");
+    expect(state.isDirty).toBe(false);
+    expect(state.isTouched).toBe(false);
+  });
+
+  it("change-path rewrite marks the field dirty but does not validate an untouched field", async () => {
+    const form = setup(synced, { residence: "EG", mobile: "+201001234567" }, alwaysInvalidMobile);
+    await act(async () => form().setValue("residence", "AE"));
+    const state = form().getFieldState("mobile");
+    expect(state.isDirty).toBe(true);
+    expect(state.error).toBeUndefined();
+  });
+
+  it("change-path rewrite re-validates a touched field", async () => {
+    const form = setup(synced, { residence: "EG", mobile: "+201001234567" }, alwaysInvalidMobile);
+    await act(async () => form().setValue("mobile", "+201001234567", { shouldTouch: true }));
+    expect(form().getFieldState("mobile").error).toBeUndefined();
+    await act(async () => form().setValue("residence", "AE"));
+    expect(form().getFieldState("mobile").error).toBeDefined();
   });
 });

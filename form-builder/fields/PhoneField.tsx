@@ -130,7 +130,7 @@ function CountrySelect({ value, onChange, options, disabled, className, emptyMes
 // always wins on change; the user can still override via the country select
 // until the next source change (per design).
 function useCountryFromSync(config: PhoneFieldConfig) {
-  const { control, getValues, setValue } = useFormContext();
+  const { control, getValues, setValue, getFieldState } = useFormContext();
   const source = config.countryFrom;
   // useWatch needs a name even when the feature is off; watching this field
   // itself with disabled: true is a no-op placeholder.
@@ -148,6 +148,8 @@ function useCountryFromSync(config: PhoneFieldConfig) {
       prev.current = watched;
       if (iso && !getValues(config.name)) {
         const next = applyCountryToPhoneValue("", iso);
+        // Seed is initialization, not an edit — no flags on purpose (the
+        // field stays pristine: not dirty, not touched, not validated).
         if (next) setValue(config.name, next);
       }
       return;
@@ -166,8 +168,12 @@ function useCountryFromSync(config: PhoneFieldConfig) {
       }
       return;
     }
-    if (next !== current) setValue(config.name, next, { shouldDirty: true });
-  }, [watched, source, config.name, getValues, setValue]);
+    // Mode is onTouched: a touched field already shows validation state, so
+    // the rewrite must re-validate or a stale green/error border survives
+    // until the next blur. Untouched fields skip it — no premature errors.
+    const { isTouched } = getFieldState(config.name);
+    if (next !== current) setValue(config.name, next, { shouldDirty: true, shouldValidate: isTouched });
+  }, [watched, source, config.name, getValues, setValue, getFieldState]);
 }
 
 export function PhoneField({ field }: FieldComponentProps) {
