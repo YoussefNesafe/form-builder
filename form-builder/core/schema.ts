@@ -217,7 +217,7 @@ function validateFields(fields: unknown[], path: string, insideGroup = false): v
     // keys, dependsOn watches) cannot resolve there — reject instead of
     // silently misbehaving.
     if (insideGroup) {
-      const wiring = raw as { dependsOn?: unknown; enabledWhenVerified?: unknown };
+      const wiring = raw as { dependsOn?: unknown; enabledWhenVerified?: unknown; countryFrom?: unknown };
       if (type === "otp" && wiring.dependsOn !== undefined) {
         throw new Error(`Invalid form config at ${fieldPath}: otp dependsOn is not supported inside groups`);
       }
@@ -225,6 +225,9 @@ function validateFields(fields: unknown[], path: string, insideGroup = false): v
         throw new Error(
           `Invalid form config at ${fieldPath}: enabledWhenVerified is not supported inside groups`,
         );
+      }
+      if (type === "phone" && wiring.countryFrom !== undefined) {
+        throw new Error(`Invalid form config at ${fieldPath}: phone countryFrom is not supported inside groups`);
       }
     }
 
@@ -262,7 +265,13 @@ function validateFields(fields: unknown[], path: string, insideGroup = false): v
     fields.map((raw) => [(raw as { name: string }).name, (raw as { type?: unknown }).type]),
   );
   fields.forEach((raw, index) => {
-    const field = raw as { type?: unknown; name: string; dependsOn?: unknown; enabledWhenVerified?: unknown };
+    const field = raw as {
+      type?: unknown;
+      name: string;
+      dependsOn?: unknown;
+      enabledWhenVerified?: unknown;
+      countryFrom?: unknown;
+    };
 
     if (field.type === "otp" && field.dependsOn !== undefined) {
       if (!seenNames.has(field.dependsOn as string) || field.dependsOn === field.name) {
@@ -278,6 +287,33 @@ function validateFields(fields: unknown[], path: string, insideGroup = false): v
         throw new Error(
           `Invalid form config at ${path}[${index}]: enabledWhenVerified must reference a sibling otp field, got "${target}"`,
         );
+      }
+    }
+
+    if (field.type === "phone" && field.countryFrom !== undefined) {
+      const source = field.countryFrom as string;
+      if (!seenNames.has(source) || source === field.name) {
+        throw new Error(
+          `Invalid form config at ${path}[${index}]: phone countryFrom references unknown field "${source}"`,
+        );
+      }
+      const sourceRaw = fields.find((f) => (f as { name: string }).name === source) as {
+        type?: unknown;
+        multiple?: unknown;
+        options?: { value: unknown }[];
+      };
+      if (sourceRaw.type !== "select" || sourceRaw.multiple === true) {
+        throw new Error(
+          `Invalid form config at ${path}[${index}]: phone countryFrom must reference a single-value select field, got "${source}"`,
+        );
+      }
+      const countries = getCountries() as string[];
+      for (const option of sourceRaw.options ?? []) {
+        if (typeof option.value !== "string" || !countries.includes(option.value)) {
+          throw new Error(
+            `Invalid form config at ${path}[${index}]: countryFrom source "${source}" option value "${String(option.value)}" is not an ISO 3166-1 alpha-2 country code`,
+          );
+        }
       }
     }
   });

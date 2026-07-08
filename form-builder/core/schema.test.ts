@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { registerField } from "./registry";
 import { validateFormConfig } from "./schema";
-import type { FormConfig } from "./types";
+import type { FieldConfig, FormConfig } from "./types";
 
 const valid: FormConfig = {
   id: "t",
@@ -281,7 +281,7 @@ describe("validateFormConfig", () => {
 });
 
 describe("phone countryFrom", () => {
-  const residence = {
+  const residence: FieldConfig = {
     type: "select",
     name: "residence",
     options: [
@@ -306,5 +306,75 @@ describe("phone countryFrom", () => {
         fields: [residence, { type: "phone", name: "mobile", countryFrom: "" }],
       } as FormConfig),
     ).toThrow(/countryFrom/);
+  });
+
+  it("rejects countryFrom referencing an unknown field", () => {
+    expect(() =>
+      validateFormConfig({
+        id: "f",
+        fields: [{ type: "phone", name: "mobile", countryFrom: "nope" }],
+      } as FormConfig),
+    ).toThrow(/references unknown field "nope"/);
+  });
+
+  it("rejects countryFrom referencing itself", () => {
+    expect(() =>
+      validateFormConfig({
+        id: "f",
+        fields: [{ type: "phone", name: "mobile", countryFrom: "mobile" }],
+      } as FormConfig),
+    ).toThrow(/references unknown field "mobile"/);
+  });
+
+  it("rejects countryFrom referencing a non-select field", () => {
+    expect(() =>
+      validateFormConfig({
+        id: "f",
+        fields: [
+          { type: "text", name: "residence" },
+          { type: "phone", name: "mobile", countryFrom: "residence" },
+        ],
+      } as FormConfig),
+    ).toThrow(/single-value select/);
+  });
+
+  it("rejects countryFrom referencing a multiple select", () => {
+    expect(() =>
+      validateFormConfig({
+        id: "f",
+        fields: [
+          { ...residence, multiple: true },
+          { type: "phone", name: "mobile", countryFrom: "residence" },
+        ],
+      } as FormConfig),
+    ).toThrow(/single-value select/);
+  });
+
+  it("rejects a source select whose option values are not ISO alpha-2 codes", () => {
+    expect(() =>
+      validateFormConfig({
+        id: "f",
+        fields: [
+          { type: "select", name: "residence", options: [{ label: "Egypt", value: "Egypt" }] },
+          { type: "phone", name: "mobile", countryFrom: "residence" },
+        ],
+      } as FormConfig),
+    ).toThrow(/ISO 3166-1 alpha-2/);
+  });
+
+  it("rejects countryFrom on a phone field inside a group", () => {
+    expect(() =>
+      validateFormConfig({
+        id: "f",
+        fields: [
+          residence,
+          {
+            type: "group",
+            name: "contacts",
+            fields: [{ type: "phone", name: "mobile", countryFrom: "residence" }],
+          },
+        ],
+      } as FormConfig),
+    ).toThrow(/not supported inside groups/);
   });
 });
