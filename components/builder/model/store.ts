@@ -4,7 +4,7 @@ import { persist, createJSONStorage } from "zustand/middleware";
 import type { FieldType } from "@/form-builder";
 import type { BuilderNode, BuilderState, BuilderStep, OutputMode } from "./types";
 import { CONTAINER_TYPES, DEFAULT_PROPS } from "./defaults";
-import { newId } from "./ids";
+import { newId, syncCounterFromIds } from "./ids";
 
 export type BuilderActions = {
   addNode: (type: FieldType, parentId?: string) => void;
@@ -98,14 +98,26 @@ function findNode(nodes: BuilderNode[], id: string): BuilderNode | null {
   return null;
 }
 
-function cloneSubtree(node: BuilderNode, rootName: string): BuilderNode {
+/** Deep-clone a subtree with fresh ids and names kept globally unique via `taken`. */
+function cloneSubtree(node: BuilderNode, taken: Set<string>): BuilderNode {
+  const name = uniqueName(node.type, taken);
+  taken.add(name);
   const clone: BuilderNode = {
     _id: newId(),
     type: node.type,
-    props: { ...structuredClone(node.props), name: rootName },
+    props: { ...structuredClone(node.props), name },
   };
-  if (node.children) clone.children = node.children.map((child) => cloneSubtree(child, child.props.name as string));
+  if (node.children) clone.children = node.children.map((child) => cloneSubtree(child, taken));
   return clone;
+}
+
+/** Every `_id` in the tree — used to advance the id counter after rehydration. */
+function collectIds(nodes: BuilderNode[], into: string[] = []): string[] {
+  for (const node of nodes) {
+    into.push(node._id);
+    if (node.children) collectIds(node.children, into);
+  }
+  return into;
 }
 
 // ---- state creator ---------------------------------------------------------
@@ -150,7 +162,7 @@ const creator: StateCreator<BuilderStore> = (set, get) => ({
     const original = findNode(get().nodes, id);
     if (!original) return;
     const taken = collectNames(get().nodes);
-    const clone = cloneSubtree(original, uniqueName(original.type, taken));
+    const clone = cloneSubtree(original, taken);
     set((state) => ({
       nodes: updateSiblings(state.nodes, id, (siblings) => {
         const index = siblings.findIndex((n) => n._id === id);
@@ -205,5 +217,10 @@ export const useBuilderStore = create<BuilderStore>()(
       steps: state.steps,
       outputMode: state.outputMode,
     }),
+    // A fresh module starts the id counter at 0; advance it past every restored
+    // id so newly-added nodes never collide with rehydrated ones.
+    onRehydrateStorage: () => (state) => {
+      if (state) syncCounterFromIds(collectIds(state.nodes));
+    },
   }),
 );

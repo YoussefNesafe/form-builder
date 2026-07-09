@@ -19,8 +19,9 @@ function cleanProps(props: Record<string, unknown>): Record<string, unknown> {
   const out: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(props)) {
     if (value === undefined || value === null) continue;
-    if (value === "" && key !== "value") continue;
-    if (value === false) continue;
+    // `value` (hidden field) keeps its key even when "" or false — the engine
+    // requires the key to be present.
+    if (key !== "value" && (value === "" || value === false)) continue;
     out[key] = value;
   }
   return out;
@@ -51,11 +52,15 @@ export function serialize(state: SerializeInput): FormConfig {
       const name = node.props.name;
       if (typeof name === "string" && name) nameById.set(node._id, name);
     }
-    const steps = state.steps.map((step) => ({
-      title: step.title,
-      fieldNames: step.nodeIds.map((id) => nameById.get(id)).filter((n): n is string => Boolean(n)),
-    }));
-    config.steps = steps;
+    const steps = state.steps
+      .map((step) => ({
+        title: step.title,
+        fieldNames: step.nodeIds.map((id) => nameById.get(id)).filter((n): n is string => Boolean(n)),
+      }))
+      // The engine rejects a step with no field names; an all-removed step
+      // would otherwise brick the whole config.
+      .filter((step) => step.fieldNames.length > 0);
+    if (steps.length > 0) config.steps = steps;
   }
 
   return config;

@@ -13,3 +13,15 @@ export function newId(): string {
 export function resetIds(): void {
   counter = 0;
 }
+
+/**
+ * Advance the counter past every `n<number>` id in `ids`. Called on persist
+ * rehydration so a fresh module (counter = 0) never re-issues an id that
+ * already exists in the restored tree.
+ */
+export function syncCounterFromIds(ids: Iterable<string>): void {
+  for (const id of ids) {
+    const match = /^n(\d+)$/.exec(id);
+    if (match) counter = Math.max(counter, Number(match[1]));
+  }
+}

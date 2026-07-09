@@ -76,6 +76,28 @@ describe("builder store", () => {
     expect(s.getState().nodes[0].children).toHaveLength(2);
   });
 
+  it("moves, duplicates, and removes a node nested inside a group", () => {
+    const s = createBuilderStore();
+    s.getState().addNode("group");
+    const group = s.getState().nodes[0]._id;
+    s.getState().addNode("email", group); // group now has [text(default), email]
+    const kids = () => s.getState().nodes[0].children!;
+    const firstChild = kids()[0]._id;
+
+    s.getState().moveNode(firstChild, 1);
+    expect(kids().map((n) => n.type)).toEqual(["email", "text"]);
+
+    s.getState().duplicateNode(kids()[0]._id);
+    expect(kids()).toHaveLength(3);
+    // duplicated child name stays unique across the whole tree
+    const allNames = kids().map((n) => n.props.name);
+    expect(new Set(allNames).size).toBe(allNames.length);
+
+    const removeId = kids()[0]._id;
+    s.getState().removeNode(removeId);
+    expect(kids().some((n) => n._id === removeId)).toBe(false);
+  });
+
   it("round-trips through the serializer", () => {
     const s = createBuilderStore();
     s.getState().addNode("text");

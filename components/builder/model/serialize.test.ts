@@ -94,6 +94,25 @@ describe("serialize", () => {
     expect(config.steps).toBeUndefined();
   });
 
+  it("keeps a hidden value of false (not pruned as a falsy prop)", () => {
+    const config = serialize(baseState({ nodes: [{ _id: "n1", type: "hidden", props: { name: "flag", value: false } }] }));
+    expect(config.fields[0]).toEqual({ type: "hidden", name: "flag", value: false });
+  });
+
+  it("drops a step whose fields were all removed (empty fieldNames is invalid)", () => {
+    const config = serialize(
+      baseState({
+        nodes: [textNode("n1", "a")],
+        multiStep: true,
+        steps: [
+          { title: "Kept", nodeIds: ["n1"] },
+          { title: "Emptied", nodeIds: ["gone"] },
+        ],
+      }),
+    );
+    expect(config.steps).toEqual([{ title: "Kept", fieldNames: ["a"] }]);
+  });
+
   it("produces a config that passes validateFormConfig", () => {
     const config = serialize(
       baseState({
