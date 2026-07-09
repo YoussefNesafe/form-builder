@@ -19,6 +19,7 @@ const { listeners, padMock, padConstructor } = vi.hoisted(() => {
     fromDataURL: vi.fn(() => Promise.resolve()),
     isEmpty: vi.fn(() => false),
     clear: vi.fn(),
+    redraw: vi.fn(),
     on: vi.fn(),
     off: vi.fn(),
   };
@@ -121,6 +122,27 @@ describe("SignatureField", () => {
 
   it("disabled turns the pad off", () => {
     setup({ ...config, disabled: true });
+    expect(padMock.off).toHaveBeenCalled();
+  });
+
+  it("resize path uses redraw (restored ink survives), not toData/fromData", () => {
+    setup();
+    // resize() runs once on mount.
+    expect(padMock.redraw).toHaveBeenCalled();
+    expect(padMock.fromData).not.toHaveBeenCalled();
+  });
+
+  it("a non-empty value change does not clear the pad", async () => {
+    const form = setup();
+    padMock.clear.mockClear();
+    await act(async () => form().setValue("sign", "data:image/png;base64,NEW"));
+    expect(padMock.clear).not.toHaveBeenCalled();
+  });
+
+  it("unmount removes the endStroke listener and detaches the pad", () => {
+    setup();
+    cleanup();
+    expect(padMock.removeEventListener).toHaveBeenCalledWith("endStroke", expect.any(Function));
     expect(padMock.off).toHaveBeenCalled();
   });
 

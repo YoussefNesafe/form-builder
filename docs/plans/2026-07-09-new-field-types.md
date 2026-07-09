@@ -158,6 +158,7 @@ export function extractRaw(display: string, mask: string): string // inverse; dr
 - Time HH:mm regex duplicated in schema.ts and validation.ts — shared constant candidate. (Phase 1 review, Minor.)
 - rating `.int()` error message reads as "required" — cosmetic, unreachable via UI. (Phase 2 review, Minor.)
 - Mask token definitions live in three places (fields/maskedValue.ts, schema.ts inline check, validation.ts inline filter) — consider moving the pure helpers to core/ and importing everywhere. (Phase 5 review, Minor.)
+- Signature: canvas `htmlFor` association is inert (canvas not labelable; aria-label carries the name) — consider aria-labelledby. Keyboard users cannot sign (inherent) — document in spec (Phase 7). Optional-field garbage prefill shows the required message — consider a dedicated invalidSignature key. (Phase 6 review, Minors.)
 - Ambiguous-mask guard: reject masks where a literal matches the class of the token at its own raw index (e.g. "#1#") — such masks swallow a keystroke equal to the literal (documented in MaskedField). Resolving this dovetails with moving matchesToken to core/. (Phase 5 review, Minor M4.)
 - Shared config-validation rule: reject duplicate `String(value)` within any options list (radio, select, checkbox-group, segmented) — mixed-type duplicates (`2` vs `"2"`) render broken controls silently. Pre-existing, not segmented-specific; also consider rejecting `value: ""` (collides with the unset sentinel). (Phase 3 review, Minor.)
 

@@ -48,9 +48,11 @@ function SignatureCanvas({
   // refs during render is forbidden).
   const onChangeRef = useRef(onChange);
   const onBlurRef = useRef(onBlur);
+  const disabledRef = useRef(disabled);
   useEffect(() => {
     onChangeRef.current = onChange;
     onBlurRef.current = onBlur;
+    disabledRef.current = disabled;
   });
   // Mount-time value only — used to restore a signed value after remount.
   const initialValueRef = useRef(value);
@@ -68,19 +70,22 @@ function SignatureCanvas({
     };
     pad.addEventListener("endStroke", handleEndStroke);
 
-    // devicePixelRatio-aware sizing; strokes are kept as point data and
-    // redrawn so a container resize does not wipe the drawing.
+    // devicePixelRatio-aware sizing. pad.redraw() re-renders BOTH the stroke
+    // point data and any fromDataURL-restored image — a manual toData/fromData
+    // pair would wipe restored ink (fromDataURL stores pixels, not points).
     const resize = () => {
       const ratio = Math.max(window.devicePixelRatio || 1, 1);
-      const data = pad.toData();
       canvas.width = canvas.offsetWidth * ratio;
+      // Reassigning width/height resets the context transform; re-scale.
       canvas.height = canvas.offsetHeight * ratio;
       canvas.getContext("2d")?.scale(ratio, ratio);
-      pad.fromData(data);
+      pad.redraw();
     };
     resize();
     // Wizard steps unmount fields; restore a previously signed value.
     if (initialValueRef.current) void pad.fromDataURL(initialValueRef.current);
+    // Constructor called pad.on(); respect a field that mounts disabled.
+    if (disabledRef.current) pad.off();
     const observer = new ResizeObserver(resize);
     observer.observe(canvas);
 
@@ -90,6 +95,9 @@ function SignatureCanvas({
       pad.off();
       padRef.current = null;
     };
+    // penColor is treated as static config: a runtime change recreates the
+    // pad (losing undrawn state) and restores the MOUNT-time value — fine for
+    // configs, not a supported dynamic prop.
   }, [penColor]);
 
   useEffect(() => {
@@ -99,7 +107,9 @@ function SignatureCanvas({
     else pad.on();
   }, [disabled]);
 
-  // External reset (form.reset(), setValue("")) must wipe the ink too.
+  // External reset (form.reset(), setValue("")) must wipe the ink too. The
+  // inverse — a late programmatic non-empty setValue — is NOT drawn onto the
+  // canvas (the value still validates; v1 limitation).
   useEffect(() => {
     const pad = padRef.current;
     if (!value && pad && !pad.isEmpty()) pad.clear();
