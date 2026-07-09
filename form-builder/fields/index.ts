@@ -12,6 +12,7 @@ import { SliderField } from "./SliderField";
 import { StaticField } from "./StaticField";
 import { SubmitField } from "./SubmitField";
 import { TextField } from "./TextField";
+import { TimeField } from "./TimeField";
 
 export function registerBuiltInFields(): void {
   registerField("text", TextField);
@@ -26,6 +27,7 @@ export function registerBuiltInFields(): void {
   registerField("otp", OtpField);
   registerField("phone", PhoneField);
   registerField("date", DateField);
+  registerField("time", TimeField);
   registerField("slider", SliderField);
   registerField("file", FileField);
   registerField("group", GroupField);

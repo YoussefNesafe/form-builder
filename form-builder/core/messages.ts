@@ -21,6 +21,7 @@ export type Messages = {
   otpVerifyFailed: string;
   otpNotVerified: string;
   invalidDate: string;
+  invalidTime: string;
   invalidPhone: string;
   showPassword: string;
   hidePassword: string;
@@ -61,6 +62,7 @@ export const defaultMessages: Messages = {
   otpVerifyFailed: "Invalid OTP",
   otpNotVerified: "OTP is not verified",
   invalidDate: "Enter a valid date",
+  invalidTime: "Enter a valid time",
   invalidPhone: "Enter a valid phone number",
   showPassword: "Show password",
   hidePassword: "Hide password",

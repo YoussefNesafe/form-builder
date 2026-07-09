@@ -8,6 +8,11 @@ const countryCodeSchema = z.string().refine(
   { message: "not a valid ISO 3166-1 alpha-2 country code (e.g. \"AE\")" },
 );
 
+// Zero-padded 24h "HH:mm" — required for lexicographic boundary compares.
+const timeStringSchema = z
+  .string()
+  .regex(/^([01]\d|2[0-3]):[0-5]\d$/, { message: "must be a zero-padded HH:mm time (e.g. \"09:30\")" });
+
 const conditionSchema = z
   .strictObject({
     field: z.string().min(1),
@@ -161,6 +166,16 @@ const fieldSchemasByType: Record<FieldConfig["type"], z.ZodType> = {
     minDate: z.iso.date().optional(),
     maxDate: z.iso.date().optional(),
   }),
+  time: baseFieldSchema
+    .extend({
+      minTime: timeStringSchema.optional(),
+      maxTime: timeStringSchema.optional(),
+      stepMinutes: z.number().int().positive().optional(),
+    })
+    .refine(
+      (field) => field.minTime === undefined || field.maxTime === undefined || field.minTime <= field.maxTime,
+      { message: "minTime must not be after maxTime" },
+    ),
   slider: baseFieldSchema.extend({
     min: z.number(),
     max: z.number(),

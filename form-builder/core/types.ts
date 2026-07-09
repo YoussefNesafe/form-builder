@@ -63,6 +63,7 @@ export const BUILT_IN_FIELD_TYPES = [
   "checkbox",
   "switch",
   "date",
+  "time",
   "slider",
   "file",
   "hidden",
@@ -81,6 +82,9 @@ export type FieldConfig =
   | (BaseField & { type: "radio"; options: Option[] })
   | (BaseField & { type: "checkbox" | "switch"; options?: Option[] }) // options => checkbox group
   | (BaseField & { type: "date"; range?: boolean; minDate?: string; maxDate?: string })
+  // Times are plain zero-padded "HH:mm" strings, compared lexicographically
+  // (same convention as dates — no Date math).
+  | (BaseField & { type: "time"; minTime?: string; maxTime?: string; stepMinutes?: number })
   | (BaseField & { type: "slider"; min: number; max: number; step?: number })
   | (BaseField & { type: "file"; accept?: string; maxSizeMB?: number; multiple?: boolean })
   | (BaseField & { type: "hidden"; value: unknown })

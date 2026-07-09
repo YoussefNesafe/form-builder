@@ -409,3 +409,40 @@ describe("phone countryFrom", () => {
     ).toThrow(/not supported inside groups/);
   });
 });
+
+describe("time config", () => {
+  it("accepts a valid time field", () =>
+    expect(() =>
+      validateFormConfig({
+        id: "t",
+        fields: [{ type: "time", name: "meeting", minTime: "09:00", maxTime: "17:30", stepMinutes: 15 }],
+      }),
+    ).not.toThrow());
+
+  it("rejects out-of-range minTime", () =>
+    expect(() =>
+      validateFormConfig({ id: "t", fields: [{ type: "time", name: "m", minTime: "25:00" }] }),
+    ).toThrow(/HH:mm/));
+
+  it("rejects non-zero-padded maxTime", () =>
+    expect(() =>
+      validateFormConfig({ id: "t", fields: [{ type: "time", name: "m", maxTime: "9:00" }] }),
+    ).toThrow(/HH:mm/));
+
+  it("rejects minTime after maxTime", () =>
+    expect(() =>
+      validateFormConfig({
+        id: "t",
+        fields: [{ type: "time", name: "m", minTime: "17:00", maxTime: "09:00" }],
+      }),
+    ).toThrow(/minTime/));
+
+  it("rejects non-positive or fractional stepMinutes", () => {
+    expect(() =>
+      validateFormConfig({ id: "t", fields: [{ type: "time", name: "m", stepMinutes: 0 }] }),
+    ).toThrow();
+    expect(() =>
+      validateFormConfig({ id: "t", fields: [{ type: "time", name: "m", stepMinutes: 7.5 }] }),
+    ).toThrow();
+  });
+});

@@ -190,6 +190,25 @@ export function toZodSchema(
       return field.required ? schema : optionalEmptyable(schema);
     }
 
+    case "time": {
+      // Zero-padded "HH:mm" strings order lexicographically — same convention
+      // as calendar dates, no Date math.
+      const base = field.required ? z.string({ error: messages.required }).min(1, messages.required) : z.string();
+      let schema: z.ZodType = base.refine(
+        (value) => /^([01]\d|2[0-3]):[0-5]\d$/.test(value as string),
+        messages.invalidTime,
+      );
+      if (field.minTime !== undefined) {
+        const min = field.minTime;
+        schema = schema.refine((value) => (value as string) >= min, messages.min(min));
+      }
+      if (field.maxTime !== undefined) {
+        const max = field.maxTime;
+        schema = schema.refine((value) => (value as string) <= max, messages.max(max));
+      }
+      return field.required ? schema : optionalEmptyable(schema);
+    }
+
     case "slider": {
       // Always required: the slider always has a value (defaults to min).
       let schema = z.number({ error: messages.required });

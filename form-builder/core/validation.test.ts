@@ -433,6 +433,45 @@ describe("custom field types", () => {
   });
 });
 
+describe("time", () => {
+  it("required rejects empty and malformed values", () => {
+    const schema = schemaFor({ type: "time", name: "t", required: true });
+    expect(schema.safeParse("").success).toBe(false);
+    expect(schema.safeParse("24:00").success).toBe(false);
+    expect(schema.safeParse("9:30").success).toBe(false);
+    expect(schema.safeParse("09:60").success).toBe(false);
+    expect(schema.safeParse("09:30").success).toBe(true);
+  });
+
+  it("malformed value surfaces invalidTime message", () => {
+    const schema = schemaFor({ type: "time", name: "t", required: true });
+    const result = schema.safeParse("24:00");
+    expect(result.success).toBe(false);
+    if (!result.success) expect(result.error.issues[0].message).toBe(messages.invalidTime);
+  });
+
+  it("minTime/maxTime enforced lexicographically with min/max messages", () => {
+    const schema = schemaFor({ type: "time", name: "t", required: true, minTime: "09:00", maxTime: "17:00" });
+    const early = schema.safeParse("08:59");
+    expect(early.success).toBe(false);
+    if (!early.success) expect(early.error.issues[0].message).toBe(messages.min("09:00"));
+    const late = schema.safeParse("17:01");
+    expect(late.success).toBe(false);
+    if (!late.success) expect(late.error.issues[0].message).toBe(messages.max("17:00"));
+    expect(schema.safeParse("09:00").success).toBe(true);
+    expect(schema.safeParse("17:00").success).toBe(true);
+  });
+
+  it("optional treats empty string as absent", () => {
+    const schema = schemaFor({ type: "time", name: "t", minTime: "09:00" });
+    const parsed = schema.safeParse("");
+    expect(parsed.success).toBe(true);
+    if (parsed.success) expect(parsed.data).toBeUndefined();
+    expect(schema.safeParse(undefined).success).toBe(true);
+    expect(schema.safeParse("08:00").success).toBe(false);
+  });
+});
+
 describe("custom messages", () => {
   it("override default", () => {
     const custom = mergeMessages({ required: "verplicht" });
