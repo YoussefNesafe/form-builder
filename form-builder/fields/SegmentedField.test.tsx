@@ -87,6 +87,7 @@ describe("SegmentedField", () => {
     await act(async () => form().setError("plan", { type: "manual", message: "boom" }));
     expect(screen.getByText("boom")).toBeTruthy();
     const group = screen.getByRole("radiogroup");
+    expect(group.getAttribute("aria-invalid")).toBe("true");
     const describedBy = group.getAttribute("aria-describedby");
     expect(describedBy).toBeTruthy();
     expect(document.getElementById(describedBy!)?.textContent).toBe("boom");

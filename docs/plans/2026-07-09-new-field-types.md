@@ -157,5 +157,6 @@ export function extractRaw(display: string, mask: string): string // inverse; dr
 - Radiogroup accessible name: both RadioField and RatingField rely on FieldWrapper's fieldset/legend for naming; the `role="radiogroup"` element itself is unnamed. Joint fix: give FieldLegend an id + `aria-labelledby` on both. (Phase 2 review, Minor.)
 - Time HH:mm regex duplicated in schema.ts and validation.ts — shared constant candidate. (Phase 1 review, Minor.)
 - rating `.int()` error message reads as "required" — cosmetic, unreachable via UI. (Phase 2 review, Minor.)
+- Shared config-validation rule: reject duplicate `String(value)` within any options list (radio, select, checkbox-group, segmented) — mixed-type duplicates (`2` vs `"2"`) render broken controls silently. Pre-existing, not segmented-specific; also consider rejecting `value: ""` (collides with the unset sentinel). (Phase 3 review, Minor.)
 
 **Per-phase review protocol (applies to every phase):** dispatch `superpowers:code-reviewer` subagent with the phase's commit range + design doc reference; wait for report; fix all Critical/Important findings (and Minor unless disputed); re-dispatch reviewer; repeat until clean; only then commit+push and open next phase.
