@@ -71,21 +71,44 @@ const config: FormConfig = {
     },
     { type: "otp", name: "code", label: "Code", length: 4 },
     {
-      type: "select",
+      type: "country",
       name: "residence",
       label: "Country of residence",
       width: "half",
-      options: [
-        { label: "Netherlands", value: "NL" },
-        { label: "United Arab Emirates", value: "AE" },
-        { label: "Egypt", value: "EG" },
-        { label: "Saudi Arabia", value: "SA" },
-      ],
+      countries: ["NL", "AE", "EG", "SA"],
+      preferredCountries: ["AE"],
+      placeholder: "Pick a country",
     },
     { type: "phone", name: "mobile", label: "Mobile", defaultCountry: "NL", countryFrom: "residence", width: "half" },
+    {
+      type: "segmented",
+      name: "plan",
+      label: "Plan",
+      required: true,
+      options: [
+        { label: "Basic", value: "basic" },
+        { label: "Pro", value: "pro" },
+        { label: "Max", value: "max" },
+      ],
+    },
+    {
+      type: "checkbox",
+      name: "interests",
+      label: "Interests",
+      width: "half",
+      options: [
+        { label: "Design", value: "design" },
+        { label: "Engineering", value: "engineering" },
+        { label: "Marketing", value: "marketing" },
+      ],
+    },
+    { type: "rating", name: "satisfaction", label: "Satisfaction", max: 5, width: "half" },
     { type: "date", name: "birthday", label: "Birthday", width: "half" },
     { type: "date", name: "stay", label: "Stay", range: true, width: "half" },
+    { type: "time", name: "meeting", label: "Meeting time", minTime: "09:00", maxTime: "17:00", stepMinutes: 15, width: "half" },
+    { type: "masked", name: "card", label: "Card number", mask: "#### #### #### ####", width: "half" },
     { type: "slider", name: "level", label: "Level", min: 0, max: 10, step: 1, width: "half" },
+    { type: "signature", name: "sign", label: "Signature", heightPx: 160 },
     { type: "file", name: "cv", label: "CV", accept: ".pdf,.txt", maxSizeMB: 1 },
     {
       type: "group",
@@ -106,9 +129,9 @@ const config: FormConfig = {
     { title: "Account", fieldNames: ["title", "firstName", "email", "secret", "bio", "age"] },
     {
       title: "Profile",
-      fieldNames: ["newsletter", "nickname", "other", "details", "size", "color", "toppings", "code", "residence", "mobile"],
+      fieldNames: ["newsletter", "nickname", "other", "details", "size", "color", "toppings", "code", "residence", "mobile", "plan", "interests", "satisfaction"],
     },
-    { title: "Extras", fieldNames: ["birthday", "stay", "level", "cv", "team"] },
+    { title: "Extras", fieldNames: ["birthday", "stay", "meeting", "card", "level", "sign", "cv", "team"] },
   ],
 };
 

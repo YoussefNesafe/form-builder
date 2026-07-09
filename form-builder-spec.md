@@ -74,15 +74,21 @@ form-builder/
 | `select`   | shadcn `Select` (no search) or `Command` + `Popover` combobox (search) — one component, toggled by `searchable` boolean; also supports `multiple` |
 | `radio`    | radio group, exclusive short choices                                                                                                              |
 | `checkbox` | boolean or checkbox group                                                                                                                         |
+| `segmented` | radio semantics rendered as a joined button group (radix `RadioGroup` primitive)                                                                 |
 | `date`     | single date or range, `react-day-picker` + `Popover`                                                                                              |
+| `time`     | native `<input type="time">`, value is a plain zero-padded `"HH:mm"` string; `minTime`/`maxTime`/`stepMinutes`                                     |
+| `rating`   | 1..`max` stars (default 5), lucide `Star`, radiogroup a11y with roving tabindex; click current value clears when optional                          |
+| `country`  | searchable combobox over ISO 3166-1 alpha-2 codes, SVG flags from `react-phone-number-input/flags`, names via host `locale.countryLabels` else `Intl.DisplayNames`; `countries` subset, `preferredCountries` pinned on top; valid as a phone `countryFrom` source |
+| `masked`   | pattern-masked text (`#` digit, `A` letter, `*` alphanumeric, others literal); payload stores the RAW token chars, the input shows the formatted value; caret may jump on mid-string edits (v1) |
 | `slider`   | shadcn native `Slider`                                                                                                                            |
+| `signature` | draw-to-sign canvas via `signature_pad`; value is a PNG data URL (`""` until signed); clear button; strokes survive container resizes; keyboard users cannot sign (inherent to signature pads) |
 | `file`     | custom-built on `<input type="file">` + shadcn `Button`/`Progress`, `accept`, `maxSizeMB`, `multiple`                                             |
 | `hidden`   | not rendered; rides along with form values (tokens, IDs, UTM params)                                                                              |
 | `static`   | heading/paragraph/divider block, not a real field, no value                                                                                       |
 | `group`    | recursive — wraps a repeatable sub-array of `FieldConfig[]` (e.g. "add another team member"), with `min`/`max`                                    |
 | `submit`   | submit button, `text` + `variant`                                                                                                                 |
 
-Deferred until a real project needs them: masked input (treat as `text` + `mask` prop), autocomplete free-text, toggle group, rating, signature pad, rich text, color picker, address autocomplete, captcha.
+Deferred until a real project needs them: autocomplete free-text, rich text, color picker, address autocomplete, captcha.
 
 ## Type Definition (core/types.ts)
 
@@ -124,7 +130,7 @@ type FieldConfig =
       type: "phone";
       defaultCountry?: string;
       preferredCountries?: string[];
-      countryFrom?: string; // sibling single-select whose option values are ISO alpha-2; source changes re-sync the phone country
+      countryFrom?: string; // sibling country field, or single-select whose option values are ISO alpha-2; source changes re-sync the phone country
     })
   | (BaseField & {
       type: "select";
@@ -133,6 +139,7 @@ type FieldConfig =
       multiple?: boolean;
     })
   | (BaseField & { type: "radio"; options: Option[] })
+  | (BaseField & { type: "segmented"; options: Option[] })
   | (BaseField & { type: "checkbox" | "switch" })
   | (BaseField & {
       type: "date";
@@ -140,7 +147,14 @@ type FieldConfig =
       minDate?: string;
       maxDate?: string;
     })
+  // "HH:mm" strings compared lexicographically, like dates — no Date math.
+  | (BaseField & { type: "time"; minTime?: string; maxTime?: string; stepMinutes?: number })
+  | (BaseField & { type: "rating"; max?: number }) // 1..max, default 5
+  | (BaseField & { type: "country"; countries?: string[]; preferredCountries?: string[] }) // ISO alpha-2 value
+  // Raw token chars stored; mask is presentation ("#" digit, "A" letter, "*" alnum).
+  | (BaseField & { type: "masked"; mask: string; message?: string })
   | (BaseField & { type: "slider"; min: number; max: number; step?: number })
+  | (BaseField & { type: "signature"; penColor?: string; heightPx?: number }) // PNG data URL value
   | (BaseField & {
       type: "file";
       accept?: string;
