@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { isValidPhoneNumber } from "libphonenumber-js";
+import { getCountries, isValidPhoneNumber } from "libphonenumber-js";
 import type { Messages } from "./messages";
 import { getPasswordChecks } from "./password";
 import { isBuiltInField } from "./types";
@@ -154,6 +154,13 @@ export function toZodSchema(
       }
       const value = optionValueSchema(field.options, field.required ? messages.required : undefined);
       return field.required ? value : optionalClearable(value);
+    }
+
+    case "country": {
+      const allowed = new Set<string>(field.countries ?? (getCountries() as string[]));
+      const base = field.required ? z.string({ error: messages.required }).min(1, messages.required) : z.string();
+      const schema = base.refine((value) => allowed.has(value as string), messages.invalidCountry);
+      return field.required ? schema : optionalClearable(schema);
     }
 
     case "radio":

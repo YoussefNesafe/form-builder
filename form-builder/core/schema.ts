@@ -156,6 +156,18 @@ const fieldSchemasByType: Record<FieldConfig["type"], z.ZodType> = {
     searchable: z.boolean().optional(),
     multiple: z.boolean().optional(),
   }),
+  country: baseFieldSchema
+    .extend({
+      countries: z.array(countryCodeSchema).min(1).optional(),
+      preferredCountries: z.array(countryCodeSchema).optional(),
+    })
+    .refine(
+      (field) =>
+        field.countries === undefined ||
+        field.preferredCountries === undefined ||
+        field.preferredCountries.every((code) => field.countries!.includes(code)),
+      { message: "preferredCountries must be a subset of countries" },
+    ),
   radio: baseFieldSchema.extend({ options: z.array(optionSchema).min(1) }),
   segmented: baseFieldSchema.extend({ options: z.array(optionSchema).min(1) }),
   checkbox: baseFieldSchema.extend({ options: z.array(optionSchema).optional() }),
@@ -321,17 +333,20 @@ function validateFields(fields: unknown[], path: string, insideGroup = false): v
         multiple?: unknown;
         options?: { value: unknown }[];
       };
-      if (sourceRaw.type !== "select" || sourceRaw.multiple === true) {
-        throw new Error(
-          `Invalid form config at ${path}[${index}]: phone countryFrom must reference a single-value select field, got "${source}"`,
-        );
-      }
-      const countries = getCountries() as string[];
-      for (const option of sourceRaw.options ?? []) {
-        if (typeof option.value !== "string" || !countries.includes(option.value)) {
+      // A country field is ISO by construction — no option checks needed.
+      if (sourceRaw.type !== "country") {
+        if (sourceRaw.type !== "select" || sourceRaw.multiple === true) {
           throw new Error(
-            `Invalid form config at ${path}[${index}]: phone countryFrom source "${source}" option value "${String(option.value)}" is not an ISO 3166-1 alpha-2 country code`,
+            `Invalid form config at ${path}[${index}]: phone countryFrom must reference a single-value select or country field, got "${source}"`,
           );
+        }
+        const countries = getCountries() as string[];
+        for (const option of sourceRaw.options ?? []) {
+          if (typeof option.value !== "string" || !countries.includes(option.value)) {
+            throw new Error(
+              `Invalid form config at ${path}[${index}]: phone countryFrom source "${source}" option value "${String(option.value)}" is not an ISO 3166-1 alpha-2 country code`,
+            );
+          }
         }
       }
     }

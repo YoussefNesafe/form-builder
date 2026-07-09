@@ -59,6 +59,7 @@ export const BUILT_IN_FIELD_TYPES = [
   "otp",
   "phone",
   "select",
+  "country",
   "radio",
   "segmented",
   "checkbox",
@@ -81,6 +82,8 @@ export type FieldConfig =
   | (BaseField & { type: "otp"; length: number; dependsOn?: string })
   | (BaseField & { type: "phone"; defaultCountry?: string; preferredCountries?: string[]; countryFrom?: string })
   | (BaseField & { type: "select"; options: Option[]; searchable?: boolean; multiple?: boolean })
+  // Values are ISO 3166-1 alpha-2 codes; valid as a phone countryFrom source.
+  | (BaseField & { type: "country"; countries?: string[]; preferredCountries?: string[] })
   | (BaseField & { type: "radio"; options: Option[] })
   | (BaseField & { type: "segmented"; options: Option[] }) // radio semantics, button-group presentation
   | (BaseField & { type: "checkbox" | "switch"; options?: Option[] }) // options => checkbox group

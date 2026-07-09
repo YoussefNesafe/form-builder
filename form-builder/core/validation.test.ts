@@ -520,6 +520,38 @@ describe("segmented", () => {
   });
 });
 
+describe("country", () => {
+  it("required accepts ISO members, rejects unknown/lowercase/missing", () => {
+    const schema = schemaFor({ type: "country", name: "c", required: true });
+    expect(schema.safeParse("NL").success).toBe(true);
+    expect(schema.safeParse("XX").success).toBe(false);
+    expect(schema.safeParse("nl").success).toBe(false);
+    expect(schema.safeParse(undefined).success).toBe(false);
+    expect(schema.safeParse("").success).toBe(false);
+  });
+
+  it("countries subset restricts accepted values", () => {
+    const schema = schemaFor({ type: "country", name: "c", required: true, countries: ["NL", "AE"] });
+    expect(schema.safeParse("NL").success).toBe(true);
+    expect(schema.safeParse("EG").success).toBe(false);
+  });
+
+  it("invalid value surfaces invalidCountry message", () => {
+    const schema = schemaFor({ type: "country", name: "c", required: true });
+    const result = schema.safeParse("XX");
+    expect(result.success).toBe(false);
+    if (!result.success) expect(result.error.issues[0].message).toBe(messages.invalidCountry);
+  });
+
+  it("optional treats cleared values as absent", () => {
+    const schema = schemaFor({ type: "country", name: "c" });
+    expect(schema.safeParse(undefined).success).toBe(true);
+    expect(schema.safeParse(null).success).toBe(true);
+    expect(schema.safeParse("").success).toBe(true);
+    expect(schema.safeParse("NL").success).toBe(true);
+  });
+});
+
 describe("custom messages", () => {
   it("override default", () => {
     const custom = mergeMessages({ required: "verplicht" });

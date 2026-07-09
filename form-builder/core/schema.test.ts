@@ -447,6 +447,67 @@ describe("time config", () => {
   });
 });
 
+describe("country config", () => {
+  it("accepts a valid country field", () =>
+    expect(() =>
+      validateFormConfig({
+        id: "t",
+        fields: [
+          { type: "country", name: "residence", countries: ["NL", "AE"], preferredCountries: ["AE"] },
+        ],
+      }),
+    ).not.toThrow());
+
+  it("accepts a country field with no restriction (all ISO countries)", () =>
+    expect(() => validateFormConfig({ id: "t", fields: [{ type: "country", name: "residence" }] })).not.toThrow());
+
+  it("rejects invalid ISO codes in countries and preferredCountries", () => {
+    expect(() =>
+      validateFormConfig({ id: "t", fields: [{ type: "country", name: "r", countries: ["XX"] }] }),
+    ).toThrow(/country code/);
+    expect(() =>
+      validateFormConfig({ id: "t", fields: [{ type: "country", name: "r", preferredCountries: ["UAE"] }] }),
+    ).toThrow(/country code/);
+  });
+
+  it("rejects preferredCountries outside the countries subset", () =>
+    expect(() =>
+      validateFormConfig({
+        id: "t",
+        fields: [{ type: "country", name: "r", countries: ["NL"], preferredCountries: ["AE"] }],
+      }),
+    ).toThrow(/preferredCountries/));
+
+  it("rejects an empty countries list", () =>
+    expect(() =>
+      validateFormConfig({ id: "t", fields: [{ type: "country", name: "r", countries: [] }] }),
+    ).toThrow());
+});
+
+describe("phone countryFrom with country source", () => {
+  it("accepts a phone field syncing from a sibling country field", () =>
+    expect(() =>
+      validateFormConfig({
+        id: "f",
+        fields: [
+          { type: "country", name: "residence" },
+          { type: "phone", name: "mobile", countryFrom: "residence" },
+        ],
+      }),
+    ).not.toThrow());
+
+  it("still rejects non-select non-country sources", () =>
+    expect(() =>
+      validateFormConfig({
+        id: "f",
+        fields: [
+          { type: "text", name: "residence" },
+          { type: "phone", name: "mobile", countryFrom: "residence" },
+        ],
+      }),
+    ).toThrow(/single-value select/));
+});
+
 describe("segmented config", () => {
   it("accepts a valid segmented field", () =>
     expect(() =>

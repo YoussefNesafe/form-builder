@@ -1,5 +1,6 @@
 import { registerField } from "../core/registry";
 import { CheckboxField } from "./CheckboxField";
+import { CountryField } from "./CountryField";
 import { DateField } from "./DateField";
 import { FileField } from "./FileField";
 import { GroupField } from "./GroupField";
@@ -27,6 +28,7 @@ export function registerBuiltInFields(): void {
   registerField("radio", RadioField);
   registerField("segmented", SegmentedField);
   registerField("select", SelectField);
+  registerField("country", CountryField);
   registerField("otp", OtpField);
   registerField("phone", PhoneField);
   registerField("date", DateField);
