@@ -163,10 +163,22 @@ export const FIELD_PROPS: Record<FieldType, PropDescriptor[]> = {
     { key: "visibleWhen", label: "Visible when", control: "condition" },
     { key: "width", label: "Width", control: "width" },
   ],
+  // Submit is gated by formState.isValid, but the runtime (FieldGate) still
+  // honors visibleWhen/disabledWhen/disabled/enabledWhenVerified on it.
   submit: [
     { key: "name", label: "Name", control: "text" },
     { key: "text", label: "Button text", control: "text" },
     { key: "variant", label: "Variant", control: "select", options: VARIANT_OPTIONS },
+    { key: "disabled", label: "Disabled", control: "boolean" },
+    { key: "visibleWhen", label: "Visible when", control: "condition" },
+    { key: "disabledWhen", label: "Disabled when", control: "condition" },
+    {
+      key: "enabledWhenVerified",
+      label: "Enabled when verified",
+      control: "fieldRef",
+      refKind: "otp",
+      help: "Stays disabled until the named OTP field is verified.",
+    },
     { key: "width", label: "Width", control: "width" },
   ],
   group: [

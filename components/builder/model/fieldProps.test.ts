@@ -62,6 +62,58 @@ describe("field prop registry", () => {
     }
   });
 
+  it("exposes no keys outside the base set plus type-specific keys", () => {
+    const BASE_KEYS = [
+      "name",
+      "label",
+      "description",
+      "placeholder",
+      "required",
+      "disabled",
+      "width",
+      "visibleWhen",
+      "disabledWhen",
+      "enabledWhenVerified",
+      // layout-only base props
+      "content",
+      "value",
+    ];
+    for (const type of BUILT_IN_FIELD_TYPES) {
+      const allowed = new Set([...BASE_KEYS, ...(REQUIRED_TYPE_KEYS[type] ?? [])]);
+      for (const d of FIELD_PROPS[type]) {
+        expect(allowed.has(d.key), `${type} has unexpected key "${d.key}"`).toBe(true);
+      }
+    }
+  });
+
+  it("uses control kinds that match each prop's shape", () => {
+    const EXPECT_CONTROL: Record<string, string> = {
+      required: "boolean",
+      disabled: "boolean",
+      searchable: "boolean",
+      multiple: "boolean",
+      range: "boolean",
+      min: "number",
+      max: "number",
+      step: "number",
+      length: "number",
+      stepMinutes: "number",
+      heightPx: "number",
+      maxSizeMB: "number",
+      options: "options",
+      value: "json",
+      visibleWhen: "condition",
+      disabledWhen: "condition",
+      width: "width",
+    };
+    for (const type of BUILT_IN_FIELD_TYPES) {
+      for (const d of FIELD_PROPS[type]) {
+        const expected = EXPECT_CONTROL[d.key];
+        if (expected) expect(d.control, `${type}.${d.key} control`).toBe(expected);
+      }
+    }
+  });
+
   it("always exposes name; input types expose label", () => {
     for (const type of BUILT_IN_FIELD_TYPES) {
       const keys = FIELD_PROPS[type].map((d) => d.key);

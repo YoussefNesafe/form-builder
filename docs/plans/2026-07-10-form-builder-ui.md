@@ -105,6 +105,7 @@ export type BuilderStep = { title: string; nodeIds: string[] };
 **Requirements:**
 - Generic: iterate `FIELD_PROPS[node.type]`, render the control per `control`, write back via `updateProps`.
 - `FieldRefSelect` lists only eligible siblings by `refKind`; deleting a referenced field elsewhere clears/warns.
+- **Group-context suppression (from Phase 2 review #2):** when the selected node is INSIDE a group, hide `enabledWhenVerified` (any type), `dependsOn` (otp), and `countryFrom` (phone) — `validateFormConfig` hard-rejects these inside groups. Editor needs to know the node's parent context.
 - Dark + triplicated-px + flat.
 
 **Steps:** TDD each special control (add option row, set condition operator+value, per-breakpoint width, eligible-ref filtering), then compose `PropEditor`. Commit: `feat(builder): prop editor + special controls`.
