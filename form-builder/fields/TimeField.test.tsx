@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { FormProvider, useForm, type UseFormReturn } from "react-hook-form";
 import { defaultMessages } from "../core/messages";
@@ -61,5 +61,16 @@ describe("TimeField", () => {
   it("honors disabled", () => {
     setup({ type: "time", name: "meeting", label: "Meeting", disabled: true });
     expect((screen.getByLabelText("Meeting") as HTMLInputElement).disabled).toBe(true);
+  });
+
+  it("renders error text and wires aria-invalid/aria-describedby", async () => {
+    const form = setup({ type: "time", name: "meeting", label: "Meeting" });
+    await act(async () => form().setError("meeting", { type: "manual", message: "boom" }));
+    expect(screen.getByText("boom")).toBeTruthy();
+    const input = screen.getByLabelText("Meeting") as HTMLInputElement;
+    expect(input.getAttribute("aria-invalid")).toBe("true");
+    const describedBy = input.getAttribute("aria-describedby");
+    expect(describedBy).toBeTruthy();
+    expect(document.getElementById(describedBy!)?.textContent).toBe("boom");
   });
 });
