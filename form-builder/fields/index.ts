@@ -5,6 +5,7 @@ import { DateField } from "./DateField";
 import { FileField } from "./FileField";
 import { GroupField } from "./GroupField";
 import { HiddenField } from "./HiddenField";
+import { MaskedField } from "./MaskedField";
 import { OtpField } from "./OtpField";
 import { PhoneField } from "./PhoneField";
 import { RadioField } from "./RadioField";
@@ -23,6 +24,7 @@ export function registerBuiltInFields(): void {
   registerField("password", TextField);
   registerField("textarea", TextField);
   registerField("number", TextField);
+  registerField("masked", MaskedField);
   registerField("checkbox", CheckboxField);
   registerField("switch", CheckboxField);
   registerField("radio", RadioField);

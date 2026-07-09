@@ -24,6 +24,7 @@ export type Messages = {
   invalidTime: string;
   invalidPhone: string;
   invalidCountry: string;
+  maskIncomplete: string;
   showPassword: string;
   hidePassword: string;
   passwordUppercase: string;
@@ -68,6 +69,7 @@ export const defaultMessages: Messages = {
   invalidTime: "Enter a valid time",
   invalidPhone: "Enter a valid phone number",
   invalidCountry: "Select a valid country",
+  maskIncomplete: "Incomplete value",
   showPassword: "Show password",
   hidePassword: "Hide password",
   passwordUppercase: "1 Uppercase",

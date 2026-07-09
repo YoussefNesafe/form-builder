@@ -447,6 +447,31 @@ describe("time config", () => {
   });
 });
 
+describe("masked config", () => {
+  it("accepts a valid masked field", () =>
+    expect(() =>
+      validateFormConfig({
+        id: "t",
+        fields: [{ type: "masked", name: "card", mask: "#### #### #### ####" }],
+      }),
+    ).not.toThrow());
+
+  it("rejects an empty mask", () =>
+    expect(() =>
+      validateFormConfig({ id: "t", fields: [{ type: "masked", name: "card", mask: "" }] }),
+    ).toThrow());
+
+  it("rejects a mask without token chars", () =>
+    expect(() =>
+      validateFormConfig({ id: "t", fields: [{ type: "masked", name: "card", mask: "----" }] }),
+    ).toThrow(/token/));
+
+  it("rejects a masked field without a mask", () =>
+    expect(() =>
+      validateFormConfig({ id: "t", fields: [{ type: "masked", name: "card" } as never] }),
+    ).toThrow());
+});
+
 describe("country config", () => {
   it("accepts a valid country field", () =>
     expect(() =>

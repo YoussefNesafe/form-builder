@@ -137,6 +137,15 @@ const fieldSchemasByType: Record<FieldConfig["type"], z.ZodType> = {
       .optional(),
   }),
   textarea: textFieldSchema,
+  masked: baseFieldSchema.extend({
+    mask: z
+      .string()
+      .min(1)
+      .refine((mask) => [...mask].some((char) => char === "#" || char === "A" || char === "*"), {
+        message: "mask must contain at least one token char (#, A, *)",
+      }),
+    message: z.string().optional(),
+  }),
   number: baseFieldSchema.extend({
     min: z.number().optional(),
     max: z.number().optional(),

@@ -124,6 +124,18 @@ export function toZodSchema(
       return withTrim(field.rules, field.required ? schema : optionalEmptyable(schema));
     }
 
+    case "masked": {
+      // Completeness = raw length equals the mask's token count; the raw value
+      // itself is char-class-filtered at input time by the component.
+      const tokenCount = [...field.mask].filter((char) => char === "#" || char === "A" || char === "*").length;
+      const base = field.required ? z.string({ error: messages.required }).min(1, messages.required) : z.string();
+      const schema = base.refine(
+        (value) => (value as string).length === tokenCount,
+        field.message ?? messages.maskIncomplete,
+      );
+      return field.required ? schema : optionalEmptyable(schema);
+    }
+
     case "number": {
       let schema = z.number({ error: messages.required });
       if (field.min !== undefined) schema = schema.min(field.min, messages.min(field.min));

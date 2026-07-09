@@ -55,6 +55,7 @@ export const BUILT_IN_FIELD_TYPES = [
   "email",
   "password",
   "textarea",
+  "masked",
   "number",
   "otp",
   "phone",
@@ -78,6 +79,9 @@ export const BUILT_IN_FIELD_TYPES = [
 export type FieldConfig =
   | (BaseField & { type: "text" | "email" | "textarea"; rules?: TextRules })
   | (BaseField & { type: "password"; rules?: TextRules; complexity?: PasswordComplexity })
+  // Stored value is RAW (token chars only, e.g. "4111111111111111"); the mask
+  // ("#" digit, "A" letter, "*" alphanumeric, others literal) is presentation.
+  | (BaseField & { type: "masked"; mask: string; message?: string })
   | (BaseField & { type: "number"; min?: number; max?: number; step?: number })
   | (BaseField & { type: "otp"; length: number; dependsOn?: string })
   | (BaseField & { type: "phone"; defaultCountry?: string; preferredCountries?: string[]; countryFrom?: string })

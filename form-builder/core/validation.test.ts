@@ -552,6 +552,42 @@ describe("country", () => {
   });
 });
 
+describe("masked", () => {
+  it("required enforces completeness against the token count", () => {
+    const schema = schemaFor({ type: "masked", name: "card", required: true, mask: "#### ####" });
+    expect(schema.safeParse("").success).toBe(false);
+    expect(schema.safeParse("1234567").success).toBe(false);
+    expect(schema.safeParse("12345678").success).toBe(true);
+  });
+
+  it("incomplete value surfaces maskIncomplete or the per-field message", () => {
+    const generic = schemaFor({ type: "masked", name: "card", required: true, mask: "####" });
+    const result = generic.safeParse("12");
+    expect(result.success).toBe(false);
+    if (!result.success) expect(result.error.issues[0].message).toBe(messages.maskIncomplete);
+
+    const custom = schemaFor({
+      type: "masked",
+      name: "card",
+      required: true,
+      mask: "####",
+      message: "Card number incomplete",
+    });
+    const customResult = custom.safeParse("12");
+    expect(customResult.success).toBe(false);
+    if (!customResult.success) expect(customResult.error.issues[0].message).toBe("Card number incomplete");
+  });
+
+  it("optional treats empty string as absent but validates partial input", () => {
+    const schema = schemaFor({ type: "masked", name: "card", mask: "####" });
+    const parsed = schema.safeParse("");
+    expect(parsed.success).toBe(true);
+    if (parsed.success) expect(parsed.data).toBeUndefined();
+    expect(schema.safeParse("12").success).toBe(false);
+    expect(schema.safeParse("1234").success).toBe(true);
+  });
+});
+
 describe("custom messages", () => {
   it("override default", () => {
     const custom = mergeMessages({ required: "verplicht" });
