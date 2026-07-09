@@ -82,6 +82,28 @@ describe("RatingField", () => {
     expect(form().getValues("stars")).toBe(4);
   });
 
+  it("arrow keys move DOM focus along with the selection", () => {
+    setup({ type: "rating", name: "stars", label: "Stars" }, { stars: 2 });
+    stars()[1].focus();
+    fireEvent.keyDown(screen.getByRole("radiogroup"), { key: "ArrowRight" });
+    expect(document.activeElement).toBe(stars()[2]);
+    expect(stars()[2].getAttribute("aria-checked")).toBe("true");
+  });
+
+  it("roving tabindex: checked star is the tab stop, first star when unset", () => {
+    setup({ type: "rating", name: "stars", label: "Stars" }, { stars: 3 });
+    expect(stars().map((star) => star.tabIndex)).toEqual([-1, -1, 0, -1, -1]);
+    cleanup();
+    setup({ type: "rating", name: "stars", label: "Stars" });
+    expect(stars().map((star) => star.tabIndex)).toEqual([0, -1, -1, -1, -1]);
+  });
+
+  it("any first arrow press from no selection lands on 1 star", () => {
+    const form = setup({ type: "rating", name: "stars", label: "Stars" });
+    fireEvent.keyDown(screen.getByRole("radiogroup"), { key: "ArrowLeft" });
+    expect(form().getValues("stars")).toBe(1);
+  });
+
   it("honors disabled", () => {
     const form = setup({ type: "rating", name: "stars", label: "Stars", disabled: true });
     fireEvent.click(stars()[0]);

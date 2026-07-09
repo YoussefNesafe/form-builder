@@ -1,6 +1,6 @@
 "use client";
 
-import { useId } from "react";
+import { useId, useRef } from "react";
 import { Controller, useFormContext } from "react-hook-form";
 import { Star } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -18,6 +18,7 @@ export function RatingField({ field }: FieldComponentProps) {
   const { messages } = useFieldRuntime();
   const id = useId();
   const max = config.max ?? 5;
+  const starRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
   return (
     <Controller
@@ -43,7 +44,14 @@ export function RatingField({ field }: FieldComponentProps) {
                 : 0;
           if (step === 0) return;
           event.preventDefault();
-          rhf.onChange(Math.min(max, Math.max(1, value + step)));
+          // From no selection any arrow lands on 1 star — intentional (native
+          // radios would pick last on Left/Up, but "first press = 1 star" is
+          // the less surprising rating behavior).
+          const next = Math.min(max, Math.max(1, value + step));
+          rhf.onChange(next);
+          // Roving tabindex: focus follows selection, so the focus border and
+          // aria-checked announcement stay on the same star.
+          starRefs.current[next - 1]?.focus();
         };
 
         return (
@@ -72,7 +80,10 @@ export function RatingField({ field }: FieldComponentProps) {
                 return (
                   <button
                     key={starValue}
-                    ref={starValue === 1 ? rhf.ref : undefined}
+                    ref={(element) => {
+                      starRefs.current[index] = element;
+                      if (starValue === 1) rhf.ref(element);
+                    }}
                     type="button"
                     role="radio"
                     aria-checked={checked}
