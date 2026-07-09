@@ -243,19 +243,19 @@ describe("validateFormConfig", () => {
     ).toThrow(/pattern/i));
 
   it("accepts custom registered field types (BaseField contract only)", () => {
-    registerField("rating", () => null);
+    registerField("probe-field", () => null);
     expect(() =>
       validateFormConfig({
         id: "t",
-        fields: [{ type: "rating", name: "stars", max: 5 }],
+        fields: [{ type: "probe-field", name: "stars", max: 5 }],
       }),
     ).not.toThrow();
   });
 
   it("custom registered type still requires a name", () => {
-    registerField("rating", () => null);
+    registerField("probe-field", () => null);
     expect(() =>
-      validateFormConfig({ id: "t", fields: [{ type: "rating" } as never] }),
+      validateFormConfig({ id: "t", fields: [{ type: "probe-field" } as never] }),
     ).toThrow(/name/);
   });
 
@@ -443,6 +443,28 @@ describe("time config", () => {
     ).toThrow();
     expect(() =>
       validateFormConfig({ id: "t", fields: [{ type: "time", name: "m", stepMinutes: 7.5 }] }),
+    ).toThrow();
+  });
+});
+
+describe("rating config", () => {
+  it("accepts a valid rating field", () =>
+    expect(() =>
+      validateFormConfig({ id: "t", fields: [{ type: "rating", name: "stars", max: 7 }] }),
+    ).not.toThrow());
+
+  it("accepts a rating field without max (defaults to 5)", () =>
+    expect(() => validateFormConfig({ id: "t", fields: [{ type: "rating", name: "stars" }] })).not.toThrow());
+
+  it("rejects max below 2, above 10, or fractional", () => {
+    expect(() =>
+      validateFormConfig({ id: "t", fields: [{ type: "rating", name: "s", max: 1 }] }),
+    ).toThrow();
+    expect(() =>
+      validateFormConfig({ id: "t", fields: [{ type: "rating", name: "s", max: 11 }] }),
+    ).toThrow();
+    expect(() =>
+      validateFormConfig({ id: "t", fields: [{ type: "rating", name: "s", max: 3.5 }] }),
     ).toThrow();
   });
 });

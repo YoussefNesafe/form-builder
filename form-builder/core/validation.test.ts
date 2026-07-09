@@ -472,6 +472,32 @@ describe("time", () => {
   });
 });
 
+describe("rating", () => {
+  it("required enforces integer within 1..max", () => {
+    const schema = schemaFor({ type: "rating", name: "r", required: true, max: 5 });
+    expect(schema.safeParse(undefined).success).toBe(false);
+    expect(schema.safeParse(0).success).toBe(false);
+    expect(schema.safeParse(6).success).toBe(false);
+    expect(schema.safeParse(2.5).success).toBe(false);
+    expect(schema.safeParse(1).success).toBe(true);
+    expect(schema.safeParse(5).success).toBe(true);
+  });
+
+  it("max defaults to 5", () => {
+    const schema = schemaFor({ type: "rating", name: "r", required: true });
+    expect(schema.safeParse(5).success).toBe(true);
+    expect(schema.safeParse(6).success).toBe(false);
+  });
+
+  it("optional treats cleared values as absent", () => {
+    const schema = schemaFor({ type: "rating", name: "r" });
+    expect(schema.safeParse(undefined).success).toBe(true);
+    expect(schema.safeParse(null).success).toBe(true);
+    expect(schema.safeParse(3).success).toBe(true);
+    expect(schema.safeParse(0).success).toBe(false);
+  });
+});
+
 describe("custom messages", () => {
   it("override default", () => {
     const custom = mergeMessages({ required: "verplicht" });

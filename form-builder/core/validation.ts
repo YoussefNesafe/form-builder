@@ -209,6 +209,16 @@ export function toZodSchema(
       return field.required ? schema : optionalEmptyable(schema);
     }
 
+    case "rating": {
+      const max = field.max ?? 5;
+      const schema = z
+        .number({ error: messages.required })
+        .int(messages.required)
+        .min(1, messages.min(1))
+        .max(max, messages.max(max));
+      return field.required ? schema : optionalClearable(schema);
+    }
+
     case "slider": {
       // Always required: the slider always has a value (defaults to min).
       let schema = z.number({ error: messages.required });

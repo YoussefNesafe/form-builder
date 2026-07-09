@@ -21,6 +21,7 @@ function defaultValueFor(field: FieldConfig): { value: unknown } | null {
     case "textarea":
     case "otp":
     case "phone":
+    case "time":
       return { value: "" };
     case "checkbox":
       return { value: field.options?.length ? [] : false };
@@ -32,6 +33,7 @@ function defaultValueFor(field: FieldConfig): { value: unknown } | null {
     case "number":
     case "date":
     case "file":
+    case "rating":
       return { value: undefined };
     case "slider":
       return { value: field.min };

@@ -64,6 +64,7 @@ export const BUILT_IN_FIELD_TYPES = [
   "switch",
   "date",
   "time",
+  "rating",
   "slider",
   "file",
   "hidden",
@@ -85,6 +86,7 @@ export type FieldConfig =
   // Times are plain zero-padded "HH:mm" strings, compared lexicographically
   // (same convention as dates — no Date math).
   | (BaseField & { type: "time"; minTime?: string; maxTime?: string; stepMinutes?: number })
+  | (BaseField & { type: "rating"; max?: number }) // 1..max stars, max defaults to 5
   | (BaseField & { type: "slider"; min: number; max: number; step?: number })
   | (BaseField & { type: "file"; accept?: string; maxSizeMB?: number; multiple?: boolean })
   | (BaseField & { type: "hidden"; value: unknown })

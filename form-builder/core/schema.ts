@@ -176,6 +176,9 @@ const fieldSchemasByType: Record<FieldConfig["type"], z.ZodType> = {
       (field) => field.minTime === undefined || field.maxTime === undefined || field.minTime <= field.maxTime,
       { message: "minTime must not be after maxTime" },
     ),
+  rating: baseFieldSchema.extend({
+    max: z.number().int().min(2).max(10).optional(),
+  }),
   slider: baseFieldSchema.extend({
     min: z.number(),
     max: z.number(),

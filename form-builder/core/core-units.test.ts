@@ -25,12 +25,22 @@ describe("getPasswordChecks", () => {
 
 describe("buildDefaultValues", () => {
   it("custom fields default to their defaultValue prop", () => {
-    registerField("rating", () => null);
+    registerField("probe-field", () => null);
     const defaults = buildDefaultValues([
-      { type: "rating", name: "stars", defaultValue: 3 },
+      { type: "probe-field", name: "stars", defaultValue: 3 },
       { type: "text", name: "note" },
     ]);
     expect(defaults.stars).toBe(3);
     expect(defaults.note).toBe("");
+  });
+
+  it("time defaults to empty string, rating to undefined", () => {
+    const defaults = buildDefaultValues([
+      { type: "time", name: "meeting" },
+      { type: "rating", name: "stars" },
+    ]);
+    expect(defaults.meeting).toBe("");
+    expect("stars" in defaults).toBe(true);
+    expect(defaults.stars).toBeUndefined();
   });
 });

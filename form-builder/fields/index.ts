@@ -7,6 +7,7 @@ import { HiddenField } from "./HiddenField";
 import { OtpField } from "./OtpField";
 import { PhoneField } from "./PhoneField";
 import { RadioField } from "./RadioField";
+import { RatingField } from "./RatingField";
 import { SelectField } from "./SelectField";
 import { SliderField } from "./SliderField";
 import { StaticField } from "./StaticField";
@@ -28,6 +29,7 @@ export function registerBuiltInFields(): void {
   registerField("phone", PhoneField);
   registerField("date", DateField);
   registerField("time", TimeField);
+  registerField("rating", RatingField);
   registerField("slider", SliderField);
   registerField("file", FileField);
   registerField("group", GroupField);

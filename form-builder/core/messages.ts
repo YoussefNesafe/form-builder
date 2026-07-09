@@ -39,6 +39,7 @@ export type Messages = {
   removeRow: (row: number) => string;
   removeFile: (name: string) => string;
   noOptions: string;
+  ratingValue: (n: number, max: number) => string;
 };
 
 export const defaultMessages: Messages = {
@@ -80,6 +81,7 @@ export const defaultMessages: Messages = {
   removeRow: (row) => `Remove row ${row}`,
   removeFile: (name) => `Remove ${name}`,
   noOptions: "No options",
+  ratingValue: (n, max) => `${n} of ${max}`,
 };
 
 export function mergeMessages(overrides?: Partial<Messages>): Messages {
