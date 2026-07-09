@@ -46,4 +46,23 @@ describe("extractRaw", () => {
   it("returns empty for a tokenless mask", () => {
     expect(extractRaw("anything", "---")).toBe("");
   });
+
+  it("literals matching a token class are not absorbed (leading digit literal)", () => {
+    const phone = "+1 ### ###";
+    // Typing sequence: each change re-extracts from the formatted display.
+    expect(extractRaw("5", phone)).toBe("5");
+    expect(formatMasked("5", phone)).toBe("+1 5");
+    expect(extractRaw("+1 56", phone)).toBe("56");
+    expect(extractRaw("+1 567 89", phone)).toBe("56789");
+  });
+
+  it("round-trips masks whose literals collide with token classes", () => {
+    for (const [raw, mask] of [
+      ["b4", "A3#"],
+      ["567890", "+1 ### ###"],
+      ["12", "#-#"],
+    ] as const) {
+      expect(extractRaw(formatMasked(raw, mask), mask)).toBe(raw);
+    }
+  });
 });

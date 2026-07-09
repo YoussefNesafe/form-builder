@@ -84,6 +84,11 @@ describe("MaskedField", () => {
     expect(input().getAttribute("inputmode")).toBeNull();
   });
 
+  it("tolerates a missing default value", () => {
+    setup(card, {});
+    expect(input().value).toBe("");
+  });
+
   it("renders error text with aria wiring", async () => {
     const form = setup();
     await act(async () => form().setError("card", { type: "manual", message: "boom" }));

@@ -560,6 +560,13 @@ describe("masked", () => {
     expect(schema.safeParse("12345678").success).toBe(true);
   });
 
+  it("empty required surfaces the required message first (not maskIncomplete)", () => {
+    const schema = schemaFor({ type: "masked", name: "card", required: true, mask: "####" });
+    const result = schema.safeParse("");
+    expect(result.success).toBe(false);
+    if (!result.success) expect(result.error.issues[0].message).toBe(messages.required);
+  });
+
   it("incomplete value surfaces maskIncomplete or the per-field message", () => {
     const generic = schemaFor({ type: "masked", name: "card", required: true, mask: "####" });
     const result = generic.safeParse("12");

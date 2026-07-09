@@ -32,14 +32,35 @@ export function formatMasked(raw: string, mask: string): string {
   return out;
 }
 
-/** Inverse of formatMasked; drops chars that don't fit the next token class and caps at the token count. */
+/**
+ * Inverse of formatMasked. Walks mask and display in tandem so a literal that
+ * happens to match a token class (e.g. the "1" in "+1 ###") is consumed as a
+ * literal, never absorbed into the raw value — extractRaw(formatMasked(raw))
+ * === raw for every raw that fits the mask. Display chars that fit no slot
+ * are dropped; raw is capped by the mask's token count by construction.
+ */
 export function extractRaw(display: string, mask: string): string {
-  const tokens: string[] = [];
-  for (const char of mask) if (TOKENS.has(char)) tokens.push(char);
   let raw = "";
-  for (const char of display) {
-    if (raw.length >= tokens.length) break;
-    if (matchesToken(tokens[raw.length], char)) raw += char;
+  let maskIndex = 0;
+  let displayIndex = 0;
+  while (displayIndex < display.length && maskIndex < mask.length) {
+    const maskChar = mask[maskIndex];
+    const displayChar = display[displayIndex];
+    if (TOKENS.has(maskChar)) {
+      if (matchesToken(maskChar, displayChar)) {
+        raw += displayChar;
+        maskIndex += 1;
+      }
+      // Non-matching char is garbage for this slot — drop it, stay on the slot.
+      displayIndex += 1;
+    } else if (displayChar === maskChar) {
+      // Literal present in the display (formatted input) — consume both.
+      maskIndex += 1;
+      displayIndex += 1;
+    } else {
+      // Literal absent (raw input, e.g. pasted digits) — skip the mask literal.
+      maskIndex += 1;
+    }
   }
   return raw;
 }
