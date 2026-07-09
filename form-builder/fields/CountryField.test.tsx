@@ -44,7 +44,7 @@ function HarnessWithLocale({
   onForm: (form: UseFormReturn) => void;
   countryLabels: Record<string, string>;
 }) {
-  const form = useForm({ defaultValues: { residence: undefined } });
+  const form = useForm<Record<string, unknown>>({ defaultValues: { residence: undefined } });
   onForm(form);
   return (
     <FormProvider {...form}>
