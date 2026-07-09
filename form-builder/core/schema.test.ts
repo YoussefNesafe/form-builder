@@ -447,6 +447,34 @@ describe("time config", () => {
   });
 });
 
+describe("segmented config", () => {
+  it("accepts a valid segmented field", () =>
+    expect(() =>
+      validateFormConfig({
+        id: "t",
+        fields: [
+          {
+            type: "segmented",
+            name: "plan",
+            options: [
+              { label: "Basic", value: "basic" },
+              { label: "Pro", value: 2 },
+            ],
+          },
+        ],
+      }),
+    ).not.toThrow());
+
+  it("rejects a segmented field without options", () => {
+    expect(() =>
+      validateFormConfig({ id: "t", fields: [{ type: "segmented", name: "plan" } as never] }),
+    ).toThrow();
+    expect(() =>
+      validateFormConfig({ id: "t", fields: [{ type: "segmented", name: "plan", options: [] }] }),
+    ).toThrow();
+  });
+});
+
 describe("rating config", () => {
   it("accepts a valid rating field", () =>
     expect(() =>

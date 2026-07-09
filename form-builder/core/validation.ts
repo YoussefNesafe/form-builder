@@ -156,7 +156,8 @@ export function toZodSchema(
       return field.required ? value : optionalClearable(value);
     }
 
-    case "radio": {
+    case "radio":
+    case "segmented": {
       const value = optionValueSchema(field.options, field.required ? messages.required : undefined);
       return field.required ? value : optionalClearable(value);
     }

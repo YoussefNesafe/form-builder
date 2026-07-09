@@ -498,6 +498,28 @@ describe("rating", () => {
   });
 });
 
+describe("segmented", () => {
+  const options = [
+    { label: "Basic", value: "basic" },
+    { label: "Pro", value: 2 },
+  ];
+
+  it("required accepts only option-typed values, rejects missing", () => {
+    const schema = schemaFor({ type: "segmented", name: "plan", required: true, options });
+    expect(schema.safeParse(undefined).success).toBe(false);
+    expect(schema.safeParse("basic").success).toBe(true);
+    expect(schema.safeParse(2).success).toBe(true);
+    expect(schema.safeParse(true).success).toBe(false);
+  });
+
+  it("optional treats null/cleared as absent", () => {
+    const schema = schemaFor({ type: "segmented", name: "plan", options });
+    expect(schema.safeParse(undefined).success).toBe(true);
+    expect(schema.safeParse(null).success).toBe(true);
+    expect(schema.safeParse("basic").success).toBe(true);
+  });
+});
+
 describe("custom messages", () => {
   it("override default", () => {
     const custom = mergeMessages({ required: "verplicht" });

@@ -30,6 +30,7 @@ function defaultValueFor(field: FieldConfig): { value: unknown } | null {
     case "select":
       return { value: field.multiple ? [] : undefined };
     case "radio":
+    case "segmented":
     case "number":
     case "date":
     case "file":

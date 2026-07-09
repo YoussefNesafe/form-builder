@@ -157,6 +157,7 @@ const fieldSchemasByType: Record<FieldConfig["type"], z.ZodType> = {
     multiple: z.boolean().optional(),
   }),
   radio: baseFieldSchema.extend({ options: z.array(optionSchema).min(1) }),
+  segmented: baseFieldSchema.extend({ options: z.array(optionSchema).min(1) }),
   checkbox: baseFieldSchema.extend({ options: z.array(optionSchema).optional() }),
   switch: baseFieldSchema.extend({ options: z.array(optionSchema).optional() }),
   date: baseFieldSchema.extend({

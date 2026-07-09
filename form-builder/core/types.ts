@@ -60,6 +60,7 @@ export const BUILT_IN_FIELD_TYPES = [
   "phone",
   "select",
   "radio",
+  "segmented",
   "checkbox",
   "switch",
   "date",
@@ -81,6 +82,7 @@ export type FieldConfig =
   | (BaseField & { type: "phone"; defaultCountry?: string; preferredCountries?: string[]; countryFrom?: string })
   | (BaseField & { type: "select"; options: Option[]; searchable?: boolean; multiple?: boolean })
   | (BaseField & { type: "radio"; options: Option[] })
+  | (BaseField & { type: "segmented"; options: Option[] }) // radio semantics, button-group presentation
   | (BaseField & { type: "checkbox" | "switch"; options?: Option[] }) // options => checkbox group
   | (BaseField & { type: "date"; range?: boolean; minDate?: string; maxDate?: string })
   // Times are plain zero-padded "HH:mm" strings, compared lexicographically

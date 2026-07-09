@@ -8,6 +8,7 @@ import { OtpField } from "./OtpField";
 import { PhoneField } from "./PhoneField";
 import { RadioField } from "./RadioField";
 import { RatingField } from "./RatingField";
+import { SegmentedField } from "./SegmentedField";
 import { SelectField } from "./SelectField";
 import { SliderField } from "./SliderField";
 import { StaticField } from "./StaticField";
@@ -24,6 +25,7 @@ export function registerBuiltInFields(): void {
   registerField("checkbox", CheckboxField);
   registerField("switch", CheckboxField);
   registerField("radio", RadioField);
+  registerField("segmented", SegmentedField);
   registerField("select", SelectField);
   registerField("otp", OtpField);
   registerField("phone", PhoneField);
