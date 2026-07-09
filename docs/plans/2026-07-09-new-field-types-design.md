@@ -1,7 +1,7 @@
 # New Field Types Design
 
 **Date:** 2026-07-09
-**Status:** Approved
+**Status:** Approved — implemented; two details superseded by review findings (see AGENTS.md "New field types"): SegmentedField ships on the radix RadioGroup primitive (not ToggleGroup — guaranteed radio semantics), and the signature resize handler uses `pad.redraw()` (a manual `toData()`/`fromData()` pair wipes `fromDataURL`-restored ink). Messages also gained `invalidCountry` and `searchCountry`.
 
 ## Problem
 

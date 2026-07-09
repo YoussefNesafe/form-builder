@@ -34,3 +34,6 @@ export type { OtpVerifiedChecker } from "./core/validation";
 export type { OtpRuntime } from "./components/FieldRuntime";
 export { stripInvisibleValues } from "./core/conditions";
 export { registerBuiltInFields } from "./fields";
+// Masked payloads carry the RAW value; hosts re-format for display (e.g.
+// review/confirmation screens) with the same helpers the field uses.
+export { formatMasked, extractRaw, maskTokenCount } from "./fields/maskedValue";

@@ -45,7 +45,7 @@ Config-driven form engine (Next.js 16 / React 19 / RHF 7 / Zod 4 / Tailwind 4). 
 - `masked` stores the RAW value (token chars only); the mask is presentation. `extractRaw` in `form-builder/fields/maskedValue.ts` walks mask+display in tandem so literals matching a token class (the "1" in `"+1 ###"`) are never absorbed — do not "simplify" it back to class-filtering. Masks like `"#1#"` (literal matches its own slot's class) swallow that keystroke by design (wrong value never stored).
 - `signature` resize handling must use `pad.redraw()` — a manual `toData()`/`fromData()` pair wipes `fromDataURL`-restored ink (fromDataURL stores pixels, not points). `penColor` is static config; a field that mounts disabled needs the explicit `pad.off()` (constructor auto-ons).
 - `country` values are ISO alpha-2 by construction and valid as a phone `countryFrom` source (no option checks). Labels resolve `locale.countryLabels` → `Intl.DisplayNames` → code; hosts that localize should pass `countryLabels` (avoids an SSR/browser locale hydration mismatch on preset values).
-- `segmented` is the radix RadioGroup primitive (radio semantics), deliberately not ToggleGroup — guaranteed radiogroup/radio roles + arrow-key roving; an optional segmented cannot be cleared once set (same as radio).
+- `segmented` is the radix RadioGroup primitive (radio semantics), deliberately not ToggleGroup — guaranteed radiogroup/radio roles + arrow-key roving; an optional segmented cannot be cleared once set (same as radio — and same for `country`, whose combobox has no clear row).
 
 ## Phone country sync (`countryFrom`)
 
