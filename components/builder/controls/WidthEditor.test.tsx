@@ -23,6 +23,12 @@ describe("WidthEditor", () => {
     expect(onChange).toHaveBeenCalledWith({ mobile: "half" });
   });
 
+  it("toggles to per-breakpoint even from the default (unset) width", () => {
+    const onChange = renderEditor(undefined);
+    fireEvent.click(screen.getByText("Per breakpoint"));
+    expect(onChange).toHaveBeenCalledWith({});
+  });
+
   it("collapses per-breakpoint back to the mobile value when going uniform", () => {
     const onChange = renderEditor({ mobile: "third", desktop: "half" });
     fireEvent.click(screen.getByText("Uniform"));

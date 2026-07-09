@@ -10,6 +10,13 @@ describe("coerceScalar", () => {
     expect(coerceScalar("red")).toBe("red");
     expect(coerceScalar("")).toBe("");
   });
+
+  it("keeps non-round-tripping numerics as strings (leading zeros, exponents)", () => {
+    expect(coerceScalar("007")).toBe("007");
+    expect(coerceScalar("1e3")).toBe("1e3");
+    expect(coerceScalar("3.50")).toBe("3.50");
+    expect(coerceScalar("10")).toBe(10);
+  });
 });
 
 describe("scalarToText", () => {

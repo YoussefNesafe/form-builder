@@ -98,6 +98,26 @@ describe("builder store", () => {
     expect(kids().some((n) => n._id === removeId)).toBe(false);
   });
 
+  it("scrubs sibling references when a referenced field is deleted", () => {
+    const s = createBuilderStore();
+    s.getState().addNode("email");
+    const emailId = s.getState().nodes[0]._id;
+    s.getState().updateProps(emailId, { name: "email" });
+    s.getState().addNode("otp");
+    const otpId = s.getState().nodes[1]._id;
+    s.getState().updateProps(otpId, { dependsOn: "email" });
+    s.getState().addNode("text");
+    const textId = s.getState().nodes[2]._id;
+    s.getState().updateProps(textId, { visibleWhen: { field: "email", equals: "x" } });
+
+    s.getState().removeNode(emailId);
+
+    const otp = s.getState().nodes.find((n) => n._id === otpId)!;
+    const text = s.getState().nodes.find((n) => n._id === textId)!;
+    expect(otp.props.dependsOn).toBeUndefined();
+    expect(text.props.visibleWhen).toBeUndefined();
+  });
+
   it("round-trips through the serializer", () => {
     const s = createBuilderStore();
     s.getState().addNode("text");

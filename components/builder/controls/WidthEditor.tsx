@@ -55,7 +55,9 @@ export function WidthEditor({ id, value, onChange }: ControlProps<ResponsiveFiel
   const obj = isObject ? value : {};
 
   const setMode = (perBreakpoint: boolean) => {
-    if (perBreakpoint) onChange(uniform ? { mobile: uniform } : undefined);
+    // Seed an (empty) object even at the default width so the toggle actually
+    // switches modes; the object form resolves to full when a breakpoint is unset.
+    if (perBreakpoint) onChange(uniform ? { mobile: uniform } : {});
     else onChange(isObject ? value.mobile : undefined);
   };
 

@@ -28,6 +28,11 @@ export type PropDescriptor = {
   options?: { label: string; value: string }[];
   /** Which siblings a `control: "fieldRef"` may reference. */
   refKind?: "otp" | "countrySource" | "any";
+  /** Native constraints for `control: "number"`. */
+  min?: number;
+  max?: number;
+  step?: number;
+  integer?: boolean;
   help?: string;
 };
 
@@ -97,7 +102,7 @@ export const FIELD_PROPS: Record<FieldType, PropDescriptor[]> = {
   ],
   otp: [
     ...BASE,
-    { key: "length", label: "Length", control: "number", help: "Number of code digits." },
+    { key: "length", label: "Length", control: "number", integer: true, min: 1, help: "Number of code digits." },
     { key: "dependsOn", label: "Depends on", control: "fieldRef", refKind: "any", help: "Field that must be valid before sending a code." },
   ],
   phone: [
@@ -131,9 +136,12 @@ export const FIELD_PROPS: Record<FieldType, PropDescriptor[]> = {
     ...BASE,
     { key: "minTime", label: "Min time", control: "time" },
     { key: "maxTime", label: "Max time", control: "time" },
-    { key: "stepMinutes", label: "Step (minutes)", control: "number" },
+    { key: "stepMinutes", label: "Step (minutes)", control: "number", integer: true, min: 1 },
   ],
-  rating: [...BASE, { key: "max", label: "Max stars", control: "number", help: "2–10, defaults to 5." }],
+  rating: [
+    ...BASE,
+    { key: "max", label: "Max stars", control: "number", integer: true, min: 2, max: 10, help: "2–10, defaults to 5." },
+  ],
   slider: [
     ...BASE,
     { key: "min", label: "Min", control: "number" },
@@ -143,12 +151,12 @@ export const FIELD_PROPS: Record<FieldType, PropDescriptor[]> = {
   signature: [
     ...BASE,
     { key: "penColor", label: "Pen color", control: "penColor" },
-    { key: "heightPx", label: "Height (px)", control: "number" },
+    { key: "heightPx", label: "Height (px)", control: "number", integer: true, min: 1 },
   ],
   file: [
     ...BASE,
     { key: "accept", label: "Accept", control: "text", help: 'e.g. ".pdf,.png,.jpg"' },
-    { key: "maxSizeMB", label: "Max size (MB)", control: "number" },
+    { key: "maxSizeMB", label: "Max size (MB)", control: "number", min: 0 },
     { key: "multiple", label: "Multiple", control: "boolean" },
   ],
   // Layout / non-standard: opt out of the input BASE set.

@@ -7,7 +7,9 @@ export function coerceScalar(raw: string): string | number | boolean {
   const t = raw.trim();
   if (t === "true") return true;
   if (t === "false") return false;
-  if (t !== "" && !Number.isNaN(Number(t))) return Number(t);
+  // Only treat as a number when it round-trips exactly — preserves leading-zero
+  // codes ("007"), exponents ("1e3"), and hex-looking strings as plain strings.
+  if (t !== "" && String(Number(t)) === t) return Number(t);
   return raw;
 }
 

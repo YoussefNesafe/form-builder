@@ -34,16 +34,21 @@ export function TextareaControl({ id, value, onChange }: ControlProps<string>) {
   );
 }
 
-export function NumberControl({ id, value, onChange }: ControlProps<number>) {
+export function NumberControl({ id, value, onChange, descriptor }: ControlProps<number>) {
+  const { min, max, step, integer } = descriptor;
   return (
     <Input
       id={id}
       type="number"
       value={value ?? ""}
+      min={min}
+      max={max}
+      step={step ?? (integer ? 1 : undefined)}
       onChange={(e) => {
         if (e.target.value === "") return onChange(undefined);
         const n = e.target.valueAsNumber;
-        onChange(Number.isNaN(n) ? undefined : n);
+        if (Number.isNaN(n)) return onChange(undefined);
+        onChange(integer ? Math.trunc(n) : n);
       }}
     />
   );
@@ -150,7 +155,8 @@ export function JsonControl({ id, value, onChange }: ControlProps<unknown>) {
       placeholder='"text", 42, true, or {"a":1}'
       onChange={(e) => {
         const raw = e.target.value;
-        if (raw === "") return onChange(undefined);
+        // Empty → "" (not undefined): a hidden field must keep its `value` key.
+        if (raw === "") return onChange("");
         try {
           onChange(JSON.parse(raw));
         } catch {

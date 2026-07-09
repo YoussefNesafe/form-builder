@@ -111,6 +111,26 @@ function cloneSubtree(node: BuilderNode, taken: Set<string>): BuilderNode {
   return clone;
 }
 
+/** Clear any prop on `node` that references the deleted field `name` (same level only). */
+function scrubRefs(node: BuilderNode, name: string): BuilderNode {
+  const props = { ...node.props };
+  let changed = false;
+  for (const key of ["dependsOn", "enabledWhenVerified", "countryFrom"]) {
+    if (props[key] === name) {
+      delete props[key];
+      changed = true;
+    }
+  }
+  for (const key of ["visibleWhen", "disabledWhen"]) {
+    const cond = props[key] as { field?: unknown } | undefined;
+    if (cond && typeof cond === "object" && cond.field === name) {
+      delete props[key];
+      changed = true;
+    }
+  }
+  return changed ? { ...node, props } : node;
+}
+
 /** Every `_id` in the tree — used to advance the id counter after rehydration. */
 function collectIds(nodes: BuilderNode[], into: string[] = []): string[] {
   for (const node of nodes) {
@@ -174,18 +194,26 @@ const creator: StateCreator<BuilderStore> = (set, get) => ({
     }));
   },
 
-  removeNode: (id) =>
+  removeNode: (id) => {
+    const removed = findNode(get().nodes, id);
+    const name = removed && typeof removed.props.name === "string" ? removed.props.name : null;
     set((state) => {
-      const prune = (nodes: BuilderNode[]): BuilderNode[] =>
-        nodes
+      const prune = (nodes: BuilderNode[]): BuilderNode[] => {
+        const hadTarget = nodes.some((n) => n._id === id);
+        let next = nodes
           .filter((n) => n._id !== id)
           .map((n) => (n.children ? { ...n, children: prune(n.children) } : n));
+        // Scrub sibling references to the deleted field so the config stays valid.
+        if (hadTarget && name) next = next.map((n) => scrubRefs(n, name));
+        return next;
+      };
       return {
         nodes: prune(state.nodes),
         selectedId: state.selectedId === id ? null : state.selectedId,
         steps: state.steps.map((step) => ({ ...step, nodeIds: step.nodeIds.filter((nid) => nid !== id) })),
       };
-    }),
+    });
+  },
 
   selectNode: (id) => set({ selectedId: id }),
   setMeta: (patch) => set(patch),
