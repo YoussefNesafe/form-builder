@@ -35,6 +35,28 @@ function Harness({
   );
 }
 
+function HarnessWithLocale({
+  field,
+  onForm,
+  countryLabels,
+}: {
+  field: CountryConfig;
+  onForm: (form: UseFormReturn) => void;
+  countryLabels: Record<string, string>;
+}) {
+  const form = useForm({ defaultValues: { residence: undefined } });
+  onForm(form);
+  return (
+    <FormProvider {...form}>
+      <FieldRuntimeContext.Provider
+        value={{ disabled: false, messages: defaultMessages, locale: { countryLabels } }}
+      >
+        <CountryField field={field} />
+      </FieldRuntimeContext.Provider>
+    </FormProvider>
+  );
+}
+
 const config: CountryConfig = {
   type: "country",
   name: "residence",
@@ -91,7 +113,7 @@ describe("CountryField", () => {
   it("search filters the list", () => {
     setup();
     openCombobox();
-    fireEvent.change(screen.getByPlaceholderText(defaultMessages.country), { target: { value: "nether" } });
+    fireEvent.change(screen.getByPlaceholderText(defaultMessages.searchCountry), { target: { value: "nether" } });
     expect(screen.getByRole("option", { name: /Netherlands/ })).toBeTruthy();
     expect(screen.queryByRole("option", { name: /Egypt/ })).toBeNull();
   });
@@ -116,6 +138,28 @@ describe("CountryField", () => {
       fireEvent.click(screen.getByRole("option", { name: /United Arab Emirates/ }));
     });
     expect(form().getValues("mobile")).toBe("+971");
+  });
+
+  it("shows the placeholder when nothing is selected", () => {
+    setup({ ...config, placeholder: "Pick a country" });
+    expect(trigger().textContent).toContain("Pick a country");
+  });
+
+  it("disabled trigger does not open the popover", () => {
+    setup({ ...config, disabled: true });
+    fireEvent.click(trigger());
+    expect(screen.queryAllByRole("option")).toHaveLength(0);
+  });
+
+  it("host-provided countryLabels win over Intl names", () => {
+    let form!: UseFormReturn;
+    render(
+      <HarnessWithLocale field={config} onForm={(f) => (form = f)} countryLabels={{ EG: "مصر" }} />,
+    );
+    void form;
+    fireEvent.click(trigger());
+    expect(screen.getByRole("option", { name: /مصر/ })).toBeTruthy();
+    expect(screen.queryByRole("option", { name: /^Egypt/ })).toBeNull();
   });
 
   it("renders error text with aria wiring", async () => {

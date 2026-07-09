@@ -36,6 +36,7 @@ export type Messages = {
   steps: string;
   submit: string;
   country: string;
+  searchCountry: string;
   addRow: string;
   removeRow: (row: number) => string;
   removeFile: (name: string) => string;
@@ -79,6 +80,7 @@ export const defaultMessages: Messages = {
   steps: "Steps",
   submit: "Submit",
   country: "Country",
+  searchCountry: "Search country...",
   addRow: "Add",
   removeRow: (row) => `Remove row ${row}`,
   removeFile: (name) => `Remove ${name}`,

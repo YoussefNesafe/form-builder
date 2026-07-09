@@ -36,15 +36,22 @@ function Flag({ code, label }: { code: string; label: string }) {
   );
 }
 
-function buildOptions(config: CountryFieldConfig): { preferred: CountryOption[]; rest: CountryOption[] } {
-  const codes = config.countries ?? (getCountries() as string[]);
-  // Intl.DisplayNames is universally available in the supported runtimes;
-  // the code itself is the fallback label if a name is missing.
+function buildOptions(
+  countries: string[] | undefined,
+  preferredCountries: string[] | undefined,
+  countryLabels: Record<string, string> | undefined,
+): { preferred: CountryOption[]; rest: CountryOption[] } {
+  const codes = countries ?? (getCountries() as string[]);
+  // Host-provided labels win (same source PhoneField uses); Intl.DisplayNames
+  // fills the rest. Caveat: with no countryLabels and a preset value, the
+  // server (Node ICU default locale) and the browser may name the selected
+  // country differently — a recoverable hydration text mismatch on the
+  // trigger. Hosts that care pass locale.countryLabels.
   const names = new Intl.DisplayNames(undefined, { type: "region" });
   const labeled = codes
-    .map((code) => ({ code, label: names.of(code) ?? code }))
+    .map((code) => ({ code, label: countryLabels?.[code] ?? names.of(code) ?? code }))
     .sort((a, b) => a.label.localeCompare(b.label));
-  const preferredOrder = config.preferredCountries ?? [];
+  const preferredOrder = preferredCountries ?? [];
   if (!preferredOrder.length) return { preferred: [], rest: labeled };
   const byCode = new Map(labeled.map((option) => [option.code, option]));
   const preferredSet = new Set(preferredOrder);
@@ -59,14 +66,13 @@ export function CountryField({ field }: FieldComponentProps) {
   const config = field as CountryFieldConfig;
   const { control } = useFormContext();
   const disabled = useFieldDisabled(config);
-  const { messages } = useFieldRuntime();
+  const { messages, locale } = useFieldRuntime();
   const id = useId();
   const [open, setOpen] = useState(false);
 
   const { preferred, rest } = useMemo(
-    () => buildOptions(config),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [config.countries, config.preferredCountries],
+    () => buildOptions(config.countries, config.preferredCountries, locale?.countryLabels),
+    [config.countries, config.preferredCountries, locale?.countryLabels],
   );
 
   const renderItem = (option: CountryOption, selected: string | undefined, onSelect: (code: string) => void) => (
@@ -146,7 +152,7 @@ export function CountryField({ field }: FieldComponentProps) {
               </PopoverTrigger>
               <PopoverContent className="w-(--radix-popover-trigger-width) p-0" align="start">
                 <Command>
-                  <CommandInput placeholder={messages.country} />
+                  <CommandInput placeholder={messages.searchCountry} />
                   <CommandList>
                     <CommandEmpty>{messages.noOptions}</CommandEmpty>
                     {preferred.length > 0 && (
