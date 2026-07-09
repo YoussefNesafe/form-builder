@@ -6,8 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useBuilderStore } from "./model/store";
 import { FieldList } from "./FieldList";
+import { StepsPanel } from "./StepsPanel";
 import { PreviewPanel } from "./Preview";
 import { PropEditorPanel } from "./PropEditor";
+import { BuilderHeaderActions } from "./BuilderHeaderActions";
 
 // Field runtime must be registered before the preview renders any field.
 registerBuiltInFields();
@@ -43,7 +45,7 @@ export function FormBuilder() {
   return (
     <div className="dark flex min-h-dvh flex-col bg-background text-foreground">
       <header className="flex flex-col gap-[12px] tablet:gap-[12px] desktop:gap-[12px] border-b border-border px-[16px] tablet:px-[20px] desktop:px-[24px] py-[14px] tablet:py-[14px] desktop:py-[14px] tablet:flex-row tablet:items-end tablet:justify-between">
-        <div className="flex flex-col gap-[2px] tablet:gap-[2px] desktop:gap-[2px]">
+        <div className="flex flex-col gap-[2px] tablet:gap-[2px] desktop:gap-[2px] tablet:flex-1">
           <span className="text-[12px] tablet:text-[12px] desktop:text-[12px] font-medium uppercase tracking-wide text-muted-foreground">
             Form Builder
           </span>
@@ -73,11 +75,15 @@ export function FormBuilder() {
             </div>
           </div>
         </div>
+        <BuilderHeaderActions />
       </header>
 
       <div className="flex min-h-0 flex-1 flex-col desktop:flex-row">
-        <aside className="border-b border-border p-[16px] tablet:p-[16px] desktop:p-[16px] desktop:w-[300px] desktop:border-b-0 desktop:border-r desktop:overflow-y-auto">
-          <FieldList />
+        <aside className="flex flex-col gap-[12px] tablet:gap-[12px] desktop:gap-[12px] border-b border-border p-[16px] tablet:p-[16px] desktop:p-[16px] desktop:w-[300px] desktop:border-b-0 desktop:border-r desktop:overflow-y-auto">
+          <StepsPanel />
+          <div className="flex min-h-0 flex-1 flex-col">
+            <FieldList />
+          </div>
         </aside>
         <main className="min-w-0 flex-1 p-[16px] tablet:p-[20px] desktop:p-[24px] desktop:overflow-y-auto">
           <PreviewPanel />

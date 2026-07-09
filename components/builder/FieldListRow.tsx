@@ -3,6 +3,13 @@
 import { ChevronDown, ChevronUp, Copy, Trash2 } from "lucide-react";
 import type { FieldType } from "@/form-builder";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { useBuilderStore } from "./model/store";
 import { FIELD_META } from "./model/fieldMeta";
@@ -10,16 +17,25 @@ import { FieldIcon } from "./ui/FieldIcon";
 import { AddFieldMenu } from "./AddFieldMenu";
 import type { BuilderNode } from "./model/types";
 
+const UNASSIGNED = "__unassigned__";
+
 /** One field in the list. Recurses to render `group` children indented. */
-export function FieldListRow({ node }: { node: BuilderNode }) {
+export function FieldListRow({ node, topLevel = true }: { node: BuilderNode; topLevel?: boolean }) {
   const selectedId = useBuilderStore((s) => s.selectedId);
   const selectNode = useBuilderStore((s) => s.selectNode);
   const moveNode = useBuilderStore((s) => s.moveNode);
   const duplicateNode = useBuilderStore((s) => s.duplicateNode);
   const removeNode = useBuilderStore((s) => s.removeNode);
   const addNode = useBuilderStore((s) => s.addNode);
+  const multiStep = useBuilderStore((s) => s.multiStep);
+  const steps = useBuilderStore((s) => s.steps);
+  const assignNodeToStep = useBuilderStore((s) => s.assignNodeToStep);
 
   const selected = selectedId === node._id;
+  // hidden/submit render automatically and must not be assigned to a step.
+  const stepEligible = node.type !== "hidden" && node.type !== "submit";
+  const assignedStep = steps.findIndex((s) => s.nodeIds.includes(node._id));
+  const showStepSelect = multiStep && topLevel && stepEligible && steps.length > 0;
   const name = (node.props.name as string) || "(unnamed)";
   const label = (node.props.label as string) || "";
 
@@ -68,10 +84,33 @@ export function FieldListRow({ node }: { node: BuilderNode }) {
         </div>
       </div>
 
+      {showStepSelect && (
+        <Select
+          value={assignedStep >= 0 ? String(assignedStep) : UNASSIGNED}
+          onValueChange={(v) => assignNodeToStep(node._id, v === UNASSIGNED ? null : Number(v))}
+        >
+          <SelectTrigger
+            aria-label={`Step for ${name}`}
+            size="sm"
+            className={cn("w-full", assignedStep < 0 && "border-destructive/50")}
+          >
+            <SelectValue placeholder="Assign to step…" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={UNASSIGNED}>Unassigned</SelectItem>
+            {steps.map((s, i) => (
+              <SelectItem key={i} value={String(i)}>
+                {s.title || `Step ${i + 1}`}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
+
       {node.type === "group" && (
         <div className="ml-[16px] tablet:ml-[16px] desktop:ml-[16px] flex flex-col gap-[4px] tablet:gap-[4px] desktop:gap-[4px] border-l border-border pl-[8px] tablet:pl-[8px] desktop:pl-[8px]">
           {(node.children ?? []).map((child) => (
-            <FieldListRow key={child._id} node={child} />
+            <FieldListRow key={child._id} node={child} topLevel={false} />
           ))}
           <AddFieldMenu size="xs" label="Add to group" onPick={(type) => addNode(type, node._id)} />
         </div>

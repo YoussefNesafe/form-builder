@@ -17,6 +17,12 @@ export type BuilderActions = {
   setOutputMode: (mode: OutputMode) => void;
   toggleMultiStep: (on: boolean) => void;
   setSteps: (steps: BuilderStep[]) => void;
+  addStep: () => void;
+  renameStep: (index: number, title: string) => void;
+  removeStep: (index: number) => void;
+  moveStep: (index: number, dir: -1 | 1) => void;
+  /** Assign a node to a step (or `null` to unassign); removes it from every other step. */
+  assignNodeToStep: (nodeId: string, stepIndex: number | null) => void;
   reset: () => void;
 };
 
@@ -218,8 +224,45 @@ const creator: StateCreator<BuilderStore> = (set, get) => ({
   selectNode: (id) => set({ selectedId: id }),
   setMeta: (patch) => set(patch),
   setOutputMode: (mode) => set({ outputMode: mode }),
-  toggleMultiStep: (on) => set({ multiStep: on }),
+
+  toggleMultiStep: (on) =>
+    set((state) => {
+      if (!on || state.steps.length > 0) return { multiStep: on };
+      // Seed a first step containing every step-eligible top-level field
+      // (hidden/submit render automatically and must not be assigned).
+      const nodeIds = state.nodes
+        .filter((n) => n.type !== "hidden" && n.type !== "submit")
+        .map((n) => n._id);
+      return { multiStep: on, steps: [{ title: "Step 1", nodeIds }] };
+    }),
+
   setSteps: (steps) => set({ steps }),
+
+  addStep: () =>
+    set((state) => ({ steps: [...state.steps, { title: `Step ${state.steps.length + 1}`, nodeIds: [] }] })),
+
+  renameStep: (index, title) =>
+    set((state) => ({ steps: state.steps.map((s, i) => (i === index ? { ...s, title } : s)) })),
+
+  removeStep: (index) => set((state) => ({ steps: state.steps.filter((_, i) => i !== index) })),
+
+  moveStep: (index, dir) =>
+    set((state) => {
+      const target = index + dir;
+      if (target < 0 || target >= state.steps.length) return {};
+      const steps = [...state.steps];
+      [steps[index], steps[target]] = [steps[target], steps[index]];
+      return { steps };
+    }),
+
+  assignNodeToStep: (nodeId, stepIndex) =>
+    set((state) => ({
+      steps: state.steps.map((step, i) => {
+        const without = step.nodeIds.filter((id) => id !== nodeId);
+        return i === stepIndex ? { ...step, nodeIds: [...without, nodeId] } : { ...step, nodeIds: without };
+      }),
+    })),
+
   reset: () => set({ ...INITIAL }),
 });
 

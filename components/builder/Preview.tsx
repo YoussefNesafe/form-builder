@@ -21,22 +21,26 @@ export function PreviewPanel() {
   const nodes = useBuilderStore((s) => s.nodes);
   const multiStep = useBuilderStore((s) => s.multiStep);
   const steps = useBuilderStore((s) => s.steps);
-  const [submitted, setSubmitted] = useState<FormValues | null>(null);
+  // Tag a submission with the structural key it came from so it auto-hides once
+  // the form changes shape (no reset effect needed).
+  const [submission, setSubmission] = useState<{ key: string; values: FormValues } | null>(null);
 
   const config = useMemo(
     () => serialize({ title, description, nodes, multiStep, steps }),
     [title, description, nodes, multiStep, steps],
   );
   const key = useMemo(() => structuralKey(nodes, steps, multiStep), [nodes, steps, multiStep]);
+  const submitted = submission && submission.key === key ? submission.values : null;
 
-  let error: string | null = null;
-  if (nodes.length > 0) {
+  const error = useMemo<string | null>(() => {
+    if (nodes.length === 0) return null;
     try {
       validateFormConfig(config);
+      return null;
     } catch (e) {
-      error = e instanceof Error ? e.message : String(e);
+      return e instanceof Error ? e.message : String(e);
     }
-  }
+  }, [config, nodes.length]);
 
   return (
     <div className="flex h-full flex-col gap-[12px] tablet:gap-[12px] desktop:gap-[12px]">
@@ -62,7 +66,7 @@ export function PreviewPanel() {
               <FormRenderer
                 key={key}
                 config={config}
-                onSubmit={setSubmitted}
+                onSubmit={(values) => setSubmission({ key, values })}
                 onSendOtp={sendOtpStub}
                 onVerifyOtp={verifyOtpStub}
               />

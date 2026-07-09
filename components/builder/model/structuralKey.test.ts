@@ -20,6 +20,12 @@ describe("structuralKey", () => {
     expect(structuralKey(renamed, [], false)).not.toBe(structuralKey(base, [], false));
   });
 
+  it("changes when a value-cardinality prop toggles (multiple / range)", () => {
+    const multi = [{ ...base[0], type: "select" as const, props: { name: "a", multiple: true } }, base[1]];
+    const single = [{ ...base[0], type: "select" as const, props: { name: "a" } }, base[1]];
+    expect(structuralKey(multi, [], false)).not.toBe(structuralKey(single, [], false));
+  });
+
   it("changes on reorder and on type change", () => {
     expect(structuralKey([base[1], base[0]], [], false)).not.toBe(structuralKey(base, [], false));
     const retyped = [{ ...base[0], type: "number" as const }, base[1]];

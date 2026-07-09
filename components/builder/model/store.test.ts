@@ -126,6 +126,42 @@ describe("builder store", () => {
     expect(config.fields[0]).toEqual({ type: "text", name: "email", label: "Email" });
   });
 
+  it("seeds a first step from eligible fields when multiStep turns on", () => {
+    const s = createBuilderStore();
+    s.getState().addNode("text");
+    s.getState().addNode("submit"); // ineligible — must not be assigned
+    s.getState().toggleMultiStep(true);
+    const { steps, nodes } = s.getState();
+    expect(steps).toHaveLength(1);
+    expect(steps[0].nodeIds).toEqual([nodes[0]._id]); // text only, not submit
+  });
+
+  it("assigns a node to exactly one step", () => {
+    const s = createBuilderStore();
+    s.getState().addNode("text");
+    const id = s.getState().nodes[0]._id;
+    s.setState({ multiStep: true, steps: [{ title: "A", nodeIds: [id] }, { title: "B", nodeIds: [] }] });
+    s.getState().assignNodeToStep(id, 1);
+    expect(s.getState().steps[0].nodeIds).toEqual([]);
+    expect(s.getState().steps[1].nodeIds).toEqual([id]);
+    s.getState().assignNodeToStep(id, null); // unassign
+    expect(s.getState().steps.every((st) => !st.nodeIds.includes(id))).toBe(true);
+  });
+
+  it("adds, renames, reorders, and removes steps", () => {
+    const s = createBuilderStore();
+    s.getState().addStep();
+    s.getState().addStep();
+    expect(s.getState().steps).toHaveLength(2);
+    s.getState().renameStep(0, "Intro");
+    expect(s.getState().steps[0].title).toBe("Intro");
+    s.getState().moveStep(0, 1);
+    expect(s.getState().steps[1].title).toBe("Intro");
+    s.getState().removeStep(0);
+    expect(s.getState().steps).toHaveLength(1);
+    expect(s.getState().steps[0].title).toBe("Intro");
+  });
+
   it("reset clears everything to defaults", () => {
     const s = createBuilderStore();
     s.getState().addNode("text");
