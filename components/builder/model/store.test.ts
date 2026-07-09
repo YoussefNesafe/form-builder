@@ -126,6 +126,26 @@ describe("builder store", () => {
     expect(config.fields[0]).toEqual({ type: "text", name: "email", label: "Email" });
   });
 
+  it("duplicating a stepped field assigns the clone to the same step", () => {
+    const s = createBuilderStore();
+    s.getState().addNode("text");
+    const id = s.getState().nodes[0]._id;
+    s.setState({ multiStep: true, steps: [{ title: "A", nodeIds: [id] }] });
+    s.getState().duplicateNode(id);
+    const cloneId = s.getState().nodes[1]._id;
+    expect(s.getState().steps[0].nodeIds).toEqual([id, cloneId]);
+  });
+
+  it("removing a group clears a selection pointing at one of its children", () => {
+    const s = createBuilderStore();
+    s.getState().addNode("group");
+    const groupId = s.getState().nodes[0]._id;
+    const childId = s.getState().nodes[0].children![0]._id;
+    s.getState().selectNode(childId);
+    s.getState().removeNode(groupId);
+    expect(s.getState().selectedId).toBeNull();
+  });
+
   it("seeds a first step from eligible fields when multiStep turns on", () => {
     const s = createBuilderStore();
     s.getState().addNode("text");

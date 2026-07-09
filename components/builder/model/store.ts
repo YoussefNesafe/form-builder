@@ -197,12 +197,18 @@ const creator: StateCreator<BuilderStore> = (set, get) => ({
         return next;
       }),
       selectedId: clone._id,
+      // The clone inherits the original's step membership (top-level fields
+      // only; group children are never in steps).
+      steps: state.steps.map((step) =>
+        step.nodeIds.includes(id) ? { ...step, nodeIds: [...step.nodeIds, clone._id] } : step,
+      ),
     }));
   },
 
   removeNode: (id) => {
     const removed = findNode(get().nodes, id);
     const name = removed && typeof removed.props.name === "string" ? removed.props.name : null;
+    const removedIds = new Set(removed ? collectIds([removed]) : [id]);
     set((state) => {
       const prune = (nodes: BuilderNode[]): BuilderNode[] => {
         const hadTarget = nodes.some((n) => n._id === id);
@@ -215,8 +221,12 @@ const creator: StateCreator<BuilderStore> = (set, get) => ({
       };
       return {
         nodes: prune(state.nodes),
-        selectedId: state.selectedId === id ? null : state.selectedId,
-        steps: state.steps.map((step) => ({ ...step, nodeIds: step.nodeIds.filter((nid) => nid !== id) })),
+        // Clear selection if the selected node was anywhere in the removed subtree.
+        selectedId: state.selectedId && removedIds.has(state.selectedId) ? null : state.selectedId,
+        steps: state.steps.map((step) => ({
+          ...step,
+          nodeIds: step.nodeIds.filter((nid) => !removedIds.has(nid)),
+        })),
       };
     });
   },
