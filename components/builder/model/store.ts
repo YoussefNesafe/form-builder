@@ -1,0 +1,209 @@
+import { create, type StateCreator } from "zustand";
+import { createStore } from "zustand/vanilla";
+import { persist, createJSONStorage } from "zustand/middleware";
+import type { FieldType } from "@/form-builder";
+import type { BuilderNode, BuilderState, BuilderStep, OutputMode } from "./types";
+import { CONTAINER_TYPES, DEFAULT_PROPS } from "./defaults";
+import { newId } from "./ids";
+
+export type BuilderActions = {
+  addNode: (type: FieldType, parentId?: string) => void;
+  updateProps: (id: string, patch: Record<string, unknown>) => void;
+  moveNode: (id: string, dir: -1 | 1) => void;
+  duplicateNode: (id: string) => void;
+  removeNode: (id: string) => void;
+  selectNode: (id: string | null) => void;
+  setMeta: (patch: { title?: string; description?: string }) => void;
+  setOutputMode: (mode: OutputMode) => void;
+  toggleMultiStep: (on: boolean) => void;
+  setSteps: (steps: BuilderStep[]) => void;
+  reset: () => void;
+};
+
+export type BuilderStore = BuilderState & BuilderActions;
+
+const INITIAL: BuilderState = {
+  title: "Untitled Form",
+  description: "",
+  nodes: [],
+  multiStep: false,
+  steps: [],
+  selectedId: null,
+  outputMode: "ts",
+};
+
+// ---- pure tree helpers (immutable) ----------------------------------------
+
+/** Every `name` prop across the tree — used to keep generated names unique. */
+function collectNames(nodes: BuilderNode[], into: Set<string> = new Set()): Set<string> {
+  for (const node of nodes) {
+    const name = node.props.name;
+    if (typeof name === "string" && name) into.add(name);
+    if (node.children) collectNames(node.children, into);
+  }
+  return into;
+}
+
+function uniqueName(base: string, taken: Set<string>): string {
+  let i = 1;
+  let candidate = `${base}${i}`;
+  while (taken.has(candidate)) {
+    i += 1;
+    candidate = `${base}${i}`;
+  }
+  return candidate;
+}
+
+function makeNode(type: FieldType, taken: Set<string>): BuilderNode {
+  const node: BuilderNode = {
+    _id: newId(),
+    type,
+    props: { name: uniqueName(type, taken), ...structuredClone(DEFAULT_PROPS[type]) },
+  };
+  if (CONTAINER_TYPES.includes(type)) {
+    taken.add(node.props.name as string);
+    node.children = [makeNode("text", taken)];
+  }
+  return node;
+}
+
+/** Map every node in the tree (top-down), rebuilding arrays immutably. */
+function mapTree(nodes: BuilderNode[], fn: (n: BuilderNode) => BuilderNode): BuilderNode[] {
+  return nodes.map((node) => {
+    const mapped = fn(node);
+    return mapped.children ? { ...mapped, children: mapTree(mapped.children, fn) } : mapped;
+  });
+}
+
+/** Rebuild the tree with `updater` applied to whichever array holds `id`. */
+function updateSiblings(
+  nodes: BuilderNode[],
+  id: string,
+  updater: (siblings: BuilderNode[]) => BuilderNode[],
+): BuilderNode[] {
+  if (nodes.some((n) => n._id === id)) return updater(nodes);
+  return nodes.map((node) =>
+    node.children ? { ...node, children: updateSiblings(node.children, id, updater) } : node,
+  );
+}
+
+function findNode(nodes: BuilderNode[], id: string): BuilderNode | null {
+  for (const node of nodes) {
+    if (node._id === id) return node;
+    if (node.children) {
+      const found = findNode(node.children, id);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
+function cloneSubtree(node: BuilderNode, rootName: string): BuilderNode {
+  const clone: BuilderNode = {
+    _id: newId(),
+    type: node.type,
+    props: { ...structuredClone(node.props), name: rootName },
+  };
+  if (node.children) clone.children = node.children.map((child) => cloneSubtree(child, child.props.name as string));
+  return clone;
+}
+
+// ---- state creator ---------------------------------------------------------
+
+const creator: StateCreator<BuilderStore> = (set, get) => ({
+  ...INITIAL,
+
+  addNode: (type, parentId) => {
+    const taken = collectNames(get().nodes);
+    const node = makeNode(type, taken);
+    set((state) => {
+      if (parentId) {
+        return {
+          nodes: mapTree(state.nodes, (n) =>
+            n._id === parentId ? { ...n, children: [...(n.children ?? []), node] } : n,
+          ),
+          selectedId: node._id,
+        };
+      }
+      return { nodes: [...state.nodes, node], selectedId: node._id };
+    });
+  },
+
+  updateProps: (id, patch) =>
+    set((state) => ({
+      nodes: mapTree(state.nodes, (n) => (n._id === id ? { ...n, props: { ...n.props, ...patch } } : n)),
+    })),
+
+  moveNode: (id, dir) =>
+    set((state) => ({
+      nodes: updateSiblings(state.nodes, id, (siblings) => {
+        const index = siblings.findIndex((n) => n._id === id);
+        const target = index + dir;
+        if (index < 0 || target < 0 || target >= siblings.length) return siblings;
+        const next = [...siblings];
+        [next[index], next[target]] = [next[target], next[index]];
+        return next;
+      }),
+    })),
+
+  duplicateNode: (id) => {
+    const original = findNode(get().nodes, id);
+    if (!original) return;
+    const taken = collectNames(get().nodes);
+    const clone = cloneSubtree(original, uniqueName(original.type, taken));
+    set((state) => ({
+      nodes: updateSiblings(state.nodes, id, (siblings) => {
+        const index = siblings.findIndex((n) => n._id === id);
+        const next = [...siblings];
+        next.splice(index + 1, 0, clone);
+        return next;
+      }),
+      selectedId: clone._id,
+    }));
+  },
+
+  removeNode: (id) =>
+    set((state) => {
+      const prune = (nodes: BuilderNode[]): BuilderNode[] =>
+        nodes
+          .filter((n) => n._id !== id)
+          .map((n) => (n.children ? { ...n, children: prune(n.children) } : n));
+      return {
+        nodes: prune(state.nodes),
+        selectedId: state.selectedId === id ? null : state.selectedId,
+        steps: state.steps.map((step) => ({ ...step, nodeIds: step.nodeIds.filter((nid) => nid !== id) })),
+      };
+    }),
+
+  selectNode: (id) => set({ selectedId: id }),
+  setMeta: (patch) => set(patch),
+  setOutputMode: (mode) => set({ outputMode: mode }),
+  toggleMultiStep: (on) => set({ multiStep: on }),
+  setSteps: (steps) => set({ steps }),
+  reset: () => set({ ...INITIAL }),
+});
+
+/** Fresh isolated store — used in tests. */
+export const createBuilderStore = () => createStore<BuilderStore>()(creator);
+
+const noopStorage = {
+  getItem: () => null,
+  setItem: () => undefined,
+  removeItem: () => undefined,
+};
+
+/** App singleton, persisted to localStorage (selection is intentionally not persisted). */
+export const useBuilderStore = create<BuilderStore>()(
+  persist(creator, {
+    name: "form-builder-draft",
+    storage: createJSONStorage(() => (typeof window !== "undefined" ? window.localStorage : noopStorage)),
+    partialize: (state) => ({
+      title: state.title,
+      description: state.description,
+      nodes: state.nodes,
+      multiStep: state.multiStep,
+      steps: state.steps,
+      outputMode: state.outputMode,
+    }),
+  }),
+);

@@ -4,6 +4,10 @@ import path from "path";
 
 export default defineConfig({
   plugins: [react()],
-  test: { environment: "jsdom", include: ["form-builder/**/*.test.{ts,tsx}"], passWithNoTests: true },
+  test: {
+    environment: "jsdom",
+    include: ["form-builder/**/*.test.{ts,tsx}", "components/**/*.test.{ts,tsx}"],
+    passWithNoTests: true,
+  },
   resolve: { alias: { "@": path.resolve(__dirname, ".") } },
 });
