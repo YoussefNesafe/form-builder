@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { FieldList } from "./FieldList";
 import { useBuilderStore } from "./model/store";
@@ -30,6 +30,24 @@ describe("FieldList", () => {
     expect(screen.getByText(/Select · /)).toBeTruthy();
     // count badge reflects two fields
     expect(screen.getByText("2")).toBeTruthy();
+  });
+
+  it("deletes a node via its row action button (mouse)", () => {
+    const store = useBuilderStore.getState();
+    store.addNode("text");
+    render(<FieldList />);
+    fireEvent.click(screen.getByLabelText("Delete"));
+    expect(useBuilderStore.getState().nodes).toHaveLength(0);
+  });
+
+  it("does not select the row when a keyboard event targets a nested action button", () => {
+    const store = useBuilderStore.getState();
+    store.addNode("text");
+    store.selectNode(null);
+    render(<FieldList />);
+    // Enter aimed at the Delete button must not bubble into a row selection.
+    fireEvent.keyDown(screen.getByLabelText("Delete"), { key: "Enter" });
+    expect(useBuilderStore.getState().selectedId).toBeNull();
   });
 
   it("renders group children indented under the group", () => {

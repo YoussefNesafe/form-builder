@@ -47,7 +47,7 @@ export function FormBuilder() {
           <span className="text-[12px] tablet:text-[12px] desktop:text-[12px] font-medium uppercase tracking-wide text-muted-foreground">
             Form Builder
           </span>
-          <div className="flex flex-col gap-[8px] tablet:flex-row tablet:items-end tablet:gap-[16px]">
+          <div className="flex flex-col gap-[8px] tablet:flex-row tablet:items-end tablet:gap-[16px] desktop:gap-[16px]">
             <div className="flex flex-col gap-[4px] tablet:gap-[4px] desktop:gap-[4px]">
               <Label htmlFor="form-title" className="text-[11px] tablet:text-[11px] desktop:text-[11px] text-muted-foreground">
                 Title

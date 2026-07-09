@@ -11,7 +11,7 @@ import { AddFieldMenu } from "./AddFieldMenu";
 import type { BuilderNode } from "./model/types";
 
 /** One field in the list. Recurses to render `group` children indented. */
-export function FieldListRow({ node, depth = 0 }: { node: BuilderNode; depth?: number }) {
+export function FieldListRow({ node }: { node: BuilderNode }) {
   const selectedId = useBuilderStore((s) => s.selectedId);
   const selectNode = useBuilderStore((s) => s.selectNode);
   const moveNode = useBuilderStore((s) => s.moveNode);
@@ -30,6 +30,9 @@ export function FieldListRow({ node, depth = 0 }: { node: BuilderNode; depth?: n
         tabIndex={0}
         onClick={() => selectNode(node._id)}
         onKeyDown={(e) => {
+          // Only the row itself activates — never swallow Enter/Space aimed at a
+          // nested action button (that would cancel the button's default action).
+          if (e.target !== e.currentTarget) return;
           if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
             selectNode(node._id);
@@ -68,7 +71,7 @@ export function FieldListRow({ node, depth = 0 }: { node: BuilderNode; depth?: n
       {node.type === "group" && (
         <div className="ml-[16px] tablet:ml-[16px] desktop:ml-[16px] flex flex-col gap-[4px] tablet:gap-[4px] desktop:gap-[4px] border-l border-border pl-[8px] tablet:pl-[8px] desktop:pl-[8px]">
           {(node.children ?? []).map((child) => (
-            <FieldListRow key={child._id} node={child} depth={depth + 1} />
+            <FieldListRow key={child._id} node={child} />
           ))}
           <AddFieldMenu size="xs" label="Add to group" onPick={(type) => addNode(type, node._id)} />
         </div>
