@@ -447,6 +447,30 @@ describe("time config", () => {
   });
 });
 
+describe("signature config", () => {
+  it("accepts a valid signature field", () =>
+    expect(() =>
+      validateFormConfig({
+        id: "t",
+        fields: [{ type: "signature", name: "sign", penColor: "#1d4ed8", heightPx: 200 }],
+      }),
+    ).not.toThrow());
+
+  it("rejects non-positive or fractional heightPx", () => {
+    expect(() =>
+      validateFormConfig({ id: "t", fields: [{ type: "signature", name: "s", heightPx: 0 }] }),
+    ).toThrow();
+    expect(() =>
+      validateFormConfig({ id: "t", fields: [{ type: "signature", name: "s", heightPx: 120.5 }] }),
+    ).toThrow();
+  });
+
+  it("rejects an empty penColor", () =>
+    expect(() =>
+      validateFormConfig({ id: "t", fields: [{ type: "signature", name: "s", penColor: "" }] }),
+    ).toThrow());
+});
+
 describe("masked config", () => {
   it("accepts a valid masked field", () =>
     expect(() =>

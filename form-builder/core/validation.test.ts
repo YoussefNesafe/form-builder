@@ -595,6 +595,24 @@ describe("masked", () => {
   });
 });
 
+describe("signature", () => {
+  it("required rejects empty and non-data-URL values, accepts a PNG data URL", () => {
+    const schema = schemaFor({ type: "signature", name: "s", required: true });
+    expect(schema.safeParse("").success).toBe(false);
+    expect(schema.safeParse("hello").success).toBe(false);
+    expect(schema.safeParse("data:image/png;base64,iVBOR").success).toBe(true);
+  });
+
+  it("optional treats empty string as absent", () => {
+    const schema = schemaFor({ type: "signature", name: "s" });
+    const parsed = schema.safeParse("");
+    expect(parsed.success).toBe(true);
+    if (parsed.success) expect(parsed.data).toBeUndefined();
+    expect(schema.safeParse(undefined).success).toBe(true);
+    expect(schema.safeParse("hello").success).toBe(false);
+  });
+});
+
 describe("custom messages", () => {
   it("override default", () => {
     const custom = mergeMessages({ required: "verplicht" });

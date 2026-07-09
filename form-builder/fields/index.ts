@@ -12,6 +12,7 @@ import { RadioField } from "./RadioField";
 import { RatingField } from "./RatingField";
 import { SegmentedField } from "./SegmentedField";
 import { SelectField } from "./SelectField";
+import { SignatureField } from "./SignatureField";
 import { SliderField } from "./SliderField";
 import { StaticField } from "./StaticField";
 import { SubmitField } from "./SubmitField";
@@ -37,6 +38,7 @@ export function registerBuiltInFields(): void {
   registerField("time", TimeField);
   registerField("rating", RatingField);
   registerField("slider", SliderField);
+  registerField("signature", SignatureField);
   registerField("file", FileField);
   registerField("group", GroupField);
   registerField("hidden", HiddenField);

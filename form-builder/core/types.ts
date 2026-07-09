@@ -69,6 +69,7 @@ export const BUILT_IN_FIELD_TYPES = [
   "time",
   "rating",
   "slider",
+  "signature",
   "file",
   "hidden",
   "static",
@@ -97,6 +98,8 @@ export type FieldConfig =
   | (BaseField & { type: "time"; minTime?: string; maxTime?: string; stepMinutes?: number })
   | (BaseField & { type: "rating"; max?: number }) // 1..max stars, max defaults to 5
   | (BaseField & { type: "slider"; min: number; max: number; step?: number })
+  // Value is a PNG data URL ("" until the user signs).
+  | (BaseField & { type: "signature"; penColor?: string; heightPx?: number })
   | (BaseField & { type: "file"; accept?: string; maxSizeMB?: number; multiple?: boolean })
   | (BaseField & { type: "hidden"; value: unknown })
   | (BaseField & { type: "static"; content: string; as?: "h1" | "h2" | "p" | "divider" })

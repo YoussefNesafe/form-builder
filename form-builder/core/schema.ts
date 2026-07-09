@@ -206,6 +206,10 @@ const fieldSchemasByType: Record<FieldConfig["type"], z.ZodType> = {
     max: z.number(),
     step: z.number().optional(),
   }),
+  signature: baseFieldSchema.extend({
+    penColor: z.string().min(1).optional(),
+    heightPx: z.number().int().positive().optional(),
+  }),
   file: baseFieldSchema.extend({
     accept: z.string().optional(),
     maxSizeMB: z.number().positive().optional(),

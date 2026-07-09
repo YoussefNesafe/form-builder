@@ -23,6 +23,7 @@ function defaultValueFor(field: FieldConfig): { value: unknown } | null {
     case "phone":
     case "time":
     case "masked":
+    case "signature":
       return { value: "" };
     case "checkbox":
       return { value: field.options?.length ? [] : false };

@@ -246,6 +246,14 @@ export function toZodSchema(
       return schema;
     }
 
+    case "signature": {
+      // The component only ever writes "" or a canvas data URL; the prefix
+      // check guards CMS/programmatic values. Empty = not signed = required.
+      const base = field.required ? z.string({ error: messages.required }).min(1, messages.required) : z.string();
+      const schema = base.refine((value) => (value as string).startsWith("data:image/"), messages.required);
+      return field.required ? schema : optionalEmptyable(schema);
+    }
+
     case "file": {
       if (field.multiple) {
         // Size check refines at the ARRAY root: a per-item refine would land
