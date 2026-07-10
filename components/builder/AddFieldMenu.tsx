@@ -35,6 +35,9 @@ export function AddFieldMenu({
       </PopoverTrigger>
       <PopoverContent
         align="start"
+        // Don't return focus to the trigger on close — it sits below the list,
+        // so the browser would scroll to the bottom to reveal it.
+        onCloseAutoFocus={(e) => e.preventDefault()}
         className="max-h-[420px] tablet:max-h-[420px] desktop:max-h-[420px] overflow-y-auto gap-[12px] tablet:gap-[12px] desktop:gap-[12px]"
       >
         {TYPES_BY_GROUP.map(({ group, types }) => (

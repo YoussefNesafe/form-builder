@@ -1,16 +1,39 @@
 "use client";
 
+import { useRef } from "react";
+import type { FieldType } from "@/form-builder";
 import { useBuilderStore } from "./model/store";
 import { FieldListRow } from "./FieldListRow";
 import { AddFieldMenu } from "./AddFieldMenu";
+
+/** Nearest scrollable ancestor, or null (the window scrolls) on mobile. */
+function scrollParent(el: HTMLElement | null): HTMLElement | null {
+  let node = el?.parentElement ?? null;
+  while (node) {
+    const overflowY = getComputedStyle(node).overflowY;
+    if ((overflowY === "auto" || overflowY === "scroll") && node.scrollHeight > node.clientHeight) return node;
+    node = node.parentElement;
+  }
+  return null;
+}
 
 /** Left pane: the ordered list of top-level fields plus the add-field menu. */
 export function FieldList() {
   const nodes = useBuilderStore((s) => s.nodes);
   const addNode = useBuilderStore((s) => s.addNode);
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  const addAndScrollToTop = (type: FieldType) => {
+    addNode(type);
+    // After the row mounts, return the list (desktop pane) or page (mobile) to the top.
+    requestAnimationFrame(() => {
+      scrollParent(rootRef.current)?.scrollTo({ top: 0 });
+      window.scrollTo({ top: 0 });
+    });
+  };
 
   return (
-    <div className="flex h-full flex-col gap-[12px] tablet:gap-[12px] desktop:gap-[12px]">
+    <div ref={rootRef} className="flex h-full flex-col gap-[12px] tablet:gap-[12px] desktop:gap-[12px]">
       <div className="flex items-center justify-between">
         <h2 className="text-[13px] tablet:text-[13px] desktop:text-[13px] font-semibold uppercase tracking-wide text-muted-foreground">
           Fields
@@ -30,7 +53,7 @@ export function FieldList() {
         )}
       </div>
 
-      <AddFieldMenu onPick={(type) => addNode(type)} />
+      <AddFieldMenu onPick={addAndScrollToTop} />
     </div>
   );
 }
