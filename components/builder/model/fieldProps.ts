@@ -166,7 +166,12 @@ export const FIELD_PROPS: Record<FieldType, PropDescriptor[]> = {
   ],
   static: [
     { key: "name", label: "Name", control: "text" },
-    { key: "content", label: "Content", control: "textarea" },
+    {
+      key: "content",
+      label: "Content",
+      control: "textarea",
+      help: 'Plain text; an inline <a href="…">link</a> and <br> are rendered (safe URLs only).',
+    },
     { key: "as", label: "Render as", control: "select", options: AS_OPTIONS },
     { key: "visibleWhen", label: "Visible when", control: "condition" },
     { key: "width", label: "Width", control: "width" },
