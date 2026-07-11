@@ -1,0 +1,176 @@
+# Cross-field + form-level features — design
+
+Date: 2026-07-11. Status: approved (discussion phase, pre-implementation).
+Scope: everything from the deferred list except async validation and RTL/i18n
+(each gets its own design pass later).
+
+## 1. Cross-field validation rules
+
+`matches` (confirm password/email) and date/time ordering across two fields.
+
+### Config surface
+
+- Text family (`text`, `email`, `password`): `rules.matches: "<sibling>"` +
+  optional `rules.matchesMessage`.
+- `date`: `minDateField` / `maxDateField: "<sibling date field>"`.
+- `time`: `minTimeField` / `maxTimeField: "<sibling time field>"`.
+- Comparisons stay lexicographic on the plain `yyyy-MM-dd` / `HH:mm` strings —
+  repo convention, no Date math.
+
+### Mechanism
+
+Rules are hoisted to a form-level zod `superRefine` — NOT the field's own
+schema. Hard constraint from the condition work: the `isFieldValid` oracle
+safeParses a field's schema in isolation; a cross-field rule inside it would
+break every `isValid` condition. Precedent: the otp verified-registry refine.
+
+- Error attaches to the field **declaring** the rule (the confirm field, the
+  end-date field), via the refine issue path.
+- Rule is skipped when the declaring field's value is empty (`required`
+  covers empties — no double error) and when the **source** field is
+  condition-hidden (its value is stripped; comparing against `undefined`
+  would hard-fail an unfixable error).
+- Documented quirk: `isValid` conditions reflect own-schema validity only —
+  a confirm field can be `isValid: true` while showing a mismatch error.
+
+### Validator
+
+- Source: same-level sibling, exists, not self. Group-nested → error
+  (precedent: all cross-field wiring).
+- Type compatibility: `matches` source must be same text-family type;
+  `minDateField`/`maxDateField` source must be a `date` field (non-range);
+  time likewise.
+- Cross-step source → dev-warn (error shows on a step where the cause is
+  invisible).
+
+### Messages
+
+New `messages` entries: `matches(label)`, `dateAfter(label)` /
+`dateBefore(label)`, `timeAfter(label)` / `timeBefore(label)`.
+
+### Builder
+
+`rules.matches` → fieldRef row in RulesEditor (same-type refKind);
+`minDateField`/`maxDateField`/`minTimeField`/`maxTimeField` → fieldRef
+descriptors with new refKinds (`dateSource`, `timeSource`).
+
+## 2. Server error mapping
+
+`onSubmit` may return (or resolve to)
+`{ fieldErrors?: Record<string, string>; formError?: string }`.
+
+- Renderer maps `fieldErrors` → `setError(name, { type: "server", message })`;
+  group paths (`team.0.role`) pass through as-is.
+- Unknown field names fold into `formError`; `formError` renders in a new
+  root-error slot above the submit row.
+- First errored (visible) field gets focus; multi-step: stepper jumps to the
+  first step containing an errored field.
+- Server errors clear on the next change of the errored field (RHF default
+  for manual errors cleared on re-validation).
+- Exported standalone `applyServerErrors(setError, result, fields)` for
+  headless/custom hosts.
+
+## 3. Draft autosave
+
+`FormRenderer` prop `autosave?: { key?: string; debounceMs?: number; includeSignatures?: boolean }`.
+
+- Debounced (default 500ms) `watch` subscription → localStorage.
+- Storage key: `form-builder:draft:<autosave.key ?? config.id>:<structural hash>`
+  — hash over the fields config, so a changed form silently drops stale drafts.
+- Restore: silent, on mount, merged over `buildDefaultValues` before `useForm`
+  init. No banner. Exported `clearDraft(key)` for hosts.
+- Cleared automatically on successful submit (after `onSubmit` resolves
+  without fieldErrors).
+- Never persisted: `File` values (not serializable). `signature` data URLs
+  excluded by default (localStorage ~5MB), opt-in via `includeSignatures`.
+- Multi-step: current step index persisted and restored alongside values.
+
+## 4. copyFrom (primitive only)
+
+`copyFrom: "<same-type sibling>"` on value fields. No "same as shipping"
+payload sugar — authors compose the toggle themselves (checkbox +
+`visibleWhen`/`enabledWhen` + `copyFrom`).
+
+- Semantics identical to `useCountryFromSync` (it becomes the generalized
+  hook's first consumer): source wins on every source change, manual override
+  sticks until the next source change, first render after (re)mount is
+  baseline (drafts not clobbered, cross-step changes skipped), seed sets no
+  dirty/touched flags.
+- Validator: same-level sibling, exists, not self, same type, group-nested →
+  error, cross-step → dev-warn. `phone` keeps `countryFrom` (not both).
+
+## 5. Options-from-source
+
+Select variant: `optionsFrom: { field: "<sibling>"; map: Record<string, Option[]> }`,
+mutually exclusive with static `options` (validator error if both, or
+neither).
+
+- Runtime options: `map[String(sourceValue)] ?? []`. Empty list renders a
+  disabled placeholder state.
+- Stale-value invalidation: when the source changes and the current value is
+  not in the new option list, the dependent select resets (same class of bug
+  as otp `dependsOn` staleness).
+- Validation schema derives allowed values per current source value — the
+  visible-fields resolver already re-derives per values snapshot.
+- Validator: source sibling exists/not self/not group-nested; source should
+  be a single-value select or country field; dev-warn when a source option
+  value has no key in `map` (that branch yields an empty dependent select).
+- Builder: mapping editor (per source-option key → options list) — the
+  biggest builder cost in this batch; reuses OptionsEditor per key.
+
+## 6. Conditional steps
+
+Step config gains `visibleWhen?: ConditionSpec` — value operators only (same
+feedback argument as field visibleWhen; the validator rejects isValid).
+
+- Hidden step ⇒ its fields are condition-hidden everywhere: excluded from the
+  validation schema, stripped from the submit payload, skipped by the
+  stepper. Single source: effective field visibility = own `visibleWhen` AND
+  owning step visible.
+- Stepper: progress dots/labels hide invisible steps; next/back resolve to
+  the nearest visible step; step indices in the store are config indices
+  (visibility filters at render/navigation time).
+- Dev-warn when a step's visibleWhen sources live on later steps (visibility
+  decided by values the user has not reached — legal, defaults decide, but
+  usually a config smell). Dev-warn when every step could be hidden.
+
+## 7. Review step
+
+Step config gains `review: true` — a step with no `fieldNames` (validator:
+`review` and `fieldNames` are mutually exclusive; review steps are exempt
+from the every-field-in-a-step rule).
+
+- Renders a read-only summary of all **visible** fields from earlier visible
+  steps, grouped by step, in config order.
+- Per-type formatting: option labels (select/radio/segmented/checkbox-group),
+  `formatMasked` for masked, country labels via the locale chain, date/time
+  as-is, group rows as sub-lists, files as names, booleans via messages
+  (yes/no), passwords masked as `••••`, otp shown as verified state.
+- Custom field types: host formatter map prop (`reviewFormatters`), fallback
+  `String(value)`.
+- Edit affordance: per-step section header links back to that step
+  (`goToStep`); no per-field links in v1.
+- Values re-read live from form state — arriving back at the review step
+  always reflects current values.
+
+## Sequencing (each phase: code → code-review → fix)
+
+1. Cross-field rules (engine + builder fieldRefs)
+2. Server error mapping
+3. Draft autosave
+4. copyFrom (generalize useCountryFromSync)
+5. Options-from-source (engine, then builder mapping editor)
+6. Conditional steps
+7. Review step
+
+Ordering rationale: 1 unblocks the most common real-world gap
+(confirm-password); 2–4 are small and independent; 5–7 stack on each other
+(review step wants conditional-step visibility semantics settled first).
+
+## Out of scope
+
+- Async validation (own design: debounce, race with value changes, loading
+  states, submit gating).
+- RTL + i18n audit (own design).
+- "Same as shipping" payload sugar.
+- Per-field edit links in the review step.
