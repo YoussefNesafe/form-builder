@@ -1,8 +1,9 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { FormProvider } from "react-hook-form";
 import type { Messages } from "../core/messages";
+import { applyServerErrors, type ServerErrorResult } from "../core/serverErrors";
 import { isBuiltInField, type FormConfig, type FormValues } from "../core/types";
 import { toZodSchema } from "../core/validation";
 import { useDynamicForm } from "../hooks/useDynamicForm";
@@ -14,7 +15,10 @@ import { FLAT_GRID_CLASS } from "../ui/layout";
 
 type FormRendererProps = {
   config: FormConfig;
-  onSubmit: (values: FormValues) => void | Promise<void>;
+  // Returning (or resolving) a ServerErrorResult maps API errors onto fields:
+  // fieldErrors → setError per field (unknown names fold into the form-level
+  // error), formError → the root error slot at the end of the form.
+  onSubmit: (values: FormValues) => void | ServerErrorResult | Promise<void | ServerErrorResult>;
   // Convenience wiring: one pair of handlers for every otp field, branched by
   // fieldName. Throwing from send signals failure to the field.
   onSendOtp?: (fieldName: string, values: FormValues) => Promise<void>;
@@ -86,14 +90,45 @@ export function FormRenderer({
     [mergedMessages, controller.otp, controller.verifiedFields, isFieldValid, locale],
   );
 
+  const [formError, setFormError] = useState<string | null>(null);
+  // FormStepper registers a fieldName → step jump here, so a server error on
+  // another step's field can bring its step into view.
+  const stepJumpRef = useRef<((fieldName: string) => void) | null>(null);
+
+  // handleSubmit is invoked inside the event (not during render) so the
+  // step-jump ref is only read post-render.
+  const submitHandler = (event: React.FormEvent<HTMLFormElement>) =>
+    form.handleSubmit(async (values) => {
+      setFormError(null);
+      const result = await onSubmit(values);
+      if (!result || (!result.fieldErrors && !result.formError)) return;
+      const outcome = applyServerErrors(form.setError, result, config.fields);
+      if (outcome.formError) setFormError(outcome.formError);
+      const first = outcome.applied[0];
+      if (first !== undefined) {
+        stepJumpRef.current?.(first);
+        // After a step jump the field mounts on the next paint; setFocus on
+        // an unmounted field is a no-op, so defer one tick either way.
+        setTimeout(() => form.setFocus(first), 0);
+      }
+    })(event);
+
   return (
     <FormProvider {...form}>
       <FieldRuntimeContext.Provider value={runtime}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className={className} noValidate>
+        <form onSubmit={submitHandler} className={className} noValidate>
           {config.steps?.length ? (
-            <FormStepper config={config} />
+            <FormStepper config={config} stepJumpRef={stepJumpRef} />
           ) : (
             <div className={FLAT_GRID_CLASS}>{config.fields.map(renderField)}</div>
+          )}
+          {formError && (
+            <p
+              role="alert"
+              className="mt-[16px] tablet:mt-[16px] desktop:mt-[16px] text-[14px] tablet:text-[14px] desktop:text-[14px] font-normal text-destructive"
+            >
+              {formError}
+            </p>
           )}
         </form>
       </FieldRuntimeContext.Provider>

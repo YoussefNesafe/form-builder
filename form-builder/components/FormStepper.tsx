@@ -11,12 +11,33 @@ import { FLAT_GRID_CLASS } from "../ui/layout";
 import { useFieldRuntime } from "./FieldRuntime";
 import { renderField } from "./renderField";
 
-export function FormStepper({ config }: { config: FormConfig }) {
-  const steps = config.steps ?? [];
+export function FormStepper({
+  config,
+  stepJumpRef,
+}: {
+  config: FormConfig;
+  // FormRenderer-owned slot: jump to the step containing a field (server
+  // errors land on fields the current step may not show).
+  stepJumpRef?: React.MutableRefObject<((fieldName: string) => void) | null>;
+}) {
+  const steps = useMemo(() => config.steps ?? [], [config.steps]);
   const form = useFormContext();
   const { messages } = useFieldRuntime();
   const [store] = useState(() => createStepperStore(steps.length));
   const step = useStore(store, (state) => state.step);
+
+  useEffect(() => {
+    if (!stepJumpRef) return;
+    stepJumpRef.current = (fieldName) => {
+      // Group rows come in as "team.0.role"; steps list root names only.
+      const root = fieldName.split(".")[0];
+      const index = steps.findIndex((s) => s.fieldNames.includes(root));
+      if (index >= 0) store.getState().goTo(index);
+    };
+    return () => {
+      stepJumpRef.current = null;
+    };
+  }, [stepJumpRef, steps, store]);
 
   // Focus the step list on navigation so keyboard/SR users land at the new
   // step instead of staying on the Next/Back button.

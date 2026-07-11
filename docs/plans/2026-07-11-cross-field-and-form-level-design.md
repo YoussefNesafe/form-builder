@@ -68,7 +68,8 @@ descriptors with new refKinds (`dateSource`, `timeSource`).
 - Renderer maps `fieldErrors` → `setError(name, { type: "server", message })`;
   group paths (`team.0.role`) pass through as-is.
 - Unknown field names fold into `formError`; `formError` renders in a new
-  root-error slot above the submit row.
+  root-error slot at the end of the form (submit lives inside the field
+  grid, so "above the submit row" is not a real slot).
 - First errored (visible) field gets focus; multi-step: stepper jumps to the
   first step containing an errored field.
 - Server errors clear on the next change of the errored field (RHF default
