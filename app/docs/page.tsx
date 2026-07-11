@@ -1,25 +1,24 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { DOCS_PAGES } from "@/lib/docsNav";
 
 export const metadata: Metadata = { title: "Docs" };
 
-const PAGES = [
-  {
-    href: "/docs/installation",
-    title: "Installation",
-    description: "Copy the form-builder/ folder into your app, add the shadcn primitives it depends on, and register the built-in fields.",
-  },
-  {
-    href: "/docs/your-first-form",
-    title: "Your first form",
-    description: "A minimal FormConfig — two fields and a submit button — rendered live, plus what you get for free.",
-  },
-  {
-    href: "/docs/field-types",
-    title: "Field types",
-    description: "Every built-in field type the registry ships, generated from the package's own type list so it can't drift.",
-  },
-] as const;
+// Descriptions are index-page-only; hrefs/titles/order come from the shared
+// nav source so this list can't drift from the sidebar and pagination.
+const DESCRIPTIONS: Record<string, string> = {
+  "/docs/installation":
+    "Copy the form-builder/ folder into your app, add the shadcn primitives it depends on, and register the built-in fields.",
+  "/docs/your-first-form":
+    "A minimal FormConfig — two fields and a submit button — rendered live, plus what you get for free.",
+  "/docs/field-types":
+    "Every built-in field type the registry ships, generated from the package's own type list so it can't drift.",
+};
+
+const PAGES = DOCS_PAGES.filter((page) => page.href !== "/docs").map((page) => ({
+  ...page,
+  description: DESCRIPTIONS[page.href] ?? "",
+}));
 
 /**
  * Docs hub. The engine (form-builder/) is the product; these three pages

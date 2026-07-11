@@ -1,0 +1,82 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { cn } from "@/lib/utils";
+import { DOCS_NAV_GROUPS, DOCS_PAGES } from "@/lib/docsNav";
+
+/**
+ * Docs section nav, same active-link pattern as components/site/NavLinks.tsx
+ * (client component just for usePathname). Renders two variants and toggles
+ * which is visible with Tailwind display classes rather than branching, so
+ * there's one component instead of two kept in sync. Each variant only
+ * triplicates px sizes across the breakpoints it's actually shown at (the
+ * other is `hidden`, so a size value there would never render):
+ *  - below `desktop:`: a horizontal scrollable link row (flat list)
+ *  - `desktop:` and up: a sticky, grouped vertical sidebar
+ */
+export function DocsSidebar() {
+  const pathname = usePathname();
+  const isActive = (href: string) => pathname === href;
+
+  return (
+    <>
+      <nav
+        aria-label="Docs sections"
+        className="desktop:hidden -mx-[16px] tablet:-mx-[24px] overflow-x-auto border-b border-border px-[16px] tablet:px-[24px] py-[10px] tablet:py-[10px]"
+      >
+        <ul className="flex w-max items-center gap-[18px] tablet:gap-[18px]">
+          {DOCS_PAGES.map((item) => (
+            <li key={item.href}>
+              <Link
+                href={item.href}
+                aria-current={isActive(item.href) ? "page" : undefined}
+                className={cn(
+                  "block whitespace-nowrap border-b-2 tablet:border-b-2 pb-[2px] tablet:pb-[2px] text-[13px] tablet:text-[13px] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground",
+                  isActive(item.href)
+                    ? "border-foreground text-foreground"
+                    : "border-transparent text-muted-foreground hover:text-foreground",
+                )}
+              >
+                {item.title}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </nav>
+
+      <nav
+        aria-label="Docs sections"
+        className="hidden desktop:sticky desktop:top-[32px] desktop:block desktop:w-[240px] desktop:shrink-0 desktop:self-start desktop:py-[48px]"
+      >
+        <ul className="flex flex-col desktop:gap-[24px]">
+          {DOCS_NAV_GROUPS.map((group) => (
+            <li key={group.title} className="flex flex-col desktop:gap-[8px]">
+              <span className="desktop:text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                {group.title}
+              </span>
+              <ul className="flex flex-col desktop:gap-[2px]">
+                {group.items.map((item) => (
+                  <li key={item.href}>
+                    <Link
+                      href={item.href}
+                      aria-current={isActive(item.href) ? "page" : undefined}
+                      className={cn(
+                        "block desktop:rounded-[6px] border-l-2 desktop:px-[10px] desktop:py-[6px] desktop:text-[13px] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground",
+                        isActive(item.href)
+                          ? "border-foreground bg-muted font-medium text-foreground"
+                          : "border-transparent text-muted-foreground hover:border-border hover:text-foreground",
+                      )}
+                    >
+                      {item.title}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </li>
+          ))}
+        </ul>
+      </nav>
+    </>
+  );
+}
