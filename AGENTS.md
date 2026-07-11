@@ -6,7 +6,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 # Form Builder
 
-Config-driven form engine (Next.js 16 / React 19 / RHF 7 / Zod 4 / Tailwind 4). The portable package lives in `form-builder/`; the app around it is demo + example forms. Design docs: `docs/plans/2026-07-05-form-builder-design.md` (read before touching `form-builder/core/`) and `form-builder-spec.md`.
+Config-driven form engine (Next.js 16 / React 19 / RHF 7 / Zod 4 / Tailwind 4). The portable package lives in `form-builder/`; the app around it hosts the visual builder (`components/builder/`, rendered on the home page). Design docs: `docs/plans/2026-07-05-form-builder-design.md` (read before touching `form-builder/core/`) and `form-builder-spec.md`.
 
 ## Commands
 
@@ -23,7 +23,8 @@ Config-driven form engine (Next.js 16 / React 19 / RHF 7 / Zod 4 / Tailwind 4). 
 - `form-builder/ui/` — `FieldWrapper`, cva `variants`, `layout` (`FLAT_GRID_CLASS` 12-col grid)
 - `form-builder/store/` — zustand stepper store
 - `components/ui/` — shadcn primitives (customized — see styling rules)
-- `app/demo`, `app/forms/*` — demo playground and example form pages
+- `components/builder/` — visual builder (authoring UI over `FormConfig`; exports TS/JSON via header "Export code")
+- `app/page.tsx` — home page, renders the visual builder (`FormBuilder` from `components/builder/`)
 
 ## Responsive system (MUST follow when touching any UI)
 

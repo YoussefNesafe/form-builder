@@ -4,6 +4,14 @@
 
 Build a config-driven, portable form builder package. Developers write a `FormConfig` (JSON/TS object) and the package renders a fully working, validated, dynamic form. No visual/drag-drop builder — this is a renderer engine only. Must be dropped into multiple projects with minimal friction.
 
+> **Update 2026-07-11:** A visual builder now exists (`components/builder/`,
+> shipped 2026-07-10) as an authoring UI on top of this same `FormConfig` —
+> it exports TS/JSON config via the header's "Export code" action, it does
+> not replace or bypass the engine described below. The "no visual/drag-drop
+> builder" line above described the engine's own scope (`form-builder/`
+> stays renderer-only) and is otherwise still accurate: the engine itself
+> has no builder UI baked in.
+
 ## Stack
 
 - Next.js
