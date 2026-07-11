@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildFormSchema, toZodSchema } from "./validation";
+import { buildFieldsSchema, buildFormSchema, toZodSchema } from "./validation";
 import { defaultMessages, mergeMessages } from "./messages";
 import type { FieldConfig, FormConfig } from "./types";
 
@@ -620,5 +620,125 @@ describe("custom messages", () => {
     const result = schema!.safeParse("");
     expect(result.success).toBe(false);
     if (!result.success) expect(result.error.issues[0].message).toBe("verplicht");
+  });
+});
+
+describe("cross-field rules", () => {
+  it("matches fails on mismatch with the default message, passes on equality", () => {
+    const schema = buildFieldsSchema(
+      [
+        { type: "password", name: "password", label: "Password", required: true },
+        { type: "password", name: "confirm", required: true, rules: { matches: "password" } },
+      ],
+      messages,
+    );
+    const bad = schema.safeParse({ password: "secret1", confirm: "secret2" });
+    expect(bad.success).toBe(false);
+    if (!bad.success) {
+      expect(bad.error.issues[0].path).toEqual(["confirm"]);
+      expect(bad.error.issues[0].message).toBe(messages.matches("Password"));
+    }
+    expect(schema.safeParse({ password: "secret1", confirm: "secret1" }).success).toBe(true);
+  });
+
+  it("matches uses matchesMessage and the source name when unlabeled", () => {
+    const schema = buildFieldsSchema(
+      [
+        { type: "email", name: "email", required: true },
+        { type: "email", name: "confirmEmail", required: true, rules: { matches: "email", matchesMessage: "Emails differ" } },
+      ],
+      messages,
+    );
+    const bad = schema.safeParse({ email: "a@b.co", confirmEmail: "c@d.co" });
+    expect(bad.success).toBe(false);
+    if (!bad.success) expect(bad.error.issues[0].message).toBe("Emails differ");
+  });
+
+  it("matches is skipped while the confirm field is blank (required owns emptiness)", () => {
+    const schema = buildFieldsSchema(
+      [
+        { type: "text", name: "a", required: true },
+        { type: "text", name: "b", required: true, rules: { matches: "a" } },
+      ],
+      messages,
+    );
+    const result = schema.safeParse({ a: "x", b: "" });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues).toHaveLength(1);
+      expect(result.error.issues[0].message).toBe(messages.required);
+    }
+  });
+
+  it("matches is dropped when the source is not in the field list (condition-hidden)", () => {
+    const schema = buildFieldsSchema(
+      [{ type: "text", name: "b", required: true, rules: { matches: "a" } }],
+      messages,
+    );
+    expect(schema.safeParse({ b: "anything" }).success).toBe(true);
+  });
+
+  it("minDateField/maxDateField enforce ordering against the sibling value", () => {
+    const schema = buildFieldsSchema(
+      [
+        { type: "date", name: "start", label: "Start date", required: true },
+        { type: "date", name: "end", required: true, minDateField: "start" },
+      ],
+      messages,
+    );
+    const bad = schema.safeParse({ start: "2026-07-11", end: "2026-07-10" });
+    expect(bad.success).toBe(false);
+    if (!bad.success) {
+      expect(bad.error.issues[0].path).toEqual(["end"]);
+      expect(bad.error.issues[0].message).toBe(messages.dateAfter("Start date"));
+    }
+    expect(schema.safeParse({ start: "2026-07-11", end: "2026-07-11" }).success).toBe(true);
+    expect(schema.safeParse({ start: "2026-07-11", end: "2026-08-01" }).success).toBe(true);
+  });
+
+  it("date cross rule is skipped when either side fails the basic format", () => {
+    const schema = buildFieldsSchema(
+      [
+        { type: "date", name: "start", required: true },
+        { type: "date", name: "end", required: true, minDateField: "start" },
+      ],
+      messages,
+    );
+    const result = schema.safeParse({ start: "garbage", end: "2026-07-10" });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      // Only the source field's own invalid-date issue — no stacked cross error.
+      expect(result.error.issues).toHaveLength(1);
+      expect(result.error.issues[0].path).toEqual(["start"]);
+    }
+  });
+
+  it("minTimeField/maxTimeField enforce ordering lexicographically", () => {
+    const schema = buildFieldsSchema(
+      [
+        { type: "time", name: "opens", label: "Opens", required: true },
+        { type: "time", name: "closes", required: true, minTimeField: "opens" },
+      ],
+      messages,
+    );
+    const bad = schema.safeParse({ opens: "10:30", closes: "09:00" });
+    expect(bad.success).toBe(false);
+    if (!bad.success) expect(bad.error.issues[0].message).toBe(messages.timeAfter("Opens"));
+    expect(schema.safeParse({ opens: "10:30", closes: "10:30" }).success).toBe(true);
+    expect(schema.safeParse({ opens: "10:30", closes: "23:00" }).success).toBe(true);
+  });
+
+  it("maxDateField enforces the other direction", () => {
+    const schema = buildFieldsSchema(
+      [
+        { type: "date", name: "deadline", label: "Deadline", required: true },
+        { type: "date", name: "reminder", required: true, maxDateField: "deadline" },
+      ],
+      messages,
+    );
+    const bad = schema.safeParse({ deadline: "2026-07-11", reminder: "2026-07-12" });
+    expect(bad.success).toBe(false);
+    if (!bad.success) expect(bad.error.issues[0].message).toBe(messages.dateBefore("Deadline"));
+    expect(schema.safeParse({ deadline: "2026-07-11", reminder: "2026-07-11" }).success).toBe(true);
   });
 });

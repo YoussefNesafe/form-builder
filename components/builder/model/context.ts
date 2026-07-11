@@ -29,6 +29,9 @@ export function findContext(nodes: BuilderNode[], id: string, nested = false): N
  * - `otp`            → sibling otp fields
  * - `countrySource`  → sibling country fields or single-value selects
  * - `builtin`        → built-in siblings (isValid targets need a zod schema)
+ * - `textFamily`     → text/email/password/textarea siblings (rules.matches)
+ * - `dateSource`     → non-range date siblings (minDateField/maxDateField)
+ * - `timeSource`     → time siblings (minTimeField/maxTimeField)
  * - `any`            → any named sibling
  * Self is always excluded.
  */
@@ -45,6 +48,11 @@ export function eligibleRefs(
       if (refKind === "countrySource") {
         return n.type === "country" || (n.type === "select" && n.props.multiple !== true);
       }
+      if (refKind === "textFamily") {
+        return n.type === "text" || n.type === "email" || n.type === "password" || n.type === "textarea";
+      }
+      if (refKind === "dateSource") return n.type === "date" && n.props.range !== true;
+      if (refKind === "timeSource") return n.type === "time";
       if (refKind === "builtin") {
         // Mirrors the engine: static/submit/hidden are vacuously "valid"
         // (no user input), so they are not offered as isValid targets.
@@ -62,7 +70,16 @@ export function eligibleRefs(
 
 // Wiring props the engine hard-rejects inside groups — the editor hides these
 // when the selected node is nested (validateFormConfig would otherwise throw).
-const GROUP_FORBIDDEN_KEYS = new Set(["enabledWhenVerified", "dependsOn", "countryFrom"]);
+// (rules.matches is handled inside RulesEditor via ctx.isNested.)
+const GROUP_FORBIDDEN_KEYS = new Set([
+  "enabledWhenVerified",
+  "dependsOn",
+  "countryFrom",
+  "minDateField",
+  "maxDateField",
+  "minTimeField",
+  "maxTimeField",
+]);
 
 /** Descriptors to render for a node, dropping group-forbidden wiring when nested. */
 export function visibleDescriptors(descriptors: PropDescriptor[], isNested: boolean): PropDescriptor[] {

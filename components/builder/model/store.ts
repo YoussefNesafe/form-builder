@@ -121,11 +121,28 @@ function cloneSubtree(node: BuilderNode, taken: Set<string>): BuilderNode {
 function scrubRefs(node: BuilderNode, name: string): BuilderNode {
   const props = { ...node.props };
   let changed = false;
-  for (const key of ["dependsOn", "enabledWhenVerified", "countryFrom"]) {
+  for (const key of [
+    "dependsOn",
+    "enabledWhenVerified",
+    "countryFrom",
+    "minDateField",
+    "maxDateField",
+    "minTimeField",
+    "maxTimeField",
+  ]) {
     if (props[key] === name) {
       delete props[key];
       changed = true;
     }
+  }
+  const rules = props.rules as { matches?: string; matchesMessage?: string } | undefined;
+  if (rules && typeof rules === "object" && rules.matches === name) {
+    const rest = { ...rules };
+    delete rest.matches;
+    delete rest.matchesMessage;
+    if (Object.keys(rest).length) props.rules = rest;
+    else delete props.rules;
+    changed = true;
   }
   for (const key of ["visibleWhen", "disabledWhen", "enabledWhen"]) {
     const spec = props[key] as ConditionSpec | undefined;

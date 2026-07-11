@@ -27,7 +27,7 @@ export type PropDescriptor = {
   /** Options for `control: "select"`. */
   options?: { label: string; value: string }[];
   /** Which siblings a `control: "fieldRef"` may reference. */
-  refKind?: "otp" | "countrySource" | "any";
+  refKind?: "otp" | "countrySource" | "textFamily" | "dateSource" | "timeSource" | "any";
   /** `control: "condition"`: offer the is valid / is invalid operators. */
   validityOps?: boolean;
   /** Props to clear when this one is set (mutually exclusive pairs). */
@@ -149,12 +149,40 @@ export const FIELD_PROPS: Record<FieldType, PropDescriptor[]> = {
     { key: "range", label: "Range", control: "boolean" },
     { key: "minDate", label: "Min date", control: "date" },
     { key: "maxDate", label: "Max date", control: "date" },
+    {
+      key: "minDateField",
+      label: "Not before field",
+      control: "fieldRef",
+      refKind: "dateSource",
+      help: "Must be on or after the named date field's value. Not available on range fields.",
+    },
+    {
+      key: "maxDateField",
+      label: "Not after field",
+      control: "fieldRef",
+      refKind: "dateSource",
+      help: "Must be on or before the named date field's value.",
+    },
   ],
   time: [
     ...BASE,
     { key: "minTime", label: "Min time", control: "time" },
     { key: "maxTime", label: "Max time", control: "time" },
     { key: "stepMinutes", label: "Step (minutes)", control: "number", integer: true, min: 1 },
+    {
+      key: "minTimeField",
+      label: "Not before field",
+      control: "fieldRef",
+      refKind: "timeSource",
+      help: "Must be at or after the named time field's value.",
+    },
+    {
+      key: "maxTimeField",
+      label: "Not after field",
+      control: "fieldRef",
+      refKind: "timeSource",
+      help: "Must be at or before the named time field's value.",
+    },
   ],
   rating: [
     ...BASE,

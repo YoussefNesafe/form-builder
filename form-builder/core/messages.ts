@@ -44,6 +44,12 @@ export type Messages = {
   removeFile: (name: string) => string;
   noOptions: string;
   ratingValue: (n: number, max: number) => string;
+  // Cross-field rules — label is the source field's label (fallback: name).
+  matches: (label: string) => string;
+  dateAfter: (label: string) => string;
+  dateBefore: (label: string) => string;
+  timeAfter: (label: string) => string;
+  timeBefore: (label: string) => string;
 };
 
 export const defaultMessages: Messages = {
@@ -90,6 +96,11 @@ export const defaultMessages: Messages = {
   removeFile: (name) => `Remove ${name}`,
   noOptions: "No options",
   ratingValue: (n, max) => `${n} of ${max}`,
+  matches: (label) => `Must match ${label}`,
+  dateAfter: (label) => `Must be on or after ${label}`,
+  dateBefore: (label) => `Must be on or before ${label}`,
+  timeAfter: (label) => `Must be at or after ${label}`,
+  timeBefore: (label) => `Must be at or before ${label}`,
 };
 
 export function mergeMessages(overrides?: Partial<Messages>): Messages {

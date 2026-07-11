@@ -138,6 +138,8 @@ const textRulesSchema = z.strictObject({
     .refine((allow) => allow === undefined || isSafeCharClassBody(allow), {
       message: "allow must be a plain character-class body (letters, digits, ranges, \\d \\w \\s escapes)",
     }),
+  matches: z.string().min(1).optional(),
+  matchesMessage: z.string().optional(),
 });
 
 const textFieldSchema = baseFieldSchema.extend({ rules: textRulesSchema.optional() });
@@ -202,18 +204,26 @@ const fieldSchemasByType: Record<FieldConfig["type"], z.ZodType> = {
   segmented: baseFieldSchema.extend({ options: z.array(optionSchema).min(1) }),
   checkbox: baseFieldSchema.extend({ options: z.array(optionSchema).optional() }),
   switch: baseFieldSchema.extend({ options: z.array(optionSchema).optional() }),
-  date: baseFieldSchema.extend({
-    range: z.boolean().optional(),
-    // Strict yyyy-MM-dd: lexicographic boundary compare and the calendar
-    // matchers both require zero-padded date-only strings.
-    minDate: z.iso.date().optional(),
-    maxDate: z.iso.date().optional(),
-  }),
+  date: baseFieldSchema
+    .extend({
+      range: z.boolean().optional(),
+      // Strict yyyy-MM-dd: lexicographic boundary compare and the calendar
+      // matchers both require zero-padded date-only strings.
+      minDate: z.iso.date().optional(),
+      maxDate: z.iso.date().optional(),
+      minDateField: z.string().min(1).optional(),
+      maxDateField: z.string().min(1).optional(),
+    })
+    .refine((field) => !field.range || (field.minDateField === undefined && field.maxDateField === undefined), {
+      message: "minDateField/maxDateField are not supported on range date fields",
+    }),
   time: baseFieldSchema
     .extend({
       minTime: timeStringSchema.optional(),
       maxTime: timeStringSchema.optional(),
       stepMinutes: z.number().int().positive().optional(),
+      minTimeField: z.string().min(1).optional(),
+      maxTimeField: z.string().min(1).optional(),
     })
     .refine(
       (field) => field.minTime === undefined || field.maxTime === undefined || field.minTime <= field.maxTime,
@@ -269,6 +279,30 @@ function formatIssues(issues: z.core.$ZodIssue[], path: string): string {
 // Types whose validity is constant (no user input / unknown value schema) —
 // an isValid condition against them would silently always (or never) match.
 const VACUOUS_VALIDITY_TYPES = new Set<string>(["static", "submit", "hidden"]);
+
+const TEXT_FAMILY_TYPES = new Set<string>(["text", "email", "password", "textarea"]);
+const CROSS_BOUND_KEYS = ["minDateField", "maxDateField", "minTimeField", "maxTimeField"] as const;
+
+// Cross-field rule wiring on a field: rules.matches + date/time sibling
+// bounds. Call only on validated fields.
+function crossRuleSources(raw: unknown): { source: string; rule: string }[] {
+  const field = raw as {
+    type?: unknown;
+    rules?: { matches?: string };
+    minDateField?: string;
+    maxDateField?: string;
+    minTimeField?: string;
+    maxTimeField?: string;
+  };
+  const out: { source: string; rule: string }[] = [];
+  if (typeof field.type === "string" && TEXT_FAMILY_TYPES.has(field.type) && field.rules?.matches !== undefined) {
+    out.push({ source: field.rules.matches, rule: "rules.matches" });
+  }
+  for (const key of CROSS_BOUND_KEYS) {
+    if (field[key] !== undefined) out.push({ source: field[key], rule: key });
+  }
+  return out;
+}
 
 // Source field names of isValid conditions in a field's disabled/enabled
 // specs. Call only on validated fields — raw specs may not normalize.
@@ -336,6 +370,17 @@ function validateFields(fields: unknown[], path: string, insideGroup = false): v
       throw new Error(`Invalid form config at ${fieldPath}: isValid conditions are not supported inside groups`);
     }
 
+    // Cross-field rules resolve same-level names; group rows are runtime-
+    // prefixed, so like the rest of the wiring family they are rejected.
+    if (insideGroup) {
+      const crossRule = crossRuleSources(raw)[0];
+      if (crossRule) {
+        throw new Error(
+          `Invalid form config at ${fieldPath}: ${crossRule.rule} is not supported inside groups`,
+        );
+      }
+    }
+
     if (type === "hidden" && !("value" in (raw as object))) {
       throw new Error(`Invalid form config at ${fieldPath}: hidden field requires a value`);
     }
@@ -395,6 +440,24 @@ function validateFields(fields: unknown[], path: string, insideGroup = false): v
       if (target === field.name || !isValidatable) {
         throw new Error(
           `Invalid form config at ${path}[${index}]: isValid condition must reference a sibling built-in input field, got "${target}"`,
+        );
+      }
+    }
+
+    // Cross-field rules: source must be a same-level sibling of a compatible
+    // type — matches → text family; date/time bounds → non-range date / time.
+    for (const { source, rule } of crossRuleSources(raw)) {
+      const sourceType = typeByName.get(source);
+      const compatible =
+        rule === "rules.matches"
+          ? typeof sourceType === "string" && TEXT_FAMILY_TYPES.has(sourceType)
+          : rule.startsWith("minDate") || rule.startsWith("maxDate")
+            ? sourceType === "date" &&
+              (fields.find((f) => (f as { name: string }).name === source) as { range?: unknown })?.range !== true
+            : sourceType === "time";
+      if (source === field.name || !compatible) {
+        throw new Error(
+          `Invalid form config at ${path}[${index}]: ${rule} must reference a compatible sibling field, got "${source}"`,
         );
       }
     }
@@ -474,6 +537,19 @@ function validateSteps(config: FormConfig): void {
         console.warn(
           `form-builder: phone field "${field.name}" (step ${phoneStep + 1}) syncs country from "${countryFrom}" (step ${sourceStep + 1}) — source changes while the phone field is unmounted are not applied on remount`,
         );
+      }
+    }
+    // A cross-field rule against a source on another step: the error shows
+    // on a step where its cause is invisible. Legal, usually a config smell.
+    for (const field of config.fields) {
+      for (const { source, rule } of crossRuleSources(field)) {
+        const fieldStep = stepOf.get(field.name);
+        const sourceStep = stepOf.get(source);
+        if (fieldStep !== undefined && sourceStep !== undefined && fieldStep !== sourceStep) {
+          console.warn(
+            `form-builder: field "${field.name}" (step ${fieldStep + 1}) has a ${rule} rule against "${source}" (step ${sourceStep + 1}) — the error will show where its cause is invisible`,
+          );
+        }
       }
     }
     // Works (values persist under shouldUnregister: false), but the user

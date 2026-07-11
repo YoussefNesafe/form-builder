@@ -7,6 +7,11 @@ export type TextRules = {
   message?: string; // custom error for pattern
   trim?: boolean; // trim before validating; parsed payload is trimmed too
   allow?: string; // character-class body (e.g. "A-Za-z ") — other chars are blocked while typing
+  // Cross-field equality (confirm password/email): value must equal the named
+  // sibling's. Enforced by a form-level refine, never the field's own schema
+  // (the isValid oracle parses fields in isolation).
+  matches?: string;
+  matchesMessage?: string; // custom error for matches
 };
 
 export type PasswordComplexity = {
@@ -107,10 +112,26 @@ export type FieldConfig =
   | (BaseField & { type: "radio"; options: Option[] })
   | (BaseField & { type: "segmented"; options: Option[] }) // radio semantics, button-group presentation
   | (BaseField & { type: "checkbox" | "switch"; options?: Option[] }) // options => checkbox group
-  | (BaseField & { type: "date"; range?: boolean; minDate?: string; maxDate?: string })
+  // minDateField/maxDateField bound against a sibling date field's current
+  // value (cross-field "end after start") — form-level refine, non-range only.
+  | (BaseField & {
+      type: "date";
+      range?: boolean;
+      minDate?: string;
+      maxDate?: string;
+      minDateField?: string;
+      maxDateField?: string;
+    })
   // Times are plain zero-padded "HH:mm" strings, compared lexicographically
   // (same convention as dates — no Date math).
-  | (BaseField & { type: "time"; minTime?: string; maxTime?: string; stepMinutes?: number })
+  | (BaseField & {
+      type: "time";
+      minTime?: string;
+      maxTime?: string;
+      stepMinutes?: number;
+      minTimeField?: string;
+      maxTimeField?: string;
+    })
   | (BaseField & { type: "rating"; max?: number }) // 1..max stars, max defaults to 5
   | (BaseField & { type: "slider"; min: number; max: number; step?: number })
   // Value is a PNG data URL ("" until the user signs).

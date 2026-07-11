@@ -286,6 +286,80 @@ export function toZodSchema(
   }
 }
 
+type CrossRule = {
+  field: string; // declaring field — the refine issue lands here
+  source: string;
+  kind: "matches" | "minDate" | "maxDate" | "minTime" | "maxTime";
+  message: string;
+};
+
+const TEXT_FAMILY = new Set(["text", "email", "password", "textarea"]);
+const DATE_FORMAT = /^\d{4}-\d{2}-\d{2}(T|$)/;
+const TIME_FORMAT = /^([01]\d|2[0-3]):[0-5]\d$/;
+
+/**
+ * Cross-field rules declared by the given fields, resolved against the SAME
+ * field list — a rule whose source is not in the list (condition-hidden in
+ * the resolver path) is dropped: its value is stripped, and comparing against
+ * undefined would raise an unfixable error.
+ */
+function collectCrossRules(fields: AnyFieldConfig[], messages: Messages): CrossRule[] {
+  const byName = new Map(fields.map((field) => [field.name, field]));
+  const label = (name: string) => {
+    const source = byName.get(name);
+    return source?.label || name;
+  };
+  const rules: CrossRule[] = [];
+  for (const field of fields) {
+    if (!isBuiltInField(field)) continue;
+    if (TEXT_FAMILY.has(field.type)) {
+      const matches = (field as { rules?: TextRules }).rules?.matches;
+      if (matches !== undefined && byName.has(matches)) {
+        const message = (field as { rules?: TextRules }).rules?.matchesMessage ?? messages.matches(label(matches));
+        rules.push({ field: field.name, source: matches, kind: "matches", message });
+      }
+    }
+    if (field.type === "date" && !field.range) {
+      if (field.minDateField !== undefined && byName.has(field.minDateField)) {
+        rules.push({ field: field.name, source: field.minDateField, kind: "minDate", message: messages.dateAfter(label(field.minDateField)) });
+      }
+      if (field.maxDateField !== undefined && byName.has(field.maxDateField)) {
+        rules.push({ field: field.name, source: field.maxDateField, kind: "maxDate", message: messages.dateBefore(label(field.maxDateField)) });
+      }
+    }
+    if (field.type === "time") {
+      if (field.minTimeField !== undefined && byName.has(field.minTimeField)) {
+        rules.push({ field: field.name, source: field.minTimeField, kind: "minTime", message: messages.timeAfter(label(field.minTimeField)) });
+      }
+      if (field.maxTimeField !== undefined && byName.has(field.maxTimeField)) {
+        rules.push({ field: field.name, source: field.maxTimeField, kind: "maxTime", message: messages.timeBefore(label(field.maxTimeField)) });
+      }
+    }
+  }
+  return rules;
+}
+
+function crossRulePasses(rule: CrossRule, target: unknown, source: unknown): boolean {
+  if (rule.kind === "matches") return target === source;
+  if (typeof target !== "string" || typeof source !== "string") return true;
+  switch (rule.kind) {
+    // Skip when either side fails the basic format — the field's own schema
+    // reports that; a garbage lexicographic compare would stack a bogus error.
+    case "minDate":
+      return !DATE_FORMAT.test(target) || !DATE_FORMAT.test(source) || datePart(target) >= datePart(source);
+    case "maxDate":
+      return !DATE_FORMAT.test(target) || !DATE_FORMAT.test(source) || datePart(target) <= datePart(source);
+    case "minTime":
+      return !TIME_FORMAT.test(target) || !TIME_FORMAT.test(source) || target >= source;
+    case "maxTime":
+      return !TIME_FORMAT.test(target) || !TIME_FORMAT.test(source) || target <= source;
+  }
+}
+
+function isBlank(value: unknown): boolean {
+  return value === undefined || value === null || value === "";
+}
+
 export function buildFieldsSchema(
   fields: AnyFieldConfig[],
   messages: Messages,
@@ -297,7 +371,25 @@ export function buildFieldsSchema(
     const schema = isBuiltInField(field) ? toZodSchema(field, messages, otpVerified) : z.unknown().optional();
     if (schema) shape[field.name] = schema;
   }
-  return z.object(shape);
+  const objectSchema = z.object(shape);
+
+  // Cross-field rules live at the form level, never inside a field's own
+  // schema — the isValid condition oracle safeParses field schemas in
+  // isolation and must stay ignorant of siblings.
+  const crossRules = collectCrossRules(fields, messages);
+  if (crossRules.length === 0) return objectSchema;
+  return objectSchema.superRefine((values, ctx) => {
+    for (const rule of crossRules) {
+      const target = (values as Record<string, unknown>)[rule.field];
+      const source = (values as Record<string, unknown>)[rule.source];
+      // Blank target: `required` owns emptiness — no double error. Blank
+      // source: nothing to compare against yet.
+      if (isBlank(target) || isBlank(source)) continue;
+      if (!crossRulePasses(rule, target, source)) {
+        ctx.addIssue({ code: "custom", path: [rule.field], message: rule.message });
+      }
+    }
+  });
 }
 
 export function buildFormSchema(config: FormConfig, messages: Messages, otpVerified?: OtpVerifiedChecker): z.ZodObject {

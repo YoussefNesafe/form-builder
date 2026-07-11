@@ -362,6 +362,130 @@ describe("validateFormConfig", () => {
     ).toThrow();
   });
 
+  it("accepts valid cross-field rules (matches, date/time bounds)", () =>
+    expect(() =>
+      validateFormConfig({
+        id: "t",
+        fields: [
+          { type: "password", name: "password" },
+          { type: "password", name: "confirm", rules: { matches: "password" } },
+          { type: "date", name: "start" },
+          { type: "date", name: "end", minDateField: "start" },
+          { type: "time", name: "opens" },
+          { type: "time", name: "closes", minTimeField: "opens", maxTimeField: "opens" },
+        ],
+      }),
+    ).not.toThrow());
+
+  it("rejects matches referencing unknown, self, or non-text-family fields", () => {
+    for (const fields of [
+      [{ type: "text", name: "a", rules: { matches: "gone" } }],
+      [{ type: "text", name: "a", rules: { matches: "a" } }],
+      [
+        { type: "number", name: "n" },
+        { type: "text", name: "a", rules: { matches: "n" } },
+      ],
+    ]) {
+      expect(() => validateFormConfig({ id: "t", fields: fields as never })).toThrow(
+        /compatible sibling field/,
+      );
+    }
+  });
+
+  it("rejects date bounds referencing non-date or range-date siblings", () => {
+    expect(() =>
+      validateFormConfig({
+        id: "t",
+        fields: [
+          { type: "text", name: "notADate" },
+          { type: "date", name: "end", minDateField: "notADate" },
+        ],
+      }),
+    ).toThrow(/compatible sibling field/);
+    expect(() =>
+      validateFormConfig({
+        id: "t",
+        fields: [
+          { type: "date", name: "span", range: true },
+          { type: "date", name: "end", maxDateField: "span" },
+        ],
+      }),
+    ).toThrow(/compatible sibling field/);
+  });
+
+  it("rejects date bounds on a range date field itself", () =>
+    expect(() =>
+      validateFormConfig({
+        id: "t",
+        fields: [
+          { type: "date", name: "start" },
+          { type: "date", name: "span", range: true, minDateField: "start" },
+        ],
+      }),
+    ).toThrow(/not supported on range/));
+
+  it("rejects time bounds referencing non-time siblings", () =>
+    expect(() =>
+      validateFormConfig({
+        id: "t",
+        fields: [
+          { type: "text", name: "a" },
+          { type: "time", name: "closes", minTimeField: "a" },
+        ],
+      }),
+    ).toThrow(/compatible sibling field/));
+
+  it("rejects cross-field rules inside groups", () => {
+    expect(() =>
+      validateFormConfig({
+        id: "t",
+        fields: [
+          {
+            type: "group",
+            name: "g",
+            fields: [
+              { type: "text", name: "a" },
+              { type: "text", name: "b", rules: { matches: "a" } },
+            ],
+          },
+        ],
+      }),
+    ).toThrow(/not supported inside groups/);
+    expect(() =>
+      validateFormConfig({
+        id: "t",
+        fields: [
+          {
+            type: "group",
+            name: "g",
+            fields: [
+              { type: "date", name: "start" },
+              { type: "date", name: "end", minDateField: "start" },
+            ],
+          },
+        ],
+      }),
+    ).toThrow(/not supported inside groups/);
+  });
+
+  it("dev-warns when a cross-field rule source sits on a different step", async () => {
+    const { vi } = await import("vitest");
+    const spy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    validateFormConfig({
+      id: "t",
+      fields: [
+        { type: "password", name: "password" },
+        { type: "password", name: "confirm", rules: { matches: "password" } },
+      ],
+      steps: [
+        { title: "one", fieldNames: ["password"] },
+        { title: "two", fieldNames: ["confirm"] },
+      ],
+    });
+    expect(spy).toHaveBeenCalledWith(expect.stringContaining("rules.matches"));
+    spy.mockRestore();
+  });
+
   it("dev-warns when an isValid source sits on a different step", async () => {
     const { vi } = await import("vitest");
     const spy = vi.spyOn(console, "warn").mockImplementation(() => {});

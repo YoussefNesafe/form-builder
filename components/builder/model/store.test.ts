@@ -150,6 +150,33 @@ describe("builder store", () => {
     expect(orNode.props.disabledWhen).toEqual({ field: "lastName", equals: "y" });
   });
 
+  it("scrubs cross-field rule references when the source field is deleted", () => {
+    const s = createBuilderStore();
+    s.getState().addNode("password");
+    const passwordId = s.getState().nodes[0]._id;
+    s.getState().updateProps(passwordId, { name: "password" });
+    s.getState().addNode("password");
+    const confirmId = s.getState().nodes[1]._id;
+    s.getState().updateProps(confirmId, {
+      rules: { minLength: 8, matches: "password", matchesMessage: "Passwords differ" },
+    });
+    s.getState().addNode("date");
+    const startId = s.getState().nodes[2]._id;
+    s.getState().updateProps(startId, { name: "start" });
+    s.getState().addNode("date");
+    const endId = s.getState().nodes[3]._id;
+    s.getState().updateProps(endId, { minDateField: "start" });
+
+    s.getState().removeNode(passwordId);
+    s.getState().removeNode(startId);
+
+    const confirm = s.getState().nodes.find((n) => n._id === confirmId)!;
+    const end = s.getState().nodes.find((n) => n._id === endId)!;
+    // Other rules survive; matches + its message go together.
+    expect(confirm.props.rules).toEqual({ minLength: 8 });
+    expect(end.props.minDateField).toBeUndefined();
+  });
+
   it("round-trips through the serializer", () => {
     const s = createBuilderStore();
     s.getState().addNode("text");
