@@ -15,7 +15,10 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Form Builder — Design forms visually, ship real React code",
+  title: {
+    default: "Form Builder — Design forms visually, ship real React code",
+    template: "%s · Form Builder",
+  },
   description:
     "Visual form builder that exports type-safe, Zod-validated React Hook Form code. 24 field types, multi-step wizards, conditional logic — code you own, no hosted service.",
   openGraph: {

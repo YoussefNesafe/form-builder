@@ -1,0 +1,15 @@
+import { describe, expect, it } from "vitest";
+import { validateFormConfig } from "@/form-builder/core/schema";
+import { multiStepSignupConfig } from "./multi-step-signup/config";
+import { conditionalProfileConfig } from "./conditional-profile/config";
+import { advancedFieldsConfig } from "./advanced-fields/config";
+
+describe("example configs", () => {
+  it.each([
+    ["multi-step-signup", multiStepSignupConfig],
+    ["conditional-profile", conditionalProfileConfig],
+    ["advanced-fields", advancedFieldsConfig],
+  ] as const)("%s passes validateFormConfig with zero errors", (_name, config) => {
+    expect(() => validateFormConfig(config)).not.toThrow();
+  });
+});
