@@ -24,7 +24,18 @@ export type Condition = {
   equals?: unknown;
   notEquals?: unknown;
   in?: unknown[];
+  // Matches when the source field's schema-validity === isValid. Only allowed
+  // in disabledWhen/enabledWhen: visibility drives the validation schema, so
+  // validity-driven visibility would feed back into itself.
+  isValid?: boolean;
 };
+
+/**
+ * One condition, an AND-list, or OR-of-AND-groups (DNF). Any boolean
+ * combination is expressible without recursive trees, which keeps the
+ * builder UI flat.
+ */
+export type ConditionSpec = Condition | Condition[] | { anyOf: Condition[][] };
 
 export type FieldWidth = "full" | "half" | "third" | "quarter";
 
@@ -43,8 +54,12 @@ export type BaseField = {
   placeholder?: string;
   required?: boolean;
   disabled?: boolean;
-  visibleWhen?: Condition;
-  disabledWhen?: Condition;
+  // Value operators only — the validator rejects isValid here.
+  visibleWhen?: ConditionSpec;
+  disabledWhen?: ConditionSpec;
+  // Inverse of disabledWhen (disabled while the spec does NOT match) — reads
+  // straight for "enabled once X is valid". Mutually exclusive with disabledWhen.
+  enabledWhen?: ConditionSpec;
   // Field stays disabled until the named otp field is verified.
   enabledWhenVerified?: string;
   width?: ResponsiveFieldWidth;

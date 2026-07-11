@@ -234,6 +234,186 @@ describe("validateFormConfig", () => {
       }),
     ).toThrow(/operator/i));
 
+  it("accepts array and anyOf condition specs", () =>
+    expect(() =>
+      validateFormConfig({
+        id: "t",
+        fields: [
+          { type: "text", name: "a" },
+          { type: "text", name: "b" },
+          {
+            type: "text",
+            name: "c",
+            visibleWhen: [
+              { field: "a", equals: "x" },
+              { field: "b", notEquals: "y" },
+            ],
+          },
+          {
+            type: "text",
+            name: "d",
+            disabledWhen: { anyOf: [[{ field: "a", equals: "x" }], [{ field: "b", in: ["y"] }]] },
+          },
+        ],
+      }),
+    ).not.toThrow());
+
+  it("accepts enabledWhen with isValid conditions", () =>
+    expect(() =>
+      validateFormConfig({
+        id: "t",
+        fields: [
+          { type: "text", name: "firstName" },
+          { type: "text", name: "lastName" },
+          {
+            type: "email",
+            name: "email",
+            enabledWhen: [
+              { field: "firstName", isValid: true },
+              { field: "lastName", isValid: true },
+            ],
+          },
+        ],
+      }),
+    ).not.toThrow());
+
+  it("rejects isValid inside visibleWhen", () =>
+    expect(() =>
+      validateFormConfig({
+        id: "t",
+        fields: [
+          { type: "text", name: "a" },
+          { type: "text", name: "b", visibleWhen: { field: "a", isValid: true } },
+        ],
+      }),
+    ).toThrow(/isValid/));
+
+  it("rejects a field with both disabledWhen and enabledWhen", () =>
+    expect(() =>
+      validateFormConfig({
+        id: "t",
+        fields: [
+          { type: "text", name: "a" },
+          {
+            type: "text",
+            name: "b",
+            disabledWhen: { field: "a", equals: 1 },
+            enabledWhen: { field: "a", equals: 2 },
+          },
+        ],
+      }),
+    ).toThrow(/mutually exclusive/));
+
+  it("rejects isValid referencing an unknown or self field", () => {
+    expect(() =>
+      validateFormConfig({
+        id: "t",
+        fields: [{ type: "text", name: "a", enabledWhen: { field: "gone", isValid: true } }],
+      }),
+    ).toThrow(/sibling built-in input field/);
+    expect(() =>
+      validateFormConfig({
+        id: "t",
+        fields: [{ type: "text", name: "a", enabledWhen: { field: "a", isValid: true } }],
+      }),
+    ).toThrow(/sibling built-in input field/);
+  });
+
+  it("rejects isValid referencing a custom field", () => {
+    registerField("customValidityTarget", () => null);
+    expect(() =>
+      validateFormConfig({
+        id: "t",
+        fields: [
+          { type: "customValidityTarget", name: "custom" } as never,
+          { type: "text", name: "a", enabledWhen: { field: "custom", isValid: true } },
+        ],
+      }),
+    ).toThrow(/sibling built-in input field/);
+  });
+
+  it("rejects isValid referencing vacuously-valid types (static, submit, hidden)", () => {
+    for (const target of [
+      { type: "static", name: "note", content: "hi" },
+      { type: "submit", name: "go", text: "Go" },
+      { type: "hidden", name: "utm", value: "x" },
+    ]) {
+      expect(() =>
+        validateFormConfig({
+          id: "t",
+          fields: [
+            target as never,
+            { type: "text", name: "a", enabledWhen: { field: target.name, isValid: true } },
+          ],
+        }),
+      ).toThrow(/sibling built-in input field/);
+    }
+  });
+
+  it("rejects empty condition spec arrays and groups", () => {
+    expect(() =>
+      validateFormConfig({ id: "t", fields: [{ type: "text", name: "a", visibleWhen: [] }] }),
+    ).toThrow();
+    expect(() =>
+      validateFormConfig({ id: "t", fields: [{ type: "text", name: "a", disabledWhen: { anyOf: [] } }] }),
+    ).toThrow();
+    expect(() =>
+      validateFormConfig({ id: "t", fields: [{ type: "text", name: "a", disabledWhen: { anyOf: [[]] } }] }),
+    ).toThrow();
+  });
+
+  it("dev-warns when an isValid source sits on a different step", async () => {
+    const { vi } = await import("vitest");
+    const spy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    validateFormConfig({
+      id: "t",
+      fields: [
+        { type: "text", name: "firstName" },
+        { type: "email", name: "email", enabledWhen: { field: "firstName", isValid: true } },
+      ],
+      steps: [
+        { title: "one", fieldNames: ["firstName"] },
+        { title: "two", fieldNames: ["email"] },
+      ],
+    });
+    expect(spy).toHaveBeenCalledWith(expect.stringContaining("gated on validity"));
+    spy.mockRestore();
+  });
+
+  it("rejects isValid conditions inside groups", () =>
+    expect(() =>
+      validateFormConfig({
+        id: "t",
+        fields: [
+          {
+            type: "group",
+            name: "team",
+            fields: [
+              { type: "text", name: "member" },
+              { type: "text", name: "role", enabledWhen: { field: "member", isValid: true } },
+            ],
+          },
+        ],
+      }),
+    ).toThrow(/inside groups/));
+
+  it("plain value conditions still work inside groups", () =>
+    expect(() =>
+      validateFormConfig({
+        id: "t",
+        fields: [
+          {
+            type: "group",
+            name: "team",
+            fields: [
+              { type: "checkbox", name: "other" },
+              { type: "text", name: "details", visibleWhen: [{ field: "other", equals: true }] },
+            ],
+          },
+        ],
+      }),
+    ).not.toThrow());
+
   it("rejects invalid regex pattern", () =>
     expect(() =>
       validateFormConfig({

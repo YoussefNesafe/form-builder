@@ -1,7 +1,8 @@
 import { z } from "zod";
 import { getCountries } from "libphonenumber-js";
 import { getRegisteredTypes } from "./registry";
-import type { FieldConfig, FormConfig } from "./types";
+import { toConditionGroups } from "./conditions";
+import type { ConditionSpec, FieldConfig, FormConfig } from "./types";
 
 const countryCodeSchema = z.string().refine(
   (code) => (getCountries() as string[]).includes(code),
@@ -13,16 +14,35 @@ const timeStringSchema = z
   .string()
   .regex(/^([01]\d|2[0-3]):[0-5]\d$/, { message: "must be a zero-padded HH:mm time (e.g. \"09:30\")" });
 
-const conditionSchema = z
-  .strictObject({
-    field: z.string().min(1),
-    equals: z.unknown().optional(),
-    notEquals: z.unknown().optional(),
-    in: z.array(z.unknown()).optional(),
+const conditionObjectSchema = z.strictObject({
+  field: z.string().min(1),
+  equals: z.unknown().optional(),
+  notEquals: z.unknown().optional(),
+  in: z.array(z.unknown()).optional(),
+  isValid: z.boolean().optional(),
+});
+
+const conditionSchema = conditionObjectSchema.refine(
+  (cond) => "equals" in cond || "notEquals" in cond || "in" in cond || "isValid" in cond,
+  { message: "condition needs at least one operator (equals, notEquals, in, isValid)" },
+);
+
+// visibleWhen leaf: visibility drives the validation schema, so validity-driven
+// visibility would feed back into itself — value operators only.
+const valueConditionSchema = conditionObjectSchema
+  .refine((cond) => cond.isValid === undefined, {
+    message: "isValid conditions are only supported in disabledWhen/enabledWhen, not visibleWhen",
   })
   .refine((cond) => "equals" in cond || "notEquals" in cond || "in" in cond, {
     message: "condition needs at least one operator (equals, notEquals, in)",
   });
+
+// Condition | Condition[] (AND) | { anyOf: Condition[][] } (OR of AND-groups).
+// Empty arrays are rejected: an empty spec evaluates as "matches" (like an
+// absent one), which for disabledWhen would silently brick the field.
+function conditionSpecSchema(leaf: z.ZodType): z.ZodType {
+  return z.union([leaf, z.array(leaf).min(1), z.strictObject({ anyOf: z.array(z.array(leaf).min(1)).min(1) })]);
+}
 
 const optionSchema = z.strictObject({
   label: z.string(),
@@ -53,8 +73,9 @@ const baseFieldSchema = z.strictObject({
   placeholder: z.string().optional(),
   required: z.boolean().optional(),
   disabled: z.boolean().optional(),
-  visibleWhen: conditionSchema.optional(),
-  disabledWhen: conditionSchema.optional(),
+  visibleWhen: conditionSpecSchema(valueConditionSchema).optional(),
+  disabledWhen: conditionSpecSchema(conditionSchema).optional(),
+  enabledWhen: conditionSpecSchema(conditionSchema).optional(),
   enabledWhenVerified: z.string().min(1).optional(),
   width: fieldWidthSchema.optional(),
 });
@@ -245,6 +266,20 @@ function formatIssues(issues: z.core.$ZodIssue[], path: string): string {
   return issues.map((issue) => `${path}${issue.path.length ? "." + issue.path.join(".") : ""}: ${issue.message}`).join("; ");
 }
 
+// Types whose validity is constant (no user input / unknown value schema) —
+// an isValid condition against them would silently always (or never) match.
+const VACUOUS_VALIDITY_TYPES = new Set<string>(["static", "submit", "hidden"]);
+
+// Source field names of isValid conditions in a field's disabled/enabled
+// specs. Call only on validated fields — raw specs may not normalize.
+function isValidConditionTargets(raw: unknown): string[] {
+  const field = raw as { disabledWhen?: ConditionSpec; enabledWhen?: ConditionSpec };
+  return [...toConditionGroups(field.disabledWhen), ...toConditionGroups(field.enabledWhen)]
+    .flat()
+    .filter((condition) => condition.isValid !== undefined)
+    .map((condition) => condition.field);
+}
+
 function validateFields(fields: unknown[], path: string, insideGroup = false): void {
   const seenNames = new Set<string>();
 
@@ -286,6 +321,19 @@ function validateFields(fields: unknown[], path: string, insideGroup = false): v
     const result = schema.safeParse(raw);
     if (!result.success) {
       throw new Error(`Invalid form config at ${formatIssues(result.error.issues, fieldPath)}`);
+    }
+
+    const disableWiring = raw as { disabledWhen?: unknown; enabledWhen?: unknown };
+    if (disableWiring.disabledWhen !== undefined && disableWiring.enabledWhen !== undefined) {
+      throw new Error(
+        `Invalid form config at ${fieldPath}: disabledWhen and enabledWhen are mutually exclusive — use one`,
+      );
+    }
+
+    // Per-field zod schemas (the isValid oracle) exist for top-level fields
+    // only; group rows get runtime-prefixed names the oracle cannot resolve.
+    if (insideGroup && isValidConditionTargets(raw).length > 0) {
+      throw new Error(`Invalid form config at ${fieldPath}: isValid conditions are not supported inside groups`);
     }
 
     if (type === "hidden" && !("value" in (raw as object))) {
@@ -330,6 +378,23 @@ function validateFields(fields: unknown[], path: string, insideGroup = false): v
       if (typeByName.get(target) !== "otp" || target === field.name) {
         throw new Error(
           `Invalid form config at ${path}[${index}]: enabledWhenVerified must reference a sibling otp field, got "${target}"`,
+        );
+      }
+    }
+
+    // isValid needs the target's zod schema: it must be a sibling built-in
+    // input field (custom field values validate as unknown and static/submit/
+    // hidden have no user input — all vacuously "valid"), and not the field
+    // itself (invalid + disabled-by-own-invalidity = deadlock).
+    for (const target of isValidConditionTargets(raw)) {
+      const targetType = typeByName.get(target);
+      const isValidatable =
+        typeof targetType === "string" &&
+        targetType in fieldSchemasByType &&
+        !VACUOUS_VALIDITY_TYPES.has(targetType);
+      if (target === field.name || !isValidatable) {
+        throw new Error(
+          `Invalid form config at ${path}[${index}]: isValid condition must reference a sibling built-in input field, got "${target}"`,
         );
       }
     }
@@ -409,6 +474,20 @@ function validateSteps(config: FormConfig): void {
         console.warn(
           `form-builder: phone field "${field.name}" (step ${phoneStep + 1}) syncs country from "${countryFrom}" (step ${sourceStep + 1}) — source changes while the phone field is unmounted are not applied on remount`,
         );
+      }
+    }
+    // Works (values persist under shouldUnregister: false), but the user
+    // cannot see WHY the field is disabled — the invalid source is on
+    // another step. Usually a config smell.
+    for (const field of config.fields) {
+      for (const target of isValidConditionTargets(field)) {
+        const fieldStep = stepOf.get(field.name);
+        const targetStep = stepOf.get(target);
+        if (fieldStep !== undefined && targetStep !== undefined && fieldStep !== targetStep) {
+          console.warn(
+            `form-builder: field "${field.name}" (step ${fieldStep + 1}) is gated on validity of "${target}" (step ${targetStep + 1}) — the disable reason is invisible on the field's step`,
+          );
+        }
       }
     }
   }

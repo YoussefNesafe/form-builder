@@ -5,7 +5,8 @@ import { Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import type { FieldComponentProps } from "../core/registry";
-import type { AnyFieldConfig, Condition, FieldConfig } from "../core/types";
+import type { AnyFieldConfig, ConditionSpec, FieldConfig } from "../core/types";
+import { toConditionGroups } from "../core/conditions";
 import { renderField } from "../components/renderField";
 import { useFieldDisabled, useFieldRuntime } from "../components/FieldRuntime";
 import { FieldWrapper } from "../ui/FieldWrapper";
@@ -13,8 +14,15 @@ import { buildDefaultValues } from "../hooks/useDynamicForm";
 
 type GroupFieldConfig = Extract<FieldConfig, { type: "group" }>;
 
-function prefixCondition(condition: Condition | undefined, prefix: string): Condition | undefined {
-  return condition && { ...condition, field: `${prefix}.${condition.field}` };
+// Normalized to anyOf-groups on the way through — evaluation treats all
+// spec shapes alike, so the shape change is invisible downstream.
+function prefixConditionSpec(spec: ConditionSpec | undefined, prefix: string): ConditionSpec | undefined {
+  if (!spec) return undefined;
+  return {
+    anyOf: toConditionGroups(spec).map((group) =>
+      group.map((condition) => ({ ...condition, field: `${prefix}.${condition.field}` })),
+    ),
+  };
 }
 
 /** Row-scoped names and conditions: inner "role" becomes "team.0.role". */
@@ -22,8 +30,9 @@ export function withNamePrefix(field: AnyFieldConfig, prefix: string): AnyFieldC
   return {
     ...field,
     name: `${prefix}.${field.name}`,
-    visibleWhen: prefixCondition(field.visibleWhen, prefix),
-    disabledWhen: prefixCondition(field.disabledWhen, prefix),
+    visibleWhen: prefixConditionSpec(field.visibleWhen, prefix),
+    disabledWhen: prefixConditionSpec(field.disabledWhen, prefix),
+    enabledWhen: prefixConditionSpec(field.enabledWhen, prefix),
   };
 }
 

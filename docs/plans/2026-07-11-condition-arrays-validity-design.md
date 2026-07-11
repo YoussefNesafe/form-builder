@@ -47,7 +47,10 @@ Any boolean combination is expressible as OR-of-ANDs. Flat two-level shape keeps
 
 - Multiple operators on one leaf AND together (unchanged from today).
 - `isValid: false` = "while invalid" — comes free from the `=== isValid` comparison.
-- Empty array / empty group list: spec matches (same as absent).
+- Empty arrays/groups are **rejected by the config schema**: the engine evaluates
+  an empty spec as "matches" (defensive, same as absent), which for
+  `disabledWhen` would silently mean permanently disabled — so `[]`,
+  `{ anyOf: [] }` and `{ anyOf: [[]] }` never validate.
 
 ## Validity evaluation
 
@@ -67,6 +70,7 @@ Visibility drives the schema: the condition-aware resolver validates only visibl
   - `isValid` in `visibleWhen` → error.
   - both `disabledWhen` and `enabledWhen` on one field → error.
   - `isValid` targeting a group-nested field → error (per-field schema map holds top-level fields only; precedent: group-nested otp wiring rejected).
+  - `isValid` targeting `static`/`submit`/`hidden` or a custom field → error (their validity is constant — the condition would silently always or never match).
   - `isValid` source on a different wizard step → dev-warn (works — values persist under `shouldUnregister: false` — but usually a config smell; precedent: otp cross-step warn).
 - `components/builder/controls/ConditionEditor.tsx` — biggest cost. Group-of-rows UI: rows AND within group, "+ OR group" adds a group. Existing single-condition configs load as one group / one row. `isValid` operator option only in the disabled/enabled editors.
 

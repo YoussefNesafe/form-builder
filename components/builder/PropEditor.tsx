@@ -110,7 +110,16 @@ export function PropEditorPanel() {
             <Control
               id={controlId}
               value={node.props[d.key]}
-              onChange={(v) => updateProps(node._id, { [d.key]: v })}
+              onChange={(v) =>
+                updateProps(node._id, {
+                  [d.key]: v,
+                  // Mutually exclusive props (disabledWhen/enabledWhen) —
+                  // setting one clears the other or the engine rejects.
+                  ...(v !== undefined && d.clears
+                    ? Object.fromEntries(d.clears.map((key) => [key, undefined]))
+                    : {}),
+                })
+              }
               descriptor={d}
               ctx={ctx}
             />

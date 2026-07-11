@@ -118,6 +118,38 @@ describe("builder store", () => {
     expect(text.props.visibleWhen).toBeUndefined();
   });
 
+  it("scrubs only the leaves referencing a deleted field from condition specs", () => {
+    const s = createBuilderStore();
+    s.getState().addNode("text");
+    const firstId = s.getState().nodes[0]._id;
+    s.getState().updateProps(firstId, { name: "firstName" });
+    s.getState().addNode("text");
+    s.getState().updateProps(s.getState().nodes[1]._id, { name: "lastName" });
+    s.getState().addNode("email");
+    const emailId = s.getState().nodes[2]._id;
+    s.getState().updateProps(emailId, {
+      enabledWhen: [
+        { field: "firstName", isValid: true },
+        { field: "lastName", isValid: true },
+      ],
+    });
+    s.getState().addNode("text");
+    const orId = s.getState().nodes[3]._id;
+    s.getState().updateProps(orId, {
+      disabledWhen: { anyOf: [[{ field: "firstName", equals: "x" }], [{ field: "lastName", equals: "y" }]] },
+    });
+
+    s.getState().removeNode(firstId);
+
+    const email = s.getState().nodes.find((n) => n._id === emailId)!;
+    const orNode = s.getState().nodes.find((n) => n._id === orId)!;
+    // Remaining leaf collapses to the minimal single-condition shape.
+    expect(email.props.enabledWhen).toEqual({ field: "lastName", isValid: true });
+    // The group that only referenced the deleted field is dropped, not left
+    // empty (an empty AND-group would match everything).
+    expect(orNode.props.disabledWhen).toEqual({ field: "lastName", equals: "y" });
+  });
+
   it("round-trips through the serializer", () => {
     const s = createBuilderStore();
     s.getState().addNode("text");

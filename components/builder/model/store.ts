@@ -1,7 +1,7 @@
 import { create, type StateCreator } from "zustand";
 import { createStore } from "zustand/vanilla";
 import { persist, createJSONStorage } from "zustand/middleware";
-import type { FieldType } from "@/form-builder";
+import { fromConditionGroups, toConditionGroups, type ConditionSpec, type FieldType } from "@/form-builder";
 import type { BuilderNode, BuilderState, BuilderStep, OutputMode } from "./types";
 import { CONTAINER_TYPES, DEFAULT_PROPS } from "./defaults";
 import { newId, syncCounterFromIds } from "./ids";
@@ -127,12 +127,18 @@ function scrubRefs(node: BuilderNode, name: string): BuilderNode {
       changed = true;
     }
   }
-  for (const key of ["visibleWhen", "disabledWhen"]) {
-    const cond = props[key] as { field?: unknown } | undefined;
-    if (cond && typeof cond === "object" && cond.field === name) {
-      delete props[key];
-      changed = true;
-    }
+  for (const key of ["visibleWhen", "disabledWhen", "enabledWhen"]) {
+    const spec = props[key] as ConditionSpec | undefined;
+    if (!spec || !toConditionGroups(spec).flat().some((c) => c.field === name)) continue;
+    // Drop only the leaves referencing the deleted field; a group emptied
+    // this way is dropped too (an empty AND-group would match everything).
+    const groups = toConditionGroups(spec)
+      .map((group) => group.filter((c) => c.field !== name))
+      .filter((group) => group.length > 0);
+    const next = fromConditionGroups(groups);
+    if (next === undefined) delete props[key];
+    else props[key] = next;
+    changed = true;
   }
   return changed ? { ...node, props } : node;
 }

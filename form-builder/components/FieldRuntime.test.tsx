@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
-import { FormProvider, useForm } from "react-hook-form";
+import { FormProvider, useForm, type UseFormReturn } from "react-hook-form";
 import { defaultMessages } from "../core/messages";
 import type { AnyFieldConfig } from "../core/types";
 import { FieldGate, FieldRuntimeContext, useFieldRuntime } from "./FieldRuntime";
@@ -15,18 +15,23 @@ function Harness({
   field,
   values,
   verifiedFields,
+  isFieldValid,
   parentDisabled = false,
+  onForm,
 }: {
   field: AnyFieldConfig;
   values?: Record<string, unknown>;
   verifiedFields?: ReadonlySet<string>;
+  isFieldValid?: (fieldName: string, value: unknown) => boolean;
   parentDisabled?: boolean;
+  onForm?: (form: UseFormReturn) => void;
 }) {
   const form = useForm({ defaultValues: values });
+  onForm?.(form);
   return (
     <FormProvider {...form}>
       <FieldRuntimeContext.Provider
-        value={{ disabled: parentDisabled, messages: defaultMessages, verifiedFields }}
+        value={{ disabled: parentDisabled, messages: defaultMessages, verifiedFields, isFieldValid }}
       >
         <FieldGate field={field}>
           <Probe />
@@ -64,6 +69,62 @@ describe("FieldGate", () => {
   it("composes parent disabled onto children", () => {
     render(<Harness field={{ type: "text", name: "a" }} parentDisabled />);
     expect(screen.getByTestId("probe").textContent).toBe("disabled");
+  });
+
+  it("array visibleWhen requires every condition (AND)", () => {
+    const field: AnyFieldConfig = {
+      type: "text",
+      name: "a",
+      visibleWhen: [
+        { field: "x", equals: 1 },
+        { field: "y", equals: 2 },
+      ],
+    };
+    render(<Harness field={field} values={{ x: 1, y: 0 }} />);
+    expect(gateChildren()).toBeNull();
+    cleanup();
+    render(<Harness field={field} values={{ x: 1, y: 2 }} />);
+    expect(gateChildren()).not.toBeNull();
+  });
+
+  it("anyOf disabledWhen matches when any group matches (OR)", () => {
+    const field: AnyFieldConfig = {
+      type: "text",
+      name: "a",
+      disabledWhen: { anyOf: [[{ field: "x", equals: 1 }], [{ field: "y", equals: 2 }]] },
+    };
+    render(<Harness field={field} values={{ x: 0, y: 2 }} />);
+    expect(screen.getByTestId("probe").textContent).toBe("disabled");
+    cleanup();
+    render(<Harness field={field} values={{ x: 0, y: 0 }} />);
+    expect(screen.getByTestId("probe").textContent).toBe("enabled");
+  });
+
+  it("enabledWhen with isValid tracks source values reactively", async () => {
+    let form: UseFormReturn | undefined;
+    const nonEmpty = (_name: string, value: unknown) => typeof value === "string" && value.length > 0;
+    render(
+      <Harness
+        field={{
+          type: "email",
+          name: "email",
+          enabledWhen: [
+            { field: "firstName", isValid: true },
+            { field: "lastName", isValid: true },
+          ],
+        }}
+        values={{ firstName: "", lastName: "" }}
+        isFieldValid={nonEmpty}
+        onForm={(f) => (form = f)}
+      />,
+    );
+    expect(screen.getByTestId("probe").textContent).toBe("disabled");
+
+    await act(async () => form!.setValue("firstName", "Ada"));
+    expect(screen.getByTestId("probe").textContent).toBe("disabled");
+
+    await act(async () => form!.setValue("lastName", "Lovelace"));
+    expect(screen.getByTestId("probe").textContent).toBe("enabled");
   });
 
   it("enabledWhenVerified disables until the otp field is in the verified set", () => {

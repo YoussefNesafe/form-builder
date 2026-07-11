@@ -73,6 +73,7 @@ describe("field prop registry", () => {
       "width",
       "visibleWhen",
       "disabledWhen",
+      "enabledWhen",
       "enabledWhenVerified",
       // layout-only base props
       "content",
@@ -104,6 +105,7 @@ describe("field prop registry", () => {
       value: "json",
       visibleWhen: "condition",
       disabledWhen: "condition",
+      enabledWhen: "condition",
       width: "width",
     };
     for (const type of BUILT_IN_FIELD_TYPES) {

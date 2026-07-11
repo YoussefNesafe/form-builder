@@ -1,8 +1,8 @@
 "use client";
 
-import { createContext, useContext, type ReactNode } from "react";
+import { createContext, useContext, useMemo, type ReactNode } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
-import { conditionMatches } from "../core/conditions";
+import { conditionFieldNames, conditionSpecMatches } from "../core/conditions";
 import { defaultMessages, type Messages } from "../core/messages";
 import type { AnyFieldConfig, FormValues } from "../core/types";
 
@@ -57,23 +57,28 @@ export function FieldGate({ field, children }: { field: AnyFieldConfig; children
   const { control } = useFormContext();
   const runtime = useFieldRuntime();
 
-  const visibleWatch = useWatch({
-    control,
-    name: field.visibleWhen?.field ?? "",
-    disabled: !field.visibleWhen,
-  });
-  const disabledWatch = useWatch({
-    control,
-    name: field.disabledWhen?.field ?? "",
-    disabled: !field.disabledWhen,
-  });
+  // One subscription for every source field across all three specs; specs
+  // read values back out of it by name.
+  const watchNames = useMemo(
+    () => [
+      ...new Set([
+        ...conditionFieldNames(field.visibleWhen),
+        ...conditionFieldNames(field.disabledWhen),
+        ...conditionFieldNames(field.enabledWhen),
+      ]),
+    ],
+    [field.visibleWhen, field.disabledWhen, field.enabledWhen],
+  );
+  const watched = useWatch({ control, name: watchNames, disabled: watchNames.length === 0 });
+  const valueOf = (name: string) => watched?.[watchNames.indexOf(name)];
 
-  const visible = !field.visibleWhen || conditionMatches(field.visibleWhen, visibleWatch);
+  const visible = conditionSpecMatches(field.visibleWhen, valueOf);
   // Compose parent disabled: a disabled group must disable its children.
   const disabled =
     runtime.disabled ||
     !!field.disabled ||
-    (!!field.disabledWhen && conditionMatches(field.disabledWhen, disabledWatch)) ||
+    (!!field.disabledWhen && conditionSpecMatches(field.disabledWhen, valueOf, runtime.isFieldValid)) ||
+    (!!field.enabledWhen && !conditionSpecMatches(field.enabledWhen, valueOf, runtime.isFieldValid)) ||
     (!!field.enabledWhenVerified && !runtime.verifiedFields?.has(field.enabledWhenVerified));
 
   if (!visible) return null;

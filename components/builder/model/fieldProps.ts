@@ -28,6 +28,10 @@ export type PropDescriptor = {
   options?: { label: string; value: string }[];
   /** Which siblings a `control: "fieldRef"` may reference. */
   refKind?: "otp" | "countrySource" | "any";
+  /** `control: "condition"`: offer the is valid / is invalid operators. */
+  validityOps?: boolean;
+  /** Props to clear when this one is set (mutually exclusive pairs). */
+  clears?: string[];
   /** Native constraints for `control: "number"`. */
   min?: number;
   max?: number;
@@ -49,7 +53,21 @@ const BEHAVIOR: PropDescriptor[] = [
   { key: "disabled", label: "Disabled", control: "boolean" },
   { key: "width", label: "Width", control: "width" },
   { key: "visibleWhen", label: "Visible when", control: "condition" },
-  { key: "disabledWhen", label: "Disabled when", control: "condition" },
+  {
+    key: "disabledWhen",
+    label: "Disabled when",
+    control: "condition",
+    validityOps: true,
+    clears: ["enabledWhen"],
+  },
+  {
+    key: "enabledWhen",
+    label: "Enabled when",
+    control: "condition",
+    validityOps: true,
+    clears: ["disabledWhen"],
+    help: "Disabled until the conditions match — e.g. until other fields are valid.",
+  },
   {
     key: "enabledWhenVerified",
     label: "Enabled when verified",
@@ -184,7 +202,21 @@ export const FIELD_PROPS: Record<FieldType, PropDescriptor[]> = {
     { key: "variant", label: "Variant", control: "select", options: VARIANT_OPTIONS },
     { key: "disabled", label: "Disabled", control: "boolean" },
     { key: "visibleWhen", label: "Visible when", control: "condition" },
-    { key: "disabledWhen", label: "Disabled when", control: "condition" },
+    {
+      key: "disabledWhen",
+      label: "Disabled when",
+      control: "condition",
+      validityOps: true,
+      clears: ["enabledWhen"],
+    },
+    {
+      key: "enabledWhen",
+      label: "Enabled when",
+      control: "condition",
+      validityOps: true,
+      clears: ["disabledWhen"],
+      help: "Disabled until the conditions match — e.g. until other fields are valid.",
+    },
     {
       key: "enabledWhenVerified",
       label: "Enabled when verified",

@@ -5,6 +5,7 @@ export type {
   AnyFieldConfig,
   FieldType,
   Condition,
+  ConditionSpec,
   Option,
   TextRules,
   PasswordComplexity,
@@ -21,7 +22,15 @@ export { FormSection } from "./components/FormSection";
 // For custom field authors: match built-in chrome and runtime behavior.
 export { FieldWrapper, fieldAriaDescribedBy } from "./ui/FieldWrapper";
 export { useFieldRuntime, useFieldDisabled, type FormLocale } from "./components/FieldRuntime";
-export { conditionMatches, evaluateCondition } from "./core/conditions";
+export {
+  conditionMatches,
+  conditionSpecMatches,
+  conditionFieldNames,
+  toConditionGroups,
+  fromConditionGroups,
+  evaluateCondition,
+  type IsFieldValid,
+} from "./core/conditions";
 export { useDynamicForm, buildDefaultValues } from "./hooks/useDynamicForm";
 export { useOtpFlow, type OtpFlowConfig, type OtpFlowStatus } from "./hooks/useOtpFlow";
 export {
