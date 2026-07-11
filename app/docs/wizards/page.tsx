@@ -1,31 +1,22 @@
 import type { Metadata } from "next";
-import type { ReactNode } from "react";
 import Link from "next/link";
 import { ExampleForm } from "@/components/examples/ExampleForm";
 import { CodeBlock } from "@/components/docs/CodeBlock";
+import { DocsH1, DocsH2 as H2, DocsBody as P, DocsInlineCode as IC } from "@/components/docs/Prose";
+import type { TocItem } from "@/components/docs/DocsToc";
+import { DocsPageShell } from "@/components/docs/DocsPageShell";
 import { wizardDemoConfig } from "./config";
 
 export const metadata: Metadata = { title: "Multi-step wizards" };
 
-// Local inline-code span — matches the styling repeated across the other
-// docs pages, just not re-typed at every call site on this longer page.
-function IC({ children }: { children: ReactNode }) {
-  return (
-    <code className="rounded-[4px] tablet:rounded-[4px] desktop:rounded-[4px] bg-muted px-[4px] tablet:px-[4px] desktop:px-[4px] py-[2px] tablet:py-[2px] desktop:py-[2px] text-[13px] tablet:text-[13px] desktop:text-[13px]">
-      {children}
-    </code>
-  );
-}
-
-function H2({ children }: { children: ReactNode }) {
-  return (
-    <h2 className="text-[17px] tablet:text-[17px] desktop:text-[17px] font-semibold tracking-tight">{children}</h2>
-  );
-}
-
-function P({ children }: { children: ReactNode }) {
-  return <p className="text-[14px] tablet:text-[14px] desktop:text-[14px] text-muted-foreground">{children}</p>;
-}
+const TOC_ITEMS: TocItem[] = [
+  { id: "step-config-shape", title: "Step config shape" },
+  { id: "step-gating", title: "Step gating" },
+  { id: "conditional-steps", title: "Conditional steps" },
+  { id: "review-step", title: "Review step" },
+  { id: "otp-dependson", title: "Cross-step caveat: otp" },
+  { id: "try-it", title: "Try it" },
+];
 
 const STEPS_CODE = `export const config: FormConfig = {
   id: "wizard-demo",
@@ -62,11 +53,9 @@ const CONDITIONAL_STEP_CODE = `steps: [
  */
 export default function WizardsPage() {
   return (
-    <div className="flex flex-col gap-[28px] tablet:gap-[28px] desktop:gap-[28px]">
+    <DocsPageShell toc={TOC_ITEMS}>
       <div className="flex flex-col gap-[8px] tablet:gap-[8px] desktop:gap-[8px]">
-        <h1 className="text-[24px] tablet:text-[24px] desktop:text-[24px] font-semibold tracking-tight">
-          Multi-step wizards
-        </h1>
+        <DocsH1>Multi-step wizards</DocsH1>
         <P>
           Add a <IC>steps</IC> array to a <IC>FormConfig</IC> and <IC>FormRenderer</IC> switches from a single
           scrolling form to a stepper: one screen per step, Back/Next navigation, and an optional read-only review
@@ -75,7 +64,7 @@ export default function WizardsPage() {
       </div>
 
       <section className="flex flex-col gap-[10px] tablet:gap-[10px] desktop:gap-[10px]">
-        <H2>Step config shape</H2>
+        <H2 id="step-config-shape">Step config shape</H2>
         <P>
           Each entry in <IC>steps</IC> is <IC>{"{ title, fieldNames?, review?, visibleWhen? }"}</IC>. A step needs
           exactly one of <IC>fieldNames</IC> or <IC>review: true</IC> — the validator rejects a step with both or
@@ -90,7 +79,7 @@ export default function WizardsPage() {
       </section>
 
       <section className="flex flex-col gap-[10px] tablet:gap-[10px] desktop:gap-[10px]">
-        <H2>Step gating</H2>
+        <H2 id="step-gating">Step gating</H2>
         <P>
           The Next button gates on <IC>form.trigger(currentStepFieldNames)</IC> —{" "}
           <strong className="text-foreground">never</strong> <IC>formState.isValid</IC>. The condition-aware
@@ -112,7 +101,7 @@ export default function WizardsPage() {
       </section>
 
       <section className="flex flex-col gap-[10px] tablet:gap-[10px] desktop:gap-[10px]">
-        <H2>Conditional steps</H2>
+        <H2 id="conditional-steps">Conditional steps</H2>
         <P>
           A step&apos;s own <IC>visibleWhen</IC> hides the entire step — same value-only <IC>ConditionSpec</IC>{" "}
           restriction as field <IC>visibleWhen</IC> (isValid is rejected there too, for the same feedback-loop
@@ -134,7 +123,7 @@ export default function WizardsPage() {
       </section>
 
       <section className="flex flex-col gap-[10px] tablet:gap-[10px] desktop:gap-[10px]">
-        <H2>Review step</H2>
+        <H2 id="review-step">Review step</H2>
         <P>
           Set <IC>review: true</IC> instead of <IC>fieldNames</IC> to add a read-only summary screen. It shows
           every visible field from every earlier <em>visible</em> step (a hidden or later step contributes
@@ -153,7 +142,7 @@ export default function WizardsPage() {
       </section>
 
       <section className="flex flex-col gap-[10px] tablet:gap-[10px] desktop:gap-[10px]">
-        <H2>Cross-step caveat: otp dependsOn</H2>
+        <H2 id="otp-dependson">Cross-step caveat: otp dependsOn</H2>
         <P>
           An <IC>otp</IC> field&apos;s <IC>dependsOn</IC> source normally lives on the same step. If it&apos;s on a
           different step, the config validator dev-warns rather than errors — it works, because{" "}
@@ -164,7 +153,7 @@ export default function WizardsPage() {
       </section>
 
       <section className="flex flex-col gap-[10px] tablet:gap-[10px] desktop:gap-[10px]">
-        <H2>Try it</H2>
+        <H2 id="try-it">Try it</H2>
         <P>Two fields on step one, one field on step two, then a review screen before submit.</P>
         <ExampleForm config={wizardDemoConfig} />
       </section>
@@ -177,6 +166,6 @@ export default function WizardsPage() {
         </Link>
         .
       </p>
-    </div>
+    </DocsPageShell>
   );
 }

@@ -22,7 +22,7 @@ export function CodeBlock({ code, className, label = "Code example" }: CodeBlock
       tabIndex={0}
       aria-label={label}
       className={cn(
-        "overflow-x-auto rounded-[10px] tablet:rounded-[10px] desktop:rounded-[10px] border border-border bg-muted p-[14px] tablet:p-[14px] desktop:p-[14px] text-[12.5px] tablet:text-[12.5px] desktop:text-[12.5px] font-mono leading-relaxed",
+        "overflow-x-auto rounded-[10px] tablet:rounded-[10px] desktop:rounded-[10px] border border-border bg-muted p-[14px] tablet:p-[14px] desktop:p-[14px] text-[13px] tablet:text-[13px] desktop:text-[13px] font-mono leading-[20px] tablet:leading-[20px] desktop:leading-[20px]",
         className,
       )}
     >

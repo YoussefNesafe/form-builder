@@ -1,31 +1,21 @@
 import type { Metadata } from "next";
-import type { ReactNode } from "react";
 import Link from "next/link";
 import { ExampleForm } from "@/components/examples/ExampleForm";
 import { CodeBlock } from "@/components/docs/CodeBlock";
+import { DocsH1, DocsH2 as H2, DocsBody as P, DocsInlineCode as IC } from "@/components/docs/Prose";
+import type { TocItem } from "@/components/docs/DocsToc";
+import { DocsPageShell } from "@/components/docs/DocsPageShell";
 import { conditionsDemoConfig } from "./config";
 
 export const metadata: Metadata = { title: "Conditions" };
 
-// Local inline-code span — matches the styling repeated across the other
-// docs pages, just not re-typed at every call site on this longer page.
-function IC({ children }: { children: ReactNode }) {
-  return (
-    <code className="rounded-[4px] tablet:rounded-[4px] desktop:rounded-[4px] bg-muted px-[4px] tablet:px-[4px] desktop:px-[4px] py-[2px] tablet:py-[2px] desktop:py-[2px] text-[13px] tablet:text-[13px] desktop:text-[13px]">
-      {children}
-    </code>
-  );
-}
-
-function H2({ children }: { children: ReactNode }) {
-  return (
-    <h2 className="text-[17px] tablet:text-[17px] desktop:text-[17px] font-semibold tracking-tight">{children}</h2>
-  );
-}
-
-function P({ children }: { children: ReactNode }) {
-  return <p className="text-[14px] tablet:text-[14px] desktop:text-[14px] text-muted-foreground">{children}</p>;
-}
+const TOC_ITEMS: TocItem[] = [
+  { id: "visible-disabled-enabled-when", title: "visibleWhen, disabledWhen, enabledWhen" },
+  { id: "condition-shape", title: "Condition shape" },
+  { id: "is-valid-operator", title: "The isValid operator" },
+  { id: "group-limitation", title: "Known limitation: groups" },
+  { id: "try-it", title: "Try it" },
+];
 
 const VISIBLE_WHEN_CODE = `{
   type: "text",
@@ -87,11 +77,9 @@ const GROUP_LIMITATION_CODE = `{
  */
 export default function ConditionsPage() {
   return (
-    <div className="flex flex-col gap-[28px] tablet:gap-[28px] desktop:gap-[28px]">
+    <DocsPageShell toc={TOC_ITEMS}>
       <div className="flex flex-col gap-[8px] tablet:gap-[8px] desktop:gap-[8px]">
-        <h1 className="text-[24px] tablet:text-[24px] desktop:text-[24px] font-semibold tracking-tight">
-          Conditions
-        </h1>
+        <DocsH1>Conditions</DocsH1>
         <P>
           Any field can react to another field&apos;s value — or, for disabling, another field&apos;s{" "}
           <em>validity</em> — via <IC>visibleWhen</IC>, <IC>disabledWhen</IC>, and <IC>enabledWhen</IC>. All three
@@ -100,7 +88,7 @@ export default function ConditionsPage() {
       </div>
 
       <section className="flex flex-col gap-[10px] tablet:gap-[10px] desktop:gap-[10px]">
-        <H2>visibleWhen, disabledWhen, enabledWhen</H2>
+        <H2 id="visible-disabled-enabled-when">visibleWhen, disabledWhen, enabledWhen</H2>
         <P>
           <IC>visibleWhen</IC> controls whether the field renders at all. A field whose <IC>visibleWhen</IC> does
           not match is excluded from the validation schema entirely — the condition-aware resolver only validates
@@ -118,7 +106,7 @@ export default function ConditionsPage() {
       </section>
 
       <section className="flex flex-col gap-[10px] tablet:gap-[10px] desktop:gap-[10px]">
-        <H2>Condition shape</H2>
+        <H2 id="condition-shape">Condition shape</H2>
         <P>
           A single condition is <IC>{"{ field, equals?, notEquals?, in?, isValid? }"}</IC> — those four are the
           complete operator list (the validator rejects a condition with none of them set). A{" "}
@@ -148,7 +136,7 @@ export default function ConditionsPage() {
       </section>
 
       <section className="flex flex-col gap-[10px] tablet:gap-[10px] desktop:gap-[10px]">
-        <H2>The isValid operator</H2>
+        <H2 id="is-valid-operator">The isValid operator</H2>
         <P>
           <IC>isValid</IC> matches when a source field&apos;s own Zod schema passes (or fails, for{" "}
           <IC>isValid: false</IC>) against its current value — computed by safe-parsing the field&apos;s schema
@@ -173,7 +161,7 @@ export default function ConditionsPage() {
       </section>
 
       <section className="flex flex-col gap-[10px] tablet:gap-[10px] desktop:gap-[10px]">
-        <H2>Known limitation: conditions inside groups</H2>
+        <H2 id="group-limitation">Known limitation: conditions inside groups</H2>
         <P>
           <IC>visibleWhen</IC> on a field nested inside a <IC>group</IC> field is{" "}
           <strong className="text-foreground">not skipped by validation</strong> in v1 — this is a known
@@ -190,7 +178,7 @@ export default function ConditionsPage() {
       </section>
 
       <section className="flex flex-col gap-[10px] tablet:gap-[10px] desktop:gap-[10px]">
-        <H2>Try it</H2>
+        <H2 id="try-it">Try it</H2>
         <P>
           Pick &quot;Company&quot; below and the company name field appears — and becomes part of what
           submit validates.
@@ -210,6 +198,6 @@ export default function ConditionsPage() {
         </Link>
         .
       </p>
-    </div>
+    </DocsPageShell>
   );
 }

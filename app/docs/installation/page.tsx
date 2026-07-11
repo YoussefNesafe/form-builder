@@ -1,8 +1,19 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { CodeBlock } from "@/components/docs/CodeBlock";
+import { DocsH1, DocsH2 as H2, DocsBody as P, DocsInlineCode as IC } from "@/components/docs/Prose";
+import type { TocItem } from "@/components/docs/DocsToc";
+import { DocsPageShell } from "@/components/docs/DocsPageShell";
 
 export const metadata: Metadata = { title: "Installation" };
+
+const TOC_ITEMS: TocItem[] = [
+  { id: "copy-package-folder", title: "Copy the package folder" },
+  { id: "add-shadcn-primitives", title: "Add the shadcn primitives" },
+  { id: "install-peer-dependencies", title: "Install peer dependencies" },
+  { id: "register-fields", title: "Register the built-in fields" },
+  { id: "import-entry-point", title: "Import from the entry point" },
+];
 
 const SHADCN_ADD = `npx shadcn@latest add button calendar checkbox command dialog field \\
   input input-group input-otp label popover progress radio-group \\
@@ -35,128 +46,68 @@ import { FormRenderer } from "@/form-builder/components/FormRenderer";`;
  */
 export default function InstallationPage() {
   return (
-    <div className="flex flex-col gap-[28px] tablet:gap-[28px] desktop:gap-[28px]">
+    <DocsPageShell toc={TOC_ITEMS}>
       <div className="flex flex-col gap-[8px] tablet:gap-[8px] desktop:gap-[8px]">
-        <h1 className="text-[24px] tablet:text-[24px] desktop:text-[24px] font-semibold tracking-tight">
-          Installation
-        </h1>
-        <p className="text-[14px] tablet:text-[14px] desktop:text-[14px] text-muted-foreground">
+        <DocsH1>Installation</DocsH1>
+        <P>
           The engine is copy-in, not an npm package — the same model as shadcn/ui. You copy the source into your
           own Next.js project and own it from that point on; there is no runtime dependency on this repo.
-        </p>
+        </P>
       </div>
 
       <section className="flex flex-col gap-[10px] tablet:gap-[10px] desktop:gap-[10px]">
-        <h2 className="text-[17px] tablet:text-[17px] desktop:text-[17px] font-semibold tracking-tight">
-          1. Copy the package folder
-        </h2>
-        <p className="text-[14px] tablet:text-[14px] desktop:text-[14px] text-muted-foreground">
-          Copy the{" "}
-          <code className="rounded-[4px] tablet:rounded-[4px] desktop:rounded-[4px] bg-muted px-[4px] tablet:px-[4px] desktop:px-[4px] py-[2px] tablet:py-[2px] desktop:py-[2px] text-[13px] tablet:text-[13px] desktop:text-[13px]">
-            form-builder/
-          </code>{" "}
-          folder into your Next.js project as-is. It has no dependency on anything else in this repo —
-          <code className="rounded-[4px] tablet:rounded-[4px] desktop:rounded-[4px] bg-muted px-[4px] tablet:px-[4px] desktop:px-[4px] py-[2px] tablet:py-[2px] desktop:py-[2px] text-[13px] tablet:text-[13px] desktop:text-[13px]">
-            {" "}
-            components/ui/
-          </code>{" "}
-          (below) and the peer packages it imports.
-        </p>
+        <H2 id="copy-package-folder">1. Copy the package folder</H2>
+        <P>
+          Copy the <IC>form-builder/</IC> folder into your Next.js project as-is. It has no dependency on anything
+          else in this repo — <IC>components/ui/</IC> (below) and the peer packages it imports.
+        </P>
       </section>
 
       <section className="flex flex-col gap-[10px] tablet:gap-[10px] desktop:gap-[10px]">
-        <h2 className="text-[17px] tablet:text-[17px] desktop:text-[17px] font-semibold tracking-tight">
-          2. Add the shadcn primitives
-        </h2>
-        <p className="text-[14px] tablet:text-[14px] desktop:text-[14px] text-muted-foreground">
+        <H2 id="add-shadcn-primitives">2. Add the shadcn primitives</H2>
+        <P>
           The engine&apos;s fields are built on these shadcn primitives — it&apos;s the exact set under{" "}
-          <code className="rounded-[4px] tablet:rounded-[4px] desktop:rounded-[4px] bg-muted px-[4px] tablet:px-[4px] desktop:px-[4px] py-[2px] tablet:py-[2px] desktop:py-[2px] text-[13px] tablet:text-[13px] desktop:text-[13px]">
-            components/ui/
-          </code>{" "}
-          in this repo, so check your own{" "}
-          <code className="rounded-[4px] tablet:rounded-[4px] desktop:rounded-[4px] bg-muted px-[4px] tablet:px-[4px] desktop:px-[4px] py-[2px] tablet:py-[2px] desktop:py-[2px] text-[13px] tablet:text-[13px] desktop:text-[13px]">
-            components/ui/
-          </code>{" "}
-          before re-adding anything you already have:
-        </p>
+          <IC>components/ui/</IC> in this repo, so check your own <IC>components/ui/</IC> before re-adding anything
+          you already have:
+        </P>
         <CodeBlock code={SHADCN_ADD} />
-        <p className="text-[14px] tablet:text-[14px] desktop:text-[14px] text-muted-foreground">
-          <code className="rounded-[4px] tablet:rounded-[4px] desktop:rounded-[4px] bg-muted px-[4px] tablet:px-[4px] desktop:px-[4px] py-[2px] tablet:py-[2px] desktop:py-[2px] text-[13px] tablet:text-[13px] desktop:text-[13px]">
-            shadcn
-          </code>{" "}
-          itself stays a <strong>devDependency</strong> — it&apos;s a codegen CLI that writes files into your repo
-          at install time, not a library your bundle ships at runtime. Its base layer still has to reach your CSS
-          though: add this import to your global stylesheet (this repo does it in{" "}
-          <code className="rounded-[4px] tablet:rounded-[4px] desktop:rounded-[4px] bg-muted px-[4px] tablet:px-[4px] desktop:px-[4px] py-[2px] tablet:py-[2px] desktop:py-[2px] text-[13px] tablet:text-[13px] desktop:text-[13px]">
-            app/globals.css
-          </code>
-          ):
-        </p>
+        <P>
+          <IC>shadcn</IC> itself stays a <strong>devDependency</strong> — it&apos;s a codegen CLI that writes files
+          into your repo at install time, not a library your bundle ships at runtime. Its base layer still has to
+          reach your CSS though: add this import to your global stylesheet (this repo does it in{" "}
+          <IC>app/globals.css</IC>):
+        </P>
         <CodeBlock code={GLOBALS_CSS_IMPORT} />
       </section>
 
       <section className="flex flex-col gap-[10px] tablet:gap-[10px] desktop:gap-[10px]">
-        <h2 className="text-[17px] tablet:text-[17px] desktop:text-[17px] font-semibold tracking-tight">
-          3. Install the runtime peer dependencies
-        </h2>
-        <p className="text-[14px] tablet:text-[14px] desktop:text-[14px] text-muted-foreground">
-          These are the libraries the copied field components actually import at runtime:
-        </p>
+        <H2 id="install-peer-dependencies">3. Install the runtime peer dependencies</H2>
+        <P>These are the libraries the copied field components actually import at runtime:</P>
         <CodeBlock code={YARN_ADD_PEERS} />
-        <p className="text-[14px] tablet:text-[14px] desktop:text-[14px] text-muted-foreground">
-          Plus{" "}
-          <code className="rounded-[4px] tablet:rounded-[4px] desktop:rounded-[4px] bg-muted px-[4px] tablet:px-[4px] desktop:px-[4px] py-[2px] tablet:py-[2px] desktop:py-[2px] text-[13px] tablet:text-[13px] desktop:text-[13px]">
-            tailwindcss@^4
-          </code>{" "}
-          and{" "}
-          <code className="rounded-[4px] tablet:rounded-[4px] desktop:rounded-[4px] bg-muted px-[4px] tablet:px-[4px] desktop:px-[4px] py-[2px] tablet:py-[2px] desktop:py-[2px] text-[13px] tablet:text-[13px] desktop:text-[13px]">
-            @tailwindcss/postcss
-          </code>{" "}
-          if your project isn&apos;t already on Tailwind 4.
-        </p>
+        <P>
+          Plus <IC>tailwindcss@^4</IC> and <IC>@tailwindcss/postcss</IC> if your project isn&apos;t already on
+          Tailwind 4.
+        </P>
       </section>
 
       <section className="flex flex-col gap-[10px] tablet:gap-[10px] desktop:gap-[10px]">
-        <h2 className="text-[17px] tablet:text-[17px] desktop:text-[17px] font-semibold tracking-tight">
-          4. Register the built-in fields
-        </h2>
-        <p className="text-[14px] tablet:text-[14px] desktop:text-[14px] text-muted-foreground">
+        <H2 id="register-fields">4. Register the built-in fields</H2>
+        <P>
           Field types render through a registry, not a switch statement — nothing renders until it&apos;s
-          registered. Call this once, before the first{" "}
-          <code className="rounded-[4px] tablet:rounded-[4px] desktop:rounded-[4px] bg-muted px-[4px] tablet:px-[4px] desktop:px-[4px] py-[2px] tablet:py-[2px] desktop:py-[2px] text-[13px] tablet:text-[13px] desktop:text-[13px]">
-            FormRenderer
-          </code>{" "}
-          mounts (a root layout or app entry point works; it&apos;s safe to call more than once):
-        </p>
+          registered. Call this once, before the first <IC>FormRenderer</IC> mounts (a root layout or app entry
+          point works; it&apos;s safe to call more than once):
+        </P>
         <CodeBlock code={REGISTER_FIELDS} />
       </section>
 
       <section className="flex flex-col gap-[10px] tablet:gap-[10px] desktop:gap-[10px]">
-        <h2 className="text-[17px] tablet:text-[17px] desktop:text-[17px] font-semibold tracking-tight">
-          5. Import only from the package entry point
-        </h2>
-        <p className="text-[14px] tablet:text-[14px] desktop:text-[14px] text-muted-foreground">
-          <code className="rounded-[4px] tablet:rounded-[4px] desktop:rounded-[4px] bg-muted px-[4px] tablet:px-[4px] desktop:px-[4px] py-[2px] tablet:py-[2px] desktop:py-[2px] text-[13px] tablet:text-[13px] desktop:text-[13px]">
-            form-builder/index.ts
-          </code>{" "}
-          is the package&apos;s only supported import path — it&apos;s the public API surface (
-          <code className="rounded-[4px] tablet:rounded-[4px] desktop:rounded-[4px] bg-muted px-[4px] tablet:px-[4px] desktop:px-[4px] py-[2px] tablet:py-[2px] desktop:py-[2px] text-[13px] tablet:text-[13px] desktop:text-[13px]">
-            FormRenderer
-          </code>
-          ,{" "}
-          <code className="rounded-[4px] tablet:rounded-[4px] desktop:rounded-[4px] bg-muted px-[4px] tablet:px-[4px] desktop:px-[4px] py-[2px] tablet:py-[2px] desktop:py-[2px] text-[13px] tablet:text-[13px] desktop:text-[13px]">
-            useDynamicForm
-          </code>
-          , types, and the rest of the exports live there). Reaching into{" "}
-          <code className="rounded-[4px] tablet:rounded-[4px] desktop:rounded-[4px] bg-muted px-[4px] tablet:px-[4px] desktop:px-[4px] py-[2px] tablet:py-[2px] desktop:py-[2px] text-[13px] tablet:text-[13px] desktop:text-[13px]">
-            form-builder/core
-          </code>{" "}
-          or{" "}
-          <code className="rounded-[4px] tablet:rounded-[4px] desktop:rounded-[4px] bg-muted px-[4px] tablet:px-[4px] desktop:px-[4px] py-[2px] tablet:py-[2px] desktop:py-[2px] text-[13px] tablet:text-[13px] desktop:text-[13px]">
-            form-builder/fields
-          </code>{" "}
-          directly is unsupported — those modules can be restructured without notice.
-        </p>
+        <H2 id="import-entry-point">5. Import only from the package entry point</H2>
+        <P>
+          <IC>form-builder/index.ts</IC> is the package&apos;s only supported import path — it&apos;s the public
+          API surface (<IC>FormRenderer</IC>, <IC>useDynamicForm</IC>, types, and the rest of the exports live
+          there). Reaching into <IC>form-builder/core</IC> or <IC>form-builder/fields</IC> directly is unsupported —
+          those modules can be restructured without notice.
+        </P>
         <CodeBlock code={IMPORT_RULE} />
       </section>
 
@@ -167,6 +118,6 @@ export default function InstallationPage() {
         </Link>
         .
       </p>
-    </div>
+    </DocsPageShell>
   );
 }

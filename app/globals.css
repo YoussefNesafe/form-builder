@@ -9,7 +9,13 @@
   --breakpoint-desktop: 1025px;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
+  /* Was `var(--font-sans)` — a self-reference to itself, which CSS resolves
+     as invalid (the "guaranteed-invalid value"), so the `font-sans` utility
+     and `html { @apply font-sans; }` below were silently falling back to the
+     browser default font-family instead of Geist Sans. Point at the actual
+     next/font variable that app/layout.tsx sets on <html> (`--font-geist-sans`,
+     matching `--font-mono` below, which was already wired correctly). */
+  --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
   --font-heading: var(--font-sans);
   --color-sidebar-ring: var(--sidebar-ring);
@@ -195,5 +201,8 @@
   }
   html {
     @apply font-sans;
+    /* Sticky site header is ~61px tall — keep hash/anchor targets visible
+       below it instead of scrolled underneath. */
+    scroll-padding-top: 80px;
   }
 }

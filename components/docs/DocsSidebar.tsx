@@ -23,7 +23,7 @@ export function DocsSidebar() {
     <>
       <nav
         aria-label="Docs sections"
-        className="desktop:hidden -mx-[16px] tablet:-mx-[24px] overflow-x-auto border-b border-border px-[16px] tablet:px-[24px] py-[10px] tablet:py-[10px]"
+        className="desktop:hidden w-full min-w-0 -mx-[16px] tablet:-mx-[24px] overflow-x-auto border-b border-border px-[16px] tablet:px-[24px] py-[10px] tablet:py-[10px]"
       >
         <ul className="flex w-max items-center gap-[18px] tablet:gap-[18px]">
           {DOCS_PAGES.map((item) => (
@@ -47,7 +47,7 @@ export function DocsSidebar() {
 
       <nav
         aria-label="Docs sections"
-        className="hidden desktop:sticky desktop:top-[32px] desktop:block desktop:w-[240px] desktop:shrink-0 desktop:self-start desktop:py-[48px]"
+        className="hidden desktop:sticky desktop:top-[80px] desktop:block desktop:w-[240px] desktop:shrink-0 desktop:self-start desktop:py-[48px]"
       >
         <ul className="flex flex-col desktop:gap-[24px]">
           {DOCS_NAV_GROUPS.map((group) => (

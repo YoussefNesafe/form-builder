@@ -1,8 +1,15 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { BUILT_IN_FIELD_TYPES, type FieldType } from "@/form-builder";
+import { DocsH1, DocsBody as P, DocsInlineCode as IC } from "@/components/docs/Prose";
+import type { TocItem } from "@/components/docs/DocsToc";
+import { DocsPageShell } from "@/components/docs/DocsPageShell";
 
 export const metadata: Metadata = { title: "Field types" };
+
+// No H2 sections on this page (it's one reference table) — empty TOC_ITEMS
+// so DocsToc renders null, same null-guard pattern as DocsPagination.
+const TOC_ITEMS: TocItem[] = [];
 
 type FieldTypeInfo = {
   description: string;
@@ -92,38 +99,14 @@ const FALLBACK: FieldTypeInfo = {
  */
 export default function FieldTypesPage() {
   return (
-    <div className="flex flex-col gap-[20px] tablet:gap-[20px] desktop:gap-[20px]">
+    <DocsPageShell toc={TOC_ITEMS} gap="20">
       <div className="flex flex-col gap-[8px] tablet:gap-[8px] desktop:gap-[8px]">
-        <h1 className="text-[24px] tablet:text-[24px] desktop:text-[24px] font-semibold tracking-tight">
-          Field types
-        </h1>
-        <p className="text-[14px] tablet:text-[14px] desktop:text-[14px] text-muted-foreground">
-          {BUILT_IN_FIELD_TYPES.length} built-in types, registered by{" "}
-          <code className="rounded-[4px] tablet:rounded-[4px] desktop:rounded-[4px] bg-muted px-[4px] tablet:px-[4px] desktop:px-[4px] py-[2px] tablet:py-[2px] desktop:py-[2px] text-[13px] tablet:text-[13px] desktop:text-[13px]">
-            registerBuiltInFields()
-          </code>
-          . Every field also takes the shared base properties —{" "}
-          <code className="rounded-[4px] tablet:rounded-[4px] desktop:rounded-[4px] bg-muted px-[4px] tablet:px-[4px] desktop:px-[4px] py-[2px] tablet:py-[2px] desktop:py-[2px] text-[13px] tablet:text-[13px] desktop:text-[13px]">
-            label
-          </code>
-          ,{" "}
-          <code className="rounded-[4px] tablet:rounded-[4px] desktop:rounded-[4px] bg-muted px-[4px] tablet:px-[4px] desktop:px-[4px] py-[2px] tablet:py-[2px] desktop:py-[2px] text-[13px] tablet:text-[13px] desktop:text-[13px]">
-            required
-          </code>
-          ,{" "}
-          <code className="rounded-[4px] tablet:rounded-[4px] desktop:rounded-[4px] bg-muted px-[4px] tablet:px-[4px] desktop:px-[4px] py-[2px] tablet:py-[2px] desktop:py-[2px] text-[13px] tablet:text-[13px] desktop:text-[13px]">
-            visibleWhen
-          </code>
-          /
-          <code className="rounded-[4px] tablet:rounded-[4px] desktop:rounded-[4px] bg-muted px-[4px] tablet:px-[4px] desktop:px-[4px] py-[2px] tablet:py-[2px] desktop:py-[2px] text-[13px] tablet:text-[13px] desktop:text-[13px]">
-            disabledWhen
-          </code>
-          , and{" "}
-          <code className="rounded-[4px] tablet:rounded-[4px] desktop:rounded-[4px] bg-muted px-[4px] tablet:px-[4px] desktop:px-[4px] py-[2px] tablet:py-[2px] desktop:py-[2px] text-[13px] tablet:text-[13px] desktop:text-[13px]">
-            width
-          </code>{" "}
-          — not repeated per row below.
-        </p>
+        <DocsH1>Field types</DocsH1>
+        <P>
+          {BUILT_IN_FIELD_TYPES.length} built-in types, registered by <IC>registerBuiltInFields()</IC>. Every
+          field also takes the shared base properties — <IC>label</IC>, <IC>required</IC>, <IC>visibleWhen</IC>/
+          <IC>disabledWhen</IC>, and <IC>width</IC> — not repeated per row below.
+        </P>
       </div>
 
       <div
@@ -172,20 +155,13 @@ export default function FieldTypesPage() {
       </div>
 
       <p className="text-[13px] tablet:text-[13px] desktop:text-[13px] text-muted-foreground">
-        For the exact per-type config shape (which properties each type accepts), see the{" "}
-        <code className="rounded-[4px] tablet:rounded-[4px] desktop:rounded-[4px] bg-muted px-[4px] tablet:px-[4px] desktop:px-[4px] py-[2px] tablet:py-[2px] desktop:py-[2px] text-[13px] tablet:text-[13px] desktop:text-[13px]">
-          FieldConfig
-        </code>{" "}
-        union in{" "}
-        <code className="rounded-[4px] tablet:rounded-[4px] desktop:rounded-[4px] bg-muted px-[4px] tablet:px-[4px] desktop:px-[4px] py-[2px] tablet:py-[2px] desktop:py-[2px] text-[13px] tablet:text-[13px] desktop:text-[13px]">
-          form-builder-spec.md
-        </code>
-        , or a working config for several of these under{" "}
+        For the exact per-type config shape (which properties each type accepts), see the <IC>FieldConfig</IC>{" "}
+        union in <IC>form-builder-spec.md</IC>, or a working config for several of these under{" "}
         <Link href="/examples" className="underline underline-offset-2 hover:text-foreground">
           Examples
         </Link>
         .
       </p>
-    </div>
+    </DocsPageShell>
   );
 }

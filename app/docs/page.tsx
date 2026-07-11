@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { DOCS_PAGES } from "@/lib/docsNav";
+import { DocsH1, DocsBody as P, DocsInlineCode as IC } from "@/components/docs/Prose";
 
 export const metadata: Metadata = { title: "Docs" };
 
@@ -31,10 +32,10 @@ const PAGES = DOCS_PAGES.filter((page) => page.href !== "/docs").map((page) => (
  */
 export default function DocsIndexPage() {
   return (
-    <div className="flex flex-col gap-[24px] tablet:gap-[24px] desktop:gap-[24px]">
+    <div className="min-w-0 w-full desktop:max-w-[720px] flex flex-col gap-[24px] tablet:gap-[24px] desktop:gap-[24px]">
       <div className="flex flex-col gap-[8px] tablet:gap-[8px] desktop:gap-[8px]">
-        <h1 className="text-[24px] tablet:text-[24px] desktop:text-[24px] font-semibold tracking-tight">Docs</h1>
-        <p className="text-[14px] tablet:text-[14px] desktop:text-[14px] text-muted-foreground">
+        <DocsH1>Docs</DocsH1>
+        <P>
           The engine is copy-in code you own, not a hosted widget — same model as shadcn/ui. Start with{" "}
           <Link href="/docs/installation" className="underline underline-offset-2 hover:text-foreground">
             Installation
@@ -48,7 +49,7 @@ export default function DocsIndexPage() {
             Examples
           </Link>
           .
-        </p>
+        </P>
       </div>
 
       <ul className="flex flex-col gap-[12px] tablet:gap-[12px] desktop:gap-[12px]">
@@ -70,11 +71,7 @@ export default function DocsIndexPage() {
       </ul>
 
       <p className="text-[13px] tablet:text-[13px] desktop:text-[13px] text-muted-foreground">
-        The full config schema and design rationale live in{" "}
-        <code className="rounded-[4px] tablet:rounded-[4px] desktop:rounded-[4px] bg-muted px-[4px] tablet:px-[4px] desktop:px-[4px] py-[2px] tablet:py-[2px] desktop:py-[2px] text-[13px] tablet:text-[13px] desktop:text-[13px]">
-          form-builder-spec.md
-        </code>{" "}
-        at the repo root.
+        The full config schema and design rationale live in <IC>form-builder-spec.md</IC> at the repo root.
       </p>
     </div>
   );

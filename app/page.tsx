@@ -69,6 +69,52 @@ const COMPARISON_ROWS = [
 
 const BUILDER_CHIPS = ["Email", "Password", "Country", "Submit"] as const;
 
+// Showcase-style card grid (§4 of the visual spec) — our answer to
+// nextjs.org/showcase's site grid, mapped onto real routes. Descriptions
+// are reused verbatim from app/examples/page.tsx's EXAMPLES array and the
+// hero's own copy (for the builder card) — not new marketing copy.
+const SHOWCASE_CARDS = [
+  {
+    href: "/examples/multi-step-signup",
+    kicker: "Wizard",
+    title: "Multi-step signup",
+    description:
+      "A three-step wizard: account details with confirm-password, email OTP verification, and a read-only review step.",
+    preview: "fields",
+  },
+  {
+    href: "/examples/conditional-profile",
+    kicker: "Conditions",
+    title: "Conditional profile",
+    description:
+      "visibleWhen-conditional fields, an optionsFrom-derived select, and a phone field synced to a country field.",
+    preview: "fields",
+  },
+  {
+    href: "/examples/advanced-fields",
+    kicker: "Advanced fields",
+    title: "Advanced fields",
+    description: "Masked input, date/time fields with sibling bounds, rating, segmented, slider, signature, and file.",
+    preview: "fields",
+  },
+  {
+    href: "/builder",
+    kicker: "Builder",
+    title: "Visual builder",
+    description:
+      "A visual builder that exports real Zod- and React Hook Form–validated React — you own the code, not a hosted widget.",
+    preview: "chips",
+  },
+] as const;
+
+// Fixed set of skeleton "field row" widths for the example cards' preview
+// placeholder — purely decorative (aria-hidden), so any 3 widths do.
+const FIELD_ROW_WIDTHS = [
+  "w-[85%] tablet:w-[85%] desktop:w-[85%]",
+  "w-[60%] tablet:w-[60%] desktop:w-[60%]",
+  "w-[72%] tablet:w-[72%] desktop:w-[72%]",
+] as const;
+
 const CODE_SNIPPET = `import { FormRenderer, registerBuiltInFields } from "@/form-builder";
 import type { FormConfig } from "@/form-builder";
 
@@ -100,14 +146,14 @@ export default function Home() {
     <div className="flex min-h-dvh flex-col bg-background text-foreground">
       <SiteNav />
       <main id="main-content" className="flex-1">
-        <div className="mx-auto flex w-full max-w-[1080px] tablet:max-w-[1080px] desktop:max-w-[1080px] flex-col px-[16px] tablet:px-[24px] desktop:px-[32px]">
+        <div className="mx-auto flex w-full max-w-full tablet:max-w-[1080px] desktop:max-w-[1200px] flex-col px-[16px] tablet:px-[24px] desktop:px-[32px]">
           {/* 1. Hero */}
           <section className="flex flex-col items-center gap-[24px] tablet:gap-[24px] desktop:gap-[24px] py-[64px] tablet:py-[96px] desktop:py-[120px] text-center">
-            <h1 className="text-[36px] tablet:text-[48px] desktop:text-[56px] font-semibold tracking-tight">
+            <h1 className="text-[36px] tablet:text-[48px] desktop:text-[56px] font-semibold tracking-[-1.2px] tablet:tracking-[-2px] desktop:tracking-[-3.4px]">
               Build the form visually. Ship the{" "}
               <span className="text-accent-brand">code</span>.
             </h1>
-            <p className="max-w-[560px] tablet:max-w-[560px] desktop:max-w-[560px] text-[15px] tablet:text-[15px] desktop:text-[15px] text-muted-foreground">
+            <p className="max-w-[560px] tablet:max-w-[560px] desktop:max-w-[560px] text-[16px] tablet:text-[17px] desktop:text-[18px] leading-[26px] tablet:leading-[27px] desktop:leading-[29px] text-muted-foreground">
               A visual builder that exports real Zod- and React Hook Form–validated React — you own the code, not a
               hosted widget.
             </p>
@@ -121,10 +167,63 @@ export default function Home() {
             </div>
           </section>
 
-          {/* 2. Live demo */}
+          {/* 2. NEW — showcase-style card grid (§4.1-4.2): a navigation
+              surface ("here's what you can go look at"), distinct from the
+              live demo below it, which is a proof surface ("here's the
+              engine actually running"). Links to real routes only. */}
+          <section className="flex flex-col gap-[24px] tablet:gap-[24px] desktop:gap-[24px] pb-[64px] tablet:pb-[96px] desktop:pb-[120px]">
+            <h2 className="text-center text-[24px] tablet:text-[28px] desktop:text-[32px] font-semibold tracking-[-0.5px] tablet:tracking-[-0.9px] desktop:tracking-[-1.3px]">
+              See it in action
+            </h2>
+            <div className="grid grid-cols-1 tablet:grid-cols-2 desktop:grid-cols-4 gap-[16px] tablet:gap-[16px] desktop:gap-[16px]">
+              {SHOWCASE_CARDS.map((card) => (
+                <Link
+                  key={card.href}
+                  href={card.href}
+                  className="flex flex-col gap-[12px] tablet:gap-[12px] desktop:gap-[12px] rounded-[12px] tablet:rounded-[12px] desktop:rounded-[12px] border border-border-interactive bg-card p-[20px] tablet:p-[20px] desktop:p-[20px] transition-colors hover:border-border-interactive-hover focus-visible:border-foreground focus-visible:outline-none"
+                >
+                  <div
+                    aria-hidden="true"
+                    className="flex h-[96px] tablet:h-[96px] desktop:h-[96px] flex-col justify-center gap-[8px] tablet:gap-[8px] desktop:gap-[8px] rounded-[8px] tablet:rounded-[8px] desktop:rounded-[8px] border border-dashed border-border p-[12px] tablet:p-[12px] desktop:p-[12px]"
+                  >
+                    {card.preview === "chips" ? (
+                      <div className="flex flex-wrap gap-[6px] tablet:gap-[6px] desktop:gap-[6px]">
+                        {BUILDER_CHIPS.map((chip) => (
+                          <span
+                            key={chip}
+                            className="rounded-[6px] tablet:rounded-[6px] desktop:rounded-[6px] border border-border bg-muted px-[8px] tablet:px-[8px] desktop:px-[8px] py-[4px] tablet:py-[4px] desktop:py-[4px] text-[11px] tablet:text-[11px] desktop:text-[11px] text-muted-foreground"
+                          >
+                            {chip}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      FIELD_ROW_WIDTHS.map((widthClass, index) => (
+                        <div
+                          key={index}
+                          className={`h-[10px] tablet:h-[10px] desktop:h-[10px] rounded-[4px] tablet:rounded-[4px] desktop:rounded-[4px] bg-muted ${widthClass}`}
+                        />
+                      ))
+                    )}
+                  </div>
+                  <span className="text-[11px] tablet:text-[11px] desktop:text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                    {card.kicker}
+                  </span>
+                  <span className="text-[15px] tablet:text-[15px] desktop:text-[15px] font-medium text-card-foreground">
+                    {card.title}
+                  </span>
+                  <span className="text-[13px] tablet:text-[13px] desktop:text-[13px] text-muted-foreground">
+                    {card.description}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </section>
+
+          {/* 3. Live demo */}
           <section className="flex flex-col items-center gap-[16px] tablet:gap-[16px] desktop:gap-[16px] pb-[64px] tablet:pb-[96px] desktop:pb-[120px]">
             <div className="flex flex-col items-center gap-[8px] tablet:gap-[8px] desktop:gap-[8px] text-center">
-              <h2 className="text-[24px] tablet:text-[28px] desktop:text-[32px] font-semibold tracking-tight">
+              <h2 className="text-[24px] tablet:text-[28px] desktop:text-[32px] font-semibold tracking-[-0.5px] tablet:tracking-[-0.9px] desktop:tracking-[-1.3px]">
                 Try it right here
               </h2>
               <p className="max-w-[480px] tablet:max-w-[480px] desktop:max-w-[480px] text-[14px] tablet:text-[14px] desktop:text-[14px] text-muted-foreground">
@@ -140,7 +239,7 @@ export default function Home() {
             </p>
           </section>
 
-          {/* 3. Builder <-> code split (fully grayscale) */}
+          {/* 4. Builder <-> code split (fully grayscale) */}
           <section className="flex flex-col gap-[24px] tablet:gap-[24px] desktop:gap-[24px] pb-[64px] tablet:pb-[96px] desktop:pb-[120px]">
             <div className="grid grid-cols-1 desktop:grid-cols-2 gap-[16px] tablet:gap-[16px] desktop:gap-[16px]">
               <div className="flex flex-col gap-[12px] tablet:gap-[12px] desktop:gap-[12px] rounded-[16px] tablet:rounded-[16px] desktop:rounded-[16px] border border-border bg-card p-[20px] tablet:p-[24px] desktop:p-[24px]">
@@ -170,9 +269,9 @@ export default function Home() {
             </div>
           </section>
 
-          {/* 4. Feature grid */}
+          {/* 5. Feature grid */}
           <section className="flex flex-col gap-[24px] tablet:gap-[24px] desktop:gap-[24px] pb-[64px] tablet:pb-[96px] desktop:pb-[120px]">
-            <h2 className="text-center text-[24px] tablet:text-[28px] desktop:text-[32px] font-semibold tracking-tight">
+            <h2 className="text-center text-[24px] tablet:text-[28px] desktop:text-[32px] font-semibold tracking-[-0.5px] tablet:tracking-[-0.9px] desktop:tracking-[-1.3px]">
               Everything a real form needs
             </h2>
             <div className="grid grid-cols-1 tablet:grid-cols-2 desktop:grid-cols-3 gap-[16px] tablet:gap-[16px] desktop:gap-[16px]">
@@ -196,9 +295,9 @@ export default function Home() {
             </div>
           </section>
 
-          {/* 5. Comparison strip */}
+          {/* 6. Comparison strip */}
           <section className="flex flex-col gap-[24px] tablet:gap-[24px] desktop:gap-[24px] pb-[64px] tablet:pb-[96px] desktop:pb-[120px]">
-            <h2 className="text-center text-[24px] tablet:text-[28px] desktop:text-[32px] font-semibold tracking-tight">
+            <h2 className="text-center text-[24px] tablet:text-[28px] desktop:text-[32px] font-semibold tracking-[-0.5px] tablet:tracking-[-0.9px] desktop:tracking-[-1.3px]">
               How it compares
             </h2>
             <div className="flex flex-col">
@@ -244,9 +343,9 @@ export default function Home() {
             </div>
           </section>
 
-          {/* 6. Final CTA */}
+          {/* 7. Final CTA */}
           <section className="flex flex-col items-center gap-[20px] tablet:gap-[20px] desktop:gap-[20px] border-t border-border py-[64px] tablet:py-[80px] desktop:py-[96px] text-center">
-            <h2 className="text-[28px] tablet:text-[32px] desktop:text-[36px] font-semibold tracking-tight">
+            <h2 className="text-[24px] tablet:text-[28px] desktop:text-[32px] font-semibold tracking-[-0.5px] tablet:tracking-[-0.9px] desktop:tracking-[-1.3px]">
               Stop hand-wiring the same form again.
             </h2>
             <Button asChild variant="brand" size="lg">
