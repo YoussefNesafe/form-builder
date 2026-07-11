@@ -31,7 +31,8 @@ export {
   evaluateCondition,
   type IsFieldValid,
 } from "./core/conditions";
-export { useDynamicForm, buildDefaultValues } from "./hooks/useDynamicForm";
+export { useDynamicForm, buildDefaultValues, type FormDraft } from "./hooks/useDynamicForm";
+export { clearDraft, type AutosaveOptions } from "./core/autosave";
 export { useOtpFlow, type OtpFlowConfig, type OtpFlowStatus } from "./hooks/useOtpFlow";
 export {
   useOtpController,

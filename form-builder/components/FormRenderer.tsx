@@ -2,6 +2,7 @@
 
 import { useCallback, useMemo, useRef, useState } from "react";
 import { FormProvider } from "react-hook-form";
+import type { AutosaveOptions } from "../core/autosave";
 import type { Messages } from "../core/messages";
 import { applyServerErrors, type ServerErrorResult } from "../core/serverErrors";
 import { isBuiltInField, type FormConfig, type FormValues } from "../core/types";
@@ -29,6 +30,9 @@ type FormRendererProps = {
   messages?: Partial<Messages>;
   locale?: FormLocale;
   className?: string;
+  // Opt-in localStorage drafts: silent restore on mount, cleared after a
+  // submit that reports no server errors.
+  autosave?: AutosaveOptions;
 };
 
 export function FormRenderer({
@@ -40,6 +44,7 @@ export function FormRenderer({
   messages,
   locale,
   className,
+  autosave,
 }: FormRendererProps) {
   const legacyFallback = useMemo(
     () => (onSendOtp || onVerifyOtp ? { send: onSendOtp, verify: onVerifyOtp } : undefined),
@@ -55,10 +60,11 @@ export function FormRenderer({
     );
   }
 
-  const { form, messages: mergedMessages } = useDynamicForm(config, {
+  const { form, messages: mergedMessages, draft } = useDynamicForm(config, {
     messages,
     // Without a verify capability the checker would block every otp field.
     otpVerified: controller.hasVerify ? controller.otpVerified : undefined,
+    autosave,
   });
 
   // Standalone per-field validity, independent of form error state — lets a
@@ -97,11 +103,17 @@ export function FormRenderer({
 
   // handleSubmit is invoked inside the event (not during render) so the
   // step-jump ref is only read post-render.
-  const submitHandler = (event: React.FormEvent<HTMLFormElement>) =>
-    form.handleSubmit(async (values) => {
-      setFormError(null);
+  const submitHandler = (event: React.FormEvent<HTMLFormElement>) => {
+    // Per ATTEMPT, not per valid submit — a resubmit blocked by client
+    // validation must not keep showing the previous server formError.
+    setFormError(null);
+    return form.handleSubmit(async (values) => {
       const result = await onSubmit(values);
-      if (!result || (!result.fieldErrors && !result.formError)) return;
+      if (!result || (!result.fieldErrors && !result.formError)) {
+        // Submitted clean — the draft has served its purpose.
+        draft?.clear();
+        return;
+      }
       const outcome = applyServerErrors(form.setError, result, config.fields);
       if (outcome.formError) setFormError(outcome.formError);
       const first = outcome.applied[0];
@@ -112,13 +124,19 @@ export function FormRenderer({
         setTimeout(() => form.setFocus(first), 0);
       }
     })(event);
+  };
 
   return (
     <FormProvider {...form}>
       <FieldRuntimeContext.Provider value={runtime}>
         <form onSubmit={submitHandler} className={className} noValidate>
           {config.steps?.length ? (
-            <FormStepper config={config} stepJumpRef={stepJumpRef} />
+            <FormStepper
+              config={config}
+              stepJumpRef={stepJumpRef}
+              initialStep={draft?.restoredStep}
+              onStepChange={draft?.noteStep}
+            />
           ) : (
             <div className={FLAT_GRID_CLASS}>{config.fields.map(renderField)}</div>
           )}

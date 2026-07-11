@@ -14,17 +14,32 @@ import { renderField } from "./renderField";
 export function FormStepper({
   config,
   stepJumpRef,
+  initialStep,
+  onStepChange,
 }: {
   config: FormConfig;
   // FormRenderer-owned slot: jump to the step containing a field (server
   // errors land on fields the current step may not show).
   stepJumpRef?: React.MutableRefObject<((fieldName: string) => void) | null>;
+  // Draft-restored step — arrives once, after the restore effect runs.
+  initialStep?: number;
+  onStepChange?: (step: number) => void;
 }) {
   const steps = useMemo(() => config.steps ?? [], [config.steps]);
   const form = useFormContext();
   const { messages } = useFieldRuntime();
   const [store] = useState(() => createStepperStore(steps.length));
   const step = useStore(store, (state) => state.step);
+
+  // Draft-restored step: fires when the value arrives (undefined → number);
+  // goTo clamps, so a shrunken config cannot land out of range.
+  useEffect(() => {
+    if (initialStep !== undefined) store.getState().goTo(initialStep);
+  }, [initialStep, store]);
+
+  useEffect(() => {
+    onStepChange?.(step);
+  }, [step, onStepChange]);
 
   useEffect(() => {
     if (!stepJumpRef) return;

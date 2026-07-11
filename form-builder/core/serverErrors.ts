@@ -37,10 +37,12 @@ export function applyServerErrors(
   const unknown: string[] = [];
 
   for (const [name, message] of Object.entries(result.fieldErrors ?? {})) {
-    // Group rows arrive as "team.0.role" — known when the ROOT is a field.
+    // Group rows arrive as "team.0.role" — known when the ROOT is a group
+    // field. A dotted path under a non-group root would nest an error no
+    // component reads (silently invisible) — fold it into formError instead.
     const root = name.split(".")[0];
     const index = indexByRoot.get(root);
-    if (index === undefined) {
+    if (index === undefined || (name !== root && fields[index].type !== "group")) {
       unknown.push(message);
       continue;
     }

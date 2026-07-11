@@ -189,6 +189,79 @@ describe("useDynamicForm", () => {
     expect(result.current.form.getFieldState("confirm").error).toBeUndefined();
   });
 
+  it("autosave: persists values (debounced) and restores them on the next mount", async () => {
+    window.localStorage.clear();
+    const draftConfig: FormConfig = {
+      id: "draft-form",
+      fields: [
+        { type: "text", name: "name" },
+        { type: "email", name: "email" },
+      ],
+    };
+    const first = renderHook(() => useDynamicForm(draftConfig, { autosave: { debounceMs: 0 } }));
+    await act(async () => {
+      first.result.current.form.setValue("name", "Ada");
+    });
+    await waitFor(() =>
+      expect(window.localStorage.getItem("form-builder:draft:draft-form")).toContain("Ada"),
+    );
+    first.unmount();
+
+    const second = renderHook(() => useDynamicForm(draftConfig, { autosave: { debounceMs: 0 } }));
+    await waitFor(() => expect(second.result.current.form.getValues("name")).toBe("Ada"));
+
+    // clear() drops the entry.
+    act(() => second.result.current.draft!.clear());
+    expect(window.localStorage.getItem("form-builder:draft:draft-form")).toBeNull();
+  });
+
+  it("autosave: a draft from a different fields config is ignored and dropped", async () => {
+    window.localStorage.clear();
+    window.localStorage.setItem(
+      "form-builder:draft:draft-form",
+      JSON.stringify({ hash: "stale", values: { name: "Old" } }),
+    );
+    const draftConfig: FormConfig = { id: "draft-form", fields: [{ type: "text", name: "name" }] };
+    const { result } = renderHook(() => useDynamicForm(draftConfig, { autosave: {} }));
+    await act(async () => {});
+    expect(result.current.form.getValues("name")).toBe("");
+    expect(window.localStorage.getItem("form-builder:draft:draft-form")).toBeNull();
+  });
+
+  it("autosave: clear() cancels a pending debounced save (no draft resurrection)", async () => {
+    window.localStorage.clear();
+    vi.useFakeTimers();
+    try {
+      const draftConfig: FormConfig = { id: "draft-form", fields: [{ type: "text", name: "name" }] };
+      const { result } = renderHook(() =>
+        useDynamicForm(draftConfig, { autosave: { debounceMs: 60_000 } }),
+      );
+      // Flush the restore effect so noteStep/clear guards are armed.
+      await act(async () => {});
+      act(() => {
+        result.current.form.setValue("name", "typed just before submit");
+      });
+      // Clean submit path: clear while the save is still pending.
+      act(() => result.current.draft!.clear());
+      act(() => {
+        vi.advanceTimersByTime(120_000);
+      });
+      expect(window.localStorage.getItem("form-builder:draft:draft-form")).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("no autosave option: no draft api, nothing written", async () => {
+    window.localStorage.clear();
+    const { result } = renderHook(() => useDynamicForm(config));
+    await act(async () => {
+      result.current.form.setValue("firstName", "x");
+    });
+    expect(result.current.draft).toBeUndefined();
+    expect(window.localStorage.length).toBe(0);
+  });
+
   it("condition-visible required field blocks submit", async () => {
     const conditionalConfig: FormConfig = {
       id: "c",

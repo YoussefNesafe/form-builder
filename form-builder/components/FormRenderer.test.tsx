@@ -65,6 +65,68 @@ describe("FormRenderer server errors", () => {
     await waitFor(() => expect(screen.queryByText("Nope")).toBeNull());
   });
 
+  it("clears the root error even when the resubmit is blocked by client validation", async () => {
+    const onSubmit = vi
+      .fn()
+      .mockResolvedValueOnce({ formError: "Server said no" })
+      .mockResolvedValue(undefined);
+    render(<FormRenderer config={config} onSubmit={onSubmit} />);
+
+    await clickWhenEnabled("Go");
+    await waitFor(() => expect(screen.getByText("Server said no")).toBeTruthy());
+
+    // Break client validation, then resubmit the form directly (the submit
+    // button gates on isValid): the ATTEMPT must clear the stale formError
+    // even though onSubmit never runs.
+    await act(async () => {
+      fireEvent.change(screen.getByLabelText("Email"), { target: { value: "not-an-email" } });
+    });
+    await act(async () => {
+      fireEvent.submit(screen.getByRole("button", { name: "Go" }).closest("form")!);
+    });
+    expect(onSubmit).toHaveBeenCalledTimes(1);
+    expect(screen.queryByText("Server said no")).toBeNull();
+  });
+
+  it("autosave: restores the persisted step and clears the draft on clean submit", async () => {
+    window.localStorage.clear();
+    const { draftConfigHash } = await import("../core/autosave");
+    const steppedConfig: FormConfig = {
+      id: "draft-wizard",
+      fields: [
+        { type: "text", name: "first", label: "First" },
+        { type: "text", name: "second", label: "Second" },
+        { type: "submit", name: "go", text: "Go" },
+      ],
+      steps: [
+        { title: "One", fieldNames: ["first"] },
+        { title: "Two", fieldNames: ["second"] },
+      ],
+    };
+    window.localStorage.setItem(
+      "form-builder:draft:draft-wizard",
+      JSON.stringify({
+        hash: draftConfigHash(steppedConfig.fields),
+        values: { first: "from draft", second: "" },
+        step: 1,
+      }),
+    );
+    const onSubmit = vi.fn().mockResolvedValue(undefined);
+    render(<FormRenderer config={steppedConfig} onSubmit={onSubmit} autosave={{ debounceMs: 0 }} />);
+
+    // Restored onto step Two with the drafted value in form state.
+    await waitFor(() => expect(screen.getByLabelText("Second")).toBeTruthy());
+    expect(document.querySelector('[aria-current="step"]')?.textContent).toContain("Two");
+
+    await act(async () => {
+      fireEvent.submit(screen.getByRole("button", { name: "Go" }).closest("form")!);
+    });
+    await waitFor(() => expect(onSubmit).toHaveBeenCalled());
+    expect(onSubmit.mock.calls[0][0]).toMatchObject({ first: "from draft" });
+    // Clean submit → draft gone.
+    await waitFor(() => expect(window.localStorage.getItem("form-builder:draft:draft-wizard")).toBeNull());
+  });
+
   it("jumps the stepper to the step containing the first errored field", async () => {
     const steppedConfig: FormConfig = {
       id: "wizard",

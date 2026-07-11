@@ -75,22 +75,44 @@ descriptors with new refKinds (`dateSource`, `timeSource`).
 - Server errors clear on the next change of the errored field (RHF default
   for manual errors cleared on re-validation).
 - Exported standalone `applyServerErrors(setError, result, fields)` for
-  headless/custom hosts.
+  headless/custom hosts. Dotted paths whose root is not a group field fold
+  into `formError` (a nested error under a scalar field renders nowhere).
+- Quirk: the cross-rule re-trigger (section 1) can clear a server error on a
+  cross-rule DECLARING field when its source changes and the field passes
+  client validation — same wipe RHF's own `deps` mechanism produces.
+- Known pre-existing issue (filed, not fixed here): a submit button that
+  mounts late (multi-step last step) reads `isValid` through the context
+  formState proxy and misses the recompute-on-subscription effect that only
+  `useFormState` has — reaching the last step without a `trigger` (e.g.
+  programmatic `goTo`) can leave it disabled until any field event. Robust
+  fix when picked up: SubmitField switches to `useFormState({ control })`.
 
 ## 3. Draft autosave
 
 `FormRenderer` prop `autosave?: { key?: string; debounceMs?: number; includeSignatures?: boolean }`.
 
 - Debounced (default 500ms) `watch` subscription → localStorage.
-- Storage key: `form-builder:draft:<autosave.key ?? config.id>:<structural hash>`
-  — hash over the fields config, so a changed form silently drops stale drafts.
-- Restore: silent, on mount, merged over `buildDefaultValues` before `useForm`
-  init. No banner. Exported `clearDraft(key)` for hosts.
-- Cleared automatically on successful submit (after `onSubmit` resolves
-  without fieldErrors).
-- Never persisted: `File` values (not serializable). `signature` data URLs
+- Storage key: `form-builder:draft:<autosave.key ?? config.id>`; the
+  structural hash over the fields config lives INSIDE the payload — a
+  changed form drops its stale draft on load, and outdated drafts overwrite
+  themselves instead of accumulating under dead hashed keys.
+- Restore: silent, via `form.reset` in a mount effect — NOT merged into
+  `useForm` defaultValues (SSR renders defaults; init-time seeding would
+  hydration-mismatch). No banner. Exported `clearDraft(idOrKey)` for hosts.
+- Cleared automatically after a submit that reports no server errors.
+- Never persisted: `File` values (not serializable, dropped wherever they
+  appear); `password` values (plaintext credential at rest); `otp` codes
+  (credential, and the verified registry is not persisted — a restored code
+  would only be a stale one the refine rejects). `signature` data URLs
   excluded by default (localStorage ~5MB), opt-in via `includeSignatures`.
+- `clear()` also cancels a pending debounced save (type-then-submit within
+  the debounce window must not resurrect the draft); an effect teardown with
+  a pending save flushes it instead of dropping it.
+- Two mounted renderers sharing a `config.id` with autosave interleave
+  writes last-writer-wins — give each its own `autosave.key`.
 - Multi-step: current step index persisted and restored alongside values.
+  Step-only navigation persists only once a draft already exists (pristine
+  visits write nothing).
 
 ## 4. copyFrom (primitive only)
 

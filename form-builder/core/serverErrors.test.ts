@@ -29,6 +29,13 @@ describe("applyServerErrors", () => {
     expect(outcome.applied).toEqual(["team.0.role"]);
   });
 
+  it("folds dotted paths under non-group roots into formError (invisible otherwise)", () => {
+    const setError = vi.fn();
+    const outcome = applyServerErrors(setError, { fieldErrors: { "email.whatever": "Nested" } }, fields);
+    expect(setError).not.toHaveBeenCalled();
+    expect(outcome.formError).toBe("Nested");
+  });
+
   it("folds unknown field names into formError alongside the explicit one", () => {
     const setError = vi.fn();
     const outcome = applyServerErrors(
