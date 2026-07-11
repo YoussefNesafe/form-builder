@@ -16,8 +16,8 @@ type FieldTypeInfo = {
   note?: string;
 };
 
-// Curated one-line descriptions, written from form-builder/core/types.ts and
-// form-builder-spec.md — not invented. Deliberately Partial: if
+// Curated one-line descriptions, written from form-builder/core/types.ts —
+// not invented. Deliberately Partial: if
 // BUILT_IN_FIELD_TYPES gains a type before this map is updated, the row
 // falls back to FALLBACK below instead of the page failing to build.
 const FIELD_TYPE_INFO: Partial<Record<FieldType, FieldTypeInfo>> = {
@@ -87,7 +87,7 @@ const FIELD_TYPE_INFO: Partial<Record<FieldType, FieldTypeInfo>> = {
 };
 
 const FALLBACK: FieldTypeInfo = {
-  description: "No description recorded yet for this type — see form-builder-spec.md for details.",
+  description: "No description recorded yet for this type — see the FieldConfig union in form-builder/core/types.ts.",
 };
 
 /**
@@ -156,7 +156,7 @@ export default function FieldTypesPage() {
 
       <p className="text-[13px] tablet:text-[13px] desktop:text-[13px] text-muted-foreground">
         For the exact per-type config shape (which properties each type accepts), see the <IC>FieldConfig</IC>{" "}
-        union in <IC>form-builder-spec.md</IC>, or a working config for several of these under{" "}
+        union in <IC>form-builder/core/types.ts</IC>, or a working config for several of these under{" "}
         <Link href="/examples" className="underline underline-offset-2 hover:text-foreground">
           Examples
         </Link>

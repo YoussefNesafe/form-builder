@@ -6,7 +6,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 # Form Builder
 
-Config-driven form engine (Next.js 16 / React 19 / RHF 7 / Zod 4 / Tailwind 4). The portable package lives in `form-builder/`; the app around it hosts the visual builder (`components/builder/`, rendered on the home page). Design docs: `docs/plans/2026-07-05-form-builder-design.md` (read before touching `form-builder/core/`) and `form-builder-spec.md`.
+Config-driven form engine (Next.js 16 / React 19 / RHF 7 / Zod 4 / Tailwind 4). The portable package lives in `form-builder/`; the app around it hosts the visual builder (`components/builder/`, rendered on the home page). The config shape's source of truth is `form-builder/core/types.ts`; read this file's rules below before touching `form-builder/core/`.
 
 ## Commands
 

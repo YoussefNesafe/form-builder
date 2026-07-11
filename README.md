@@ -26,7 +26,7 @@ out is submitted anywhere by this project — you own `onSubmit`.
   `masked` (raw value stored, mask is presentation-only), `signature`
   (canvas, PNG data URL), `country` (ISO alpha-2 combobox), `rating`,
   `segmented`, `otp`, `date`/`time`, `slider`, repeatable `group`, and more.
-  Full list in [`form-builder-spec.md`](./form-builder-spec.md).
+  Full list on the [Field types docs page](https://form-builder.youssefnesafe.com/docs/field-types) (`/docs/field-types` in the running app).
 - **Multi-step wizards** with conditional steps (`visibleWhen` on a step) and
   an optional read-only **review step** that summarizes all visible fields
   with per-step edit links.

@@ -71,7 +71,8 @@ export default function DocsIndexPage() {
       </ul>
 
       <p className="text-[13px] tablet:text-[13px] desktop:text-[13px] text-muted-foreground">
-        The full config schema and design rationale live in <IC>form-builder-spec.md</IC> at the repo root.
+        The full config shape is defined by the <IC>FormConfig</IC> and <IC>FieldConfig</IC> types in{" "}
+        <IC>form-builder/core/types.ts</IC> — the package&apos;s single source of truth.
       </p>
     </div>
   );
