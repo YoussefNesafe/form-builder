@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
-import { act, renderHook } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import { useDynamicForm } from "./useDynamicForm";
+import { defaultMessages } from "../core/messages";
 import type { FormConfig } from "../core/types";
 
 const config: FormConfig = {
@@ -134,6 +135,58 @@ describe("useDynamicForm", () => {
     // Documented v1 limitation — inner conditions are not skipped by validation.
     // When row-scoped condition support lands, flip this assertion.
     expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it("re-validates a touched confirm field when its matches source changes", async () => {
+    const confirmConfig: FormConfig = {
+      id: "cf",
+      fields: [
+        { type: "password", name: "password", label: "Password", required: true },
+        { type: "password", name: "confirm", required: true, rules: { matches: "password" } },
+      ],
+    };
+    const { result } = renderHook(() => useDynamicForm(confirmConfig));
+    await act(async () => {
+      result.current.form.setValue("password", "secret1");
+      result.current.form.setValue("confirm", "secret2", { shouldTouch: true });
+      await result.current.form.trigger("confirm");
+    });
+    expect(result.current.form.getFieldState("confirm").error?.message).toBe(
+      defaultMessages.matches("Password"),
+    );
+
+    // Fixing the SOURCE must clear the confirm error without touching confirm.
+    await act(async () => {
+      result.current.form.setValue("password", "secret2");
+    });
+    await waitFor(() => expect(result.current.form.getFieldState("confirm").error).toBeUndefined());
+
+    // Breaking it from the source side must surface the error again.
+    await act(async () => {
+      result.current.form.setValue("password", "different");
+    });
+    await waitFor(() =>
+      expect(result.current.form.getFieldState("confirm").error?.message).toBe(
+        defaultMessages.matches("Password"),
+      ),
+    );
+  });
+
+  it("does not surface a matches error on an untouched confirm when the source changes", async () => {
+    const confirmConfig: FormConfig = {
+      id: "cf",
+      fields: [
+        { type: "password", name: "password", required: true },
+        { type: "password", name: "confirm", required: true, rules: { matches: "password" } },
+      ],
+    };
+    const { result } = renderHook(() => useDynamicForm(confirmConfig));
+    await act(async () => {
+      result.current.form.setValue("password", "secret1");
+    });
+    // onTouched semantics preserved: confirm never validated, no error appears.
+    expect(result.current.form.getFieldState("confirm").isTouched).toBe(false);
+    expect(result.current.form.getFieldState("confirm").error).toBeUndefined();
   });
 
   it("condition-visible required field blocks submit", async () => {

@@ -654,6 +654,20 @@ describe("cross-field rules", () => {
     if (!bad.success) expect(bad.error.issues[0].message).toBe("Emails differ");
   });
 
+  it("matches compares PARSED values — trimmed-equal inputs pass", () => {
+    const schema = buildFieldsSchema(
+      [
+        { type: "text", name: "a", required: true, rules: { trim: true } },
+        { type: "text", name: "b", required: true, rules: { trim: true, matches: "a" } },
+      ],
+      messages,
+    );
+    // zod object-level checks receive parse OUTPUT, so both sides are
+    // trimmed before the compare — exactly what would be submitted.
+    expect(schema.safeParse({ a: "abc ", b: " abc" }).success).toBe(true);
+    expect(schema.safeParse({ a: "abc", b: "abd" }).success).toBe(false);
+  });
+
   it("matches is skipped while the confirm field is blank (required owns emptiness)", () => {
     const schema = buildFieldsSchema(
       [

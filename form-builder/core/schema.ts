@@ -140,6 +140,8 @@ const textRulesSchema = z.strictObject({
     }),
   matches: z.string().min(1).optional(),
   matchesMessage: z.string().optional(),
+}).refine((rules) => rules.matchesMessage === undefined || rules.matches !== undefined, {
+  message: "matchesMessage requires matches",
 });
 
 const textFieldSchema = baseFieldSchema.extend({ rules: textRulesSchema.optional() });

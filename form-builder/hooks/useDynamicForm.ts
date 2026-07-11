@@ -1,12 +1,17 @@
 "use client";
 
-import { useMemo } from "react";
-import { useForm, type Resolver } from "react-hook-form";
+import { useEffect, useMemo, useRef } from "react";
+import { useForm, useWatch, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { getVisibleFields } from "../core/conditions";
 import { mergeMessages, type Messages } from "../core/messages";
 import { validateFormConfig } from "../core/schema";
-import { buildFieldsSchema, buildFormSchema, type OtpVerifiedChecker } from "../core/validation";
+import {
+  buildFieldsSchema,
+  buildFormSchema,
+  collectCrossRulePairs,
+  type OtpVerifiedChecker,
+} from "../core/validation";
 import { isBuiltInField } from "../core/types";
 import type { AnyFieldConfig, FieldConfig, FormConfig, FormValues } from "../core/types";
 
@@ -101,6 +106,40 @@ export function useDynamicForm(
 
   // onTouched: errors surface on first blur, then revalidate per keystroke.
   const form = useForm<FormValues>({ resolver, defaultValues, mode: "onTouched" });
+
+  // RHF applies resolver output only to the field that changed, so editing a
+  // cross-rule SOURCE (the password under a confirm field) would leave the
+  // declaring field's error stale — or never show one — until that field
+  // revalidates itself. Watch the sources and re-trigger declaring fields
+  // that are touched or already errored (untouched fields stay silent,
+  // preserving onTouched semantics).
+  const crossPairs = useMemo(() => collectCrossRulePairs(config.fields), [config]);
+  const crossSourceNames = useMemo(() => [...new Set(crossPairs.map((pair) => pair.source))], [crossPairs]);
+  const crossSourceValues = useWatch({
+    control: form.control,
+    name: crossSourceNames,
+    disabled: crossSourceNames.length === 0,
+  });
+  // Cross-rule sources are text/date/time fields — plain string values.
+  const crossSourceKey = crossSourceNames.length === 0 ? "" : JSON.stringify(crossSourceValues);
+  const skippedInitialTrigger = useRef(false);
+  useEffect(() => {
+    if (!skippedInitialTrigger.current) {
+      skippedInitialTrigger.current = true;
+      return;
+    }
+    const staleDeclaring = [
+      ...new Set(
+        crossPairs
+          .map((pair) => pair.field)
+          .filter((name) => {
+            const state = form.getFieldState(name);
+            return state.isTouched || state.invalid;
+          }),
+      ),
+    ];
+    if (staleDeclaring.length > 0) void form.trigger(staleDeclaring);
+  }, [crossSourceKey, crossPairs, form]);
 
   return { form, schema, messages };
 }

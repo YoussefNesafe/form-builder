@@ -377,6 +377,14 @@ describe("validateFormConfig", () => {
       }),
     ).not.toThrow());
 
+  it("rejects matchesMessage without matches", () =>
+    expect(() =>
+      validateFormConfig({
+        id: "t",
+        fields: [{ type: "text", name: "a", rules: { matchesMessage: "orphan" } }],
+      }),
+    ).toThrow(/matchesMessage requires matches/));
+
   it("rejects matches referencing unknown, self, or non-text-family fields", () => {
     for (const fields of [
       [{ type: "text", name: "a", rules: { matches: "gone" } }],

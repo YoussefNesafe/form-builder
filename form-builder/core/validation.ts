@@ -286,57 +286,70 @@ export function toZodSchema(
   }
 }
 
-type CrossRule = {
+type CrossRuleKind = "matches" | "minDate" | "maxDate" | "minTime" | "maxTime";
+
+export type CrossRulePair = {
   field: string; // declaring field — the refine issue lands here
   source: string;
-  kind: "matches" | "minDate" | "maxDate" | "minTime" | "maxTime";
-  message: string;
+  kind: CrossRuleKind;
+  matchesMessage?: string;
 };
+
+type CrossRule = CrossRulePair & { message: string };
 
 const TEXT_FAMILY = new Set(["text", "email", "password", "textarea"]);
 const DATE_FORMAT = /^\d{4}-\d{2}-\d{2}(T|$)/;
 const TIME_FORMAT = /^([01]\d|2[0-3]):[0-5]\d$/;
 
-/**
- * Cross-field rules declared by the given fields, resolved against the SAME
- * field list — a rule whose source is not in the list (condition-hidden in
- * the resolver path) is dropped: its value is stripped, and comparing against
- * undefined would raise an unfixable error.
- */
-function collectCrossRules(fields: AnyFieldConfig[], messages: Messages): CrossRule[] {
-  const byName = new Map(fields.map((field) => [field.name, field]));
-  const label = (name: string) => {
-    const source = byName.get(name);
-    return source?.label || name;
-  };
-  const rules: CrossRule[] = [];
+/** Every declared cross-field rule, regardless of source visibility. */
+export function collectCrossRulePairs(fields: AnyFieldConfig[]): CrossRulePair[] {
+  const pairs: CrossRulePair[] = [];
   for (const field of fields) {
     if (!isBuiltInField(field)) continue;
     if (TEXT_FAMILY.has(field.type)) {
-      const matches = (field as { rules?: TextRules }).rules?.matches;
-      if (matches !== undefined && byName.has(matches)) {
-        const message = (field as { rules?: TextRules }).rules?.matchesMessage ?? messages.matches(label(matches));
-        rules.push({ field: field.name, source: matches, kind: "matches", message });
+      const rules = (field as { rules?: TextRules }).rules;
+      if (rules?.matches !== undefined) {
+        pairs.push({ field: field.name, source: rules.matches, kind: "matches", matchesMessage: rules.matchesMessage });
       }
     }
     if (field.type === "date" && !field.range) {
-      if (field.minDateField !== undefined && byName.has(field.minDateField)) {
-        rules.push({ field: field.name, source: field.minDateField, kind: "minDate", message: messages.dateAfter(label(field.minDateField)) });
-      }
-      if (field.maxDateField !== undefined && byName.has(field.maxDateField)) {
-        rules.push({ field: field.name, source: field.maxDateField, kind: "maxDate", message: messages.dateBefore(label(field.maxDateField)) });
-      }
+      if (field.minDateField !== undefined) pairs.push({ field: field.name, source: field.minDateField, kind: "minDate" });
+      if (field.maxDateField !== undefined) pairs.push({ field: field.name, source: field.maxDateField, kind: "maxDate" });
     }
     if (field.type === "time") {
-      if (field.minTimeField !== undefined && byName.has(field.minTimeField)) {
-        rules.push({ field: field.name, source: field.minTimeField, kind: "minTime", message: messages.timeAfter(label(field.minTimeField)) });
-      }
-      if (field.maxTimeField !== undefined && byName.has(field.maxTimeField)) {
-        rules.push({ field: field.name, source: field.maxTimeField, kind: "maxTime", message: messages.timeBefore(label(field.maxTimeField)) });
-      }
+      if (field.minTimeField !== undefined) pairs.push({ field: field.name, source: field.minTimeField, kind: "minTime" });
+      if (field.maxTimeField !== undefined) pairs.push({ field: field.name, source: field.maxTimeField, kind: "maxTime" });
     }
   }
-  return rules;
+  return pairs;
+}
+
+/**
+ * Cross-field rules resolved against the SAME field list — a rule whose
+ * source is not in the list (condition-hidden in the resolver path) is
+ * dropped: its value is stripped, and comparing against undefined would
+ * raise an unfixable error.
+ */
+function collectCrossRules(fields: AnyFieldConfig[], messages: Messages): CrossRule[] {
+  const byName = new Map(fields.map((field) => [field.name, field]));
+  const label = (name: string) => byName.get(name)?.label || name;
+  const messageFor = (pair: CrossRulePair): string => {
+    switch (pair.kind) {
+      case "matches":
+        return pair.matchesMessage ?? messages.matches(label(pair.source));
+      case "minDate":
+        return messages.dateAfter(label(pair.source));
+      case "maxDate":
+        return messages.dateBefore(label(pair.source));
+      case "minTime":
+        return messages.timeAfter(label(pair.source));
+      case "maxTime":
+        return messages.timeBefore(label(pair.source));
+    }
+  };
+  return collectCrossRulePairs(fields)
+    .filter((pair) => byName.has(pair.source))
+    .map((pair) => ({ ...pair, message: messageFor(pair) }));
 }
 
 function crossRulePasses(rule: CrossRule, target: unknown, source: unknown): boolean {

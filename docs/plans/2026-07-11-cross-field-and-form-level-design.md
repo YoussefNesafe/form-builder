@@ -10,7 +10,7 @@ Scope: everything from the deferred list except async validation and RTL/i18n
 
 ### Config surface
 
-- Text family (`text`, `email`, `password`): `rules.matches: "<sibling>"` +
+- Text family (`text`, `email`, `password`, `textarea`): `rules.matches: "<sibling>"` +
   optional `rules.matchesMessage`.
 - `date`: `minDateField` / `maxDateField: "<sibling date field>"`.
 - `time`: `minTimeField` / `maxTimeField: "<sibling time field>"`.
@@ -37,9 +37,15 @@ break every `isValid` condition. Precedent: the otp verified-registry refine.
 
 - Source: same-level sibling, exists, not self. Group-nested → error
   (precedent: all cross-field wiring).
-- Type compatibility: `matches` source must be same text-family type;
+- Type compatibility: `matches` source must be in the text family (family-
+  level, not same-type — an email may match a text field);
   `minDateField`/`maxDateField` source must be a `date` field (non-range);
   time likewise.
+- The `matches` compare runs on PARSED values (zod object checks see parse
+  output), so `trim` interplay is correct: trimmed-equal values match.
+- RHF applies resolver errors per-changed-field; `useDynamicForm` watches
+  cross-rule sources and re-triggers touched-or-errored declaring fields so
+  the confirm error clears/appears when the source changes.
 - Cross-step source → dev-warn (error shows on a step where the cause is
   invisible).
 
