@@ -62,3 +62,5 @@ Config-driven form engine (Next.js 16 / React 19 / RHF 7 / Zod 4 / Tailwind 4). 
 - Dates are plain `yyyy-MM-dd` strings compared by date part, never epoch math (TZ off-by-one).
 - Custom field types register via `registerField`; validated as BaseField only, values pass through as `z.unknown().optional()`.
 - Known v1 limitation (pinned by test): conditions on fields inside groups are not skipped by validation.
+- `useSourceSync`'s restore-generation guard (re-baseline on `restoreGeneration` change instead of applying) is load-bearing for copyFrom, phone `countryFrom`, and optionsFrom stale resets — removing it silently reintroduces the autosave-restore clobber bug (drafted manual overrides overwritten by the restored source value).
+- Cross-field rules (`rules.matches`, date/time sibling bounds) and optionsFrom branch membership live in the form-level superRefine, NEVER in a field's own schema — the `isFieldValid` oracle behind isValid conditions parses field schemas in isolation.

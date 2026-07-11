@@ -46,6 +46,12 @@ export type Messages = {
   ratingValue: (n: number, max: number) => string;
   // optionsFrom: value not in the option branch of the source's current value.
   invalidOption: string;
+  // Review step.
+  edit: string;
+  yes: string;
+  no: string;
+  notAnswered: string;
+  signed: string;
   // Cross-field rules — label is the source field's label (fallback: name).
   matches: (label: string) => string;
   dateAfter: (label: string) => string;
@@ -99,6 +105,11 @@ export const defaultMessages: Messages = {
   noOptions: "No options",
   ratingValue: (n, max) => `${n} of ${max}`,
   invalidOption: "Select a valid option",
+  edit: "Edit",
+  yes: "Yes",
+  no: "No",
+  notAnswered: "—",
+  signed: "Signed",
   matches: (label) => `Must match ${label}`,
   dateAfter: (label) => `Must be on or after ${label}`,
   dateBefore: (label) => `Must be on or before ${label}`,

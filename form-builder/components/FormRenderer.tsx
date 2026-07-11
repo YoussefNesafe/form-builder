@@ -11,6 +11,7 @@ import { toZodSchema } from "../core/validation";
 import { useDynamicForm } from "../hooks/useDynamicForm";
 import { useOtpController, type OtpController } from "../hooks/useOtpController";
 import { FieldRuntimeContext, type FormLocale } from "./FieldRuntime";
+import type { ReviewFormatters } from "./reviewValue";
 import { FormStepper } from "./FormStepper";
 import { renderField } from "./renderField";
 import { FLAT_GRID_CLASS } from "../ui/layout";
@@ -34,6 +35,8 @@ type FormRendererProps = {
   // Opt-in localStorage drafts: silent restore on mount, cleared after a
   // submit that reports no server errors.
   autosave?: AutosaveOptions;
+  // Review-step display for custom field types (fallback: String(value)).
+  reviewFormatters?: ReviewFormatters;
 };
 
 export function FormRenderer({
@@ -46,6 +49,7 @@ export function FormRenderer({
   locale,
   className,
   autosave,
+  reviewFormatters,
 }: FormRendererProps) {
   const legacyFallback = useMemo(
     () => (onSendOtp || onVerifyOtp ? { send: onSendOtp, verify: onVerifyOtp } : undefined),
@@ -94,8 +98,9 @@ export function FormRenderer({
       verifiedFields: controller.verifiedFields,
       locale,
       restoreGeneration,
+      reviewFormatters,
     }),
-    [mergedMessages, controller.otp, controller.verifiedFields, isFieldValid, locale, restoreGeneration],
+    [mergedMessages, controller.otp, controller.verifiedFields, isFieldValid, locale, restoreGeneration, reviewFormatters],
   );
 
   const [formError, setFormError] = useState<string | null>(null);

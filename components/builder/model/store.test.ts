@@ -177,6 +177,31 @@ describe("builder store", () => {
     expect("visibleWhen" in s.getState().steps[0]).toBe(false);
   });
 
+  it("review steps: toggling unassigns fields and serializes review instead of fieldNames", () => {
+    const s = createBuilderStore();
+    s.getState().addNode("text");
+    const textId = s.getState().nodes[0]._id;
+    s.getState().updateProps(textId, { name: "a" });
+    s.getState().toggleMultiStep(true);
+    s.getState().addStep();
+    s.getState().assignNodeToStep(textId, 1);
+
+    s.getState().setStepReview(1, true);
+    expect(s.getState().steps[1].review).toBe(true);
+    expect(s.getState().steps[1].nodeIds).toEqual([]);
+
+    // Field must live on a regular step for the config to serialize validly.
+    s.getState().assignNodeToStep(textId, 0);
+    const config = serialize(s.getState());
+    expect(config.steps).toEqual([
+      { title: "Step 1", fieldNames: ["a"] },
+      { title: "Step 2", review: true },
+    ]);
+
+    s.getState().setStepReview(1, false);
+    expect("review" in s.getState().steps[1]).toBe(false);
+  });
+
   it("scrubs cross-field rule references when the source field is deleted", () => {
     const s = createBuilderStore();
     s.getState().addNode("password");

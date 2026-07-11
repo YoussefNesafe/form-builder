@@ -84,8 +84,12 @@ descriptors with new refKinds (`dateSource`, `timeSource`).
   mounts late (multi-step last step) reads `isValid` through the context
   formState proxy and misses the recompute-on-subscription effect that only
   `useFormState` has — reaching the last step without a `trigger` (e.g.
-  programmatic `goTo`) can leave it disabled until any field event. Robust
-  fix when picked up: SubmitField switches to `useFormState({ control })`.
+  programmatic `goTo`, or a draft restore landing DIRECTLY on a review step,
+  which triggers nothing) can leave it disabled until any field event.
+  Robust fix when picked up: SubmitField switches to `useFormState({ control })`.
+- Pre-existing, unrelated (noted during phase-7 review): switch-with-options
+  is runtime-inert — CheckboxField's group mode is checkbox-only, but the
+  builder's "Add options for a multi-switch" help text overpromises it.
 
 ## 3. Draft autosave
 
@@ -209,11 +213,20 @@ from the every-field-in-a-step rule).
   as-is, group rows as sub-lists, files as names, booleans via messages
   (yes/no), passwords masked as `••••`, otp shown as verified state.
 - Custom field types: host formatter map prop (`reviewFormatters`), fallback
-  `String(value)`.
+  `String(value)`. `formatReviewValue` is exported for host reuse
+  (confirmation emails, receipts).
+- Signatures render as an image thumbnail (not text); otp shows verification
+  state only (the code is a credential); static/submit rows are skipped.
 - Edit affordance: per-step section header links back to that step
-  (`goToStep`); no per-field links in v1.
+  (`goTo`); no per-field links in v1.
 - Values re-read live from form state — arriving back at the review step
-  always reflects current values.
+  always reflects current values. Visibility uses `visibleFieldsFor`
+  semantics: hidden steps' sections and condition-hidden rows are absent.
+- A review step owning no fields skips the Next-gate trigger (trigger([])
+  would validate the whole form in RHF).
+- Builder: per-step "Review step" switch (turning it on unassigns the
+  step's fields); review steps are excluded from field-assignment targets
+  and serialize as `review: true` without `fieldNames`.
 
 ## Sequencing (each phase: code → code-review → fix)
 

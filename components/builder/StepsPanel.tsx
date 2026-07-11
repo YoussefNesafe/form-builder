@@ -27,6 +27,7 @@ export function StepsPanel() {
   const renameStep = useBuilderStore((s) => s.renameStep);
   const removeStep = useBuilderStore((s) => s.removeStep);
   const setStepCondition = useBuilderStore((s) => s.setStepCondition);
+  const setStepReview = useBuilderStore((s) => s.setStepReview);
   const moveStep = useBuilderStore((s) => s.moveStep);
   // Pseudo node: ConditionEditor only uses ctx.node._id for self-exclusion,
   // and a step is not a field — nothing to exclude.
@@ -78,7 +79,15 @@ export function StepsPanel() {
                   <X />
                 </Button>
               </div>
-              <div className="ps-[20px] tablet:ps-[20px] desktop:ps-[20px]">
+              <div className="flex flex-col gap-[6px] tablet:gap-[6px] desktop:gap-[6px] ps-[20px] tablet:ps-[20px] desktop:ps-[20px]">
+                <label className="flex items-center gap-[6px] tablet:gap-[6px] desktop:gap-[6px] text-[12px] tablet:text-[12px] desktop:text-[12px] text-muted-foreground">
+                  <Switch
+                    aria-label={`Step ${i + 1} review step`}
+                    checked={step.review === true}
+                    onCheckedChange={(on) => setStepReview(i, on)}
+                  />
+                  Review step (summary of earlier steps; owns no fields)
+                </label>
                 <ConditionEditor
                   id={`step-${i}-visible-when`}
                   value={step.visibleWhen}

@@ -171,7 +171,11 @@ export function isBuiltInField(field: AnyFieldConfig): field is FieldConfig {
 
 export type StepConfig = {
   title: string;
-  fieldNames: string[];
+  // Required unless review: true (validator-enforced exactly-one).
+  fieldNames?: string[];
+  // Read-only summary of all visible fields from earlier visible steps,
+  // with per-step edit links. A review step owns no fields.
+  review?: boolean;
   // Value operators only (validator rejects isValid — visibility drives the
   // schema). A hidden step's fields are condition-hidden everywhere:
   // excluded from validation, stripped from the payload, skipped by the

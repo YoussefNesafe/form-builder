@@ -13,7 +13,13 @@ export type BuilderNode = {
 };
 
 /** A wizard step referencing nodes by `_id` (resolved to `fieldNames` on export). */
-export type BuilderStep = { title: string; nodeIds: string[]; visibleWhen?: ConditionSpec };
+export type BuilderStep = {
+  title: string;
+  nodeIds: string[];
+  visibleWhen?: ConditionSpec;
+  /** Review steps own no fields; nodeIds stays empty while set. */
+  review?: boolean;
+};
 
 export type OutputMode = "ts" | "json";
 

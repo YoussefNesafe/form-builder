@@ -1,4 +1,4 @@
-import type { AnyFieldConfig, FormConfig } from "@/form-builder";
+import type { AnyFieldConfig, FormConfig, StepConfig } from "@/form-builder";
 import type { BuilderNode, BuilderState } from "./types";
 
 /** URL-safe slug: lowercase, punctuation stripped, spaces → single hyphens. */
@@ -53,14 +53,19 @@ export function serialize(state: SerializeInput): FormConfig {
       if (typeof name === "string" && name) nameById.set(node._id, name);
     }
     const steps = state.steps
-      .map((step) => ({
-        title: step.title,
-        fieldNames: step.nodeIds.map((id) => nameById.get(id)).filter((n): n is string => Boolean(n)),
-        ...(step.visibleWhen !== undefined ? { visibleWhen: step.visibleWhen } : {}),
-      }))
-      // The engine rejects a step with no field names; an all-removed step
-      // would otherwise brick the whole config.
-      .filter((step) => step.fieldNames.length > 0);
+      .map((step): StepConfig => {
+        const fieldNames = step.nodeIds.map((id) => nameById.get(id)).filter((n): n is string => Boolean(n));
+        return {
+          title: step.title,
+          // Review steps carry review: true INSTEAD of fieldNames (engine
+          // enforces exactly-one); regular steps carry fieldNames.
+          ...(step.review ? { review: true as const } : { fieldNames }),
+          ...(step.visibleWhen !== undefined ? { visibleWhen: step.visibleWhen } : {}),
+        };
+      })
+      // The engine rejects a regular step with no field names; an all-removed
+      // step would otherwise brick the whole config.
+      .filter((step) => step.review === true || (step.fieldNames?.length ?? 0) > 0);
     if (steps.length > 0) config.steps = steps;
   }
 

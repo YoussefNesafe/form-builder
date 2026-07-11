@@ -11,6 +11,7 @@ import { createStepperStore } from "../store/stepper";
 import { FLAT_GRID_CLASS } from "../ui/layout";
 import { useFieldRuntime } from "./FieldRuntime";
 import { renderField } from "./renderField";
+import { ReviewStep } from "./ReviewStep";
 
 // Where to land when `step` is not visible: next visible preferred, else
 // previous. Shared by the render guard and the fallback effect so the
@@ -84,7 +85,7 @@ export function FormStepper({
     stepJumpRef.current = (fieldName) => {
       // Group rows come in as "team.0.role"; steps list root names only.
       const root = fieldName.split(".")[0];
-      const index = steps.findIndex((s) => s.fieldNames.includes(root));
+      const index = steps.findIndex((s) => (s.fieldNames ?? []).includes(root));
       if (index >= 0) store.getState().goTo(index);
     };
     return () => {
@@ -124,7 +125,9 @@ export function FormStepper({
     ? step
     : (nearestVisible(step, visibleIndices) ?? visibleIndices[0]);
 
-  const currentFields = steps[effectiveStep].fieldNames
+  const currentStep = steps[effectiveStep];
+  const currentFieldNames = currentStep.fieldNames ?? [];
+  const currentFields = currentFieldNames
     .map((name) => fieldsByName.get(name))
     .filter((field) => field !== undefined);
   // Hidden fields carry values via defaults regardless of step; render them
@@ -136,8 +139,10 @@ export function FormStepper({
 
   const handleNext = async () => {
     // Gate on trigger(), never formState.isValid — the condition-aware
-    // resolver computes isValid across ALL steps.
-    const valid = await form.trigger(steps[effectiveStep].fieldNames);
+    // resolver computes isValid across ALL steps. A review step owns no
+    // fields: RHF's trigger([]) runs the full resolver but applies errors to
+    // ZERO fields (vacuously true) — skip the wasted run and be explicit.
+    const valid = currentFieldNames.length === 0 ? true : await form.trigger(currentFieldNames);
     if (valid) {
       const next = visibleIndices[position + 1];
       if (next !== undefined) store.getState().goTo(next);
@@ -146,7 +151,7 @@ export function FormStepper({
     // Move focus to the first field that failed so the error is announced.
     // getFieldState reads live state — formState from render is a stale
     // snapshot inside this handler.
-    const firstInvalid = steps[effectiveStep].fieldNames.find((name) => form.getFieldState(name).invalid);
+    const firstInvalid = currentFieldNames.find((name) => form.getFieldState(name).invalid);
     if (firstInvalid) form.setFocus(firstInvalid);
   };
 
@@ -186,10 +191,23 @@ export function FormStepper({
         ))}
       </ol>
 
-      <div className={FLAT_GRID_CLASS}>
-        {currentFields.map(renderField)}
-        {hiddenFields.map(renderField)}
-      </div>
+      {currentStep.review ? (
+        <>
+          <ReviewStep
+            config={config}
+            currentIndex={effectiveStep}
+            visibleIndices={visibleIndices}
+            goTo={(index) => store.getState().goTo(index)}
+          />
+          {/* Hidden fields still carry values on the review step. */}
+          <div className={FLAT_GRID_CLASS}>{hiddenFields.map(renderField)}</div>
+        </>
+      ) : (
+        <div className={FLAT_GRID_CLASS}>
+          {currentFields.map(renderField)}
+          {hiddenFields.map(renderField)}
+        </div>
+      )}
 
       <div className="flex items-center justify-between">
         <Button type="button" variant="outline" disabled={position === 0} onClick={handleBack}>

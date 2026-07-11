@@ -78,7 +78,7 @@ export function hiddenStepFieldNames(config: FormConfig, values: FormValues): Se
   const hidden = new Set<string>();
   for (const step of config.steps ?? []) {
     if (!evaluateCondition(step.visibleWhen, values)) {
-      for (const name of step.fieldNames) hidden.add(name);
+      for (const name of step.fieldNames ?? []) hidden.add(name);
     }
   }
   return hidden;

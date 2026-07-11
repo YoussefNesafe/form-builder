@@ -53,3 +53,10 @@ export { registerBuiltInFields } from "./fields";
 // Masked payloads carry the RAW value; hosts re-format for display (e.g.
 // review/confirmation screens) with the same helpers the field uses.
 export { formatMasked, extractRaw, maskTokenCount } from "./fields/maskedValue";
+// Review-step value display — exported so hosts can reuse it (e.g. emails,
+// confirmation screens) and type their reviewFormatters.
+export {
+  formatReviewValue,
+  type ReviewFormatter,
+  type ReviewFormatters,
+} from "./components/reviewValue";

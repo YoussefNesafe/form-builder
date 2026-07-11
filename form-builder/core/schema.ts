@@ -286,13 +286,18 @@ const formConfigShellSchema = z.object({
   fields: z.array(z.record(z.string(), z.unknown())).min(1),
   steps: z
     .array(
-      z.object({
-        title: z.string(),
-        fieldNames: z.array(z.string()).min(1),
-        // Value operators only — a hidden step hides its fields from the
-        // validation schema, so validity-driven step visibility would loop.
-        visibleWhen: conditionSpecSchema(valueConditionSchema).optional(),
-      }),
+      z
+        .object({
+          title: z.string(),
+          fieldNames: z.array(z.string()).min(1).optional(),
+          review: z.boolean().optional(),
+          // Value operators only — a hidden step hides its fields from the
+          // validation schema, so validity-driven step visibility would loop.
+          visibleWhen: conditionSpecSchema(valueConditionSchema).optional(),
+        })
+        .refine((step) => (step.review === true) !== (step.fieldNames !== undefined), {
+          message: "a step needs fieldNames, or review: true instead of them (not both)",
+        }),
     )
     .optional(),
 });
@@ -646,7 +651,7 @@ function validateSteps(config: FormConfig): void {
   const topLevelNames = new Set(config.fields.map((field) => field.name));
   const stepped = new Set<string>();
   for (const step of config.steps) {
-    for (const fieldName of step.fieldNames) {
+    for (const fieldName of step.fieldNames ?? []) {
       if (!topLevelNames.has(fieldName)) {
         throw new Error(`Invalid form config: step "${step.title}" references unknown field "${fieldName}"`);
       }
@@ -659,7 +664,7 @@ function validateSteps(config: FormConfig): void {
   // on remount, so keep the pair on one step unless that is understood.
   if (process.env.NODE_ENV !== "production") {
     const stepOf = new Map<string, number>();
-    config.steps.forEach((step, index) => step.fieldNames.forEach((name) => stepOf.set(name, index)));
+    config.steps.forEach((step, index) => (step.fieldNames ?? []).forEach((name) => stepOf.set(name, index)));
     // Step visibility decided by fields the user has not reached yet is
     // legal (defaults decide) but usually a config smell.
     config.steps.forEach((step, index) => {

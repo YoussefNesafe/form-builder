@@ -98,11 +98,14 @@ export function FieldListRow({ node, topLevel = true }: { node: BuilderNode; top
           </SelectTrigger>
           <SelectContent>
             <SelectItem value={UNASSIGNED}>Unassigned</SelectItem>
-            {steps.map((s, i) => (
-              <SelectItem key={i} value={String(i)}>
-                {s.title || `Step ${i + 1}`}
-              </SelectItem>
-            ))}
+            {steps.map((s, i) =>
+              // Review steps own no fields — not an assignment target.
+              s.review ? null : (
+                <SelectItem key={i} value={String(i)}>
+                  {s.title || `Step ${i + 1}`}
+                </SelectItem>
+              ),
+            )}
           </SelectContent>
         </Select>
       )}

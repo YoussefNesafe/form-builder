@@ -21,6 +21,7 @@ export type BuilderActions = {
   renameStep: (index: number, title: string) => void;
   removeStep: (index: number) => void;
   setStepCondition: (index: number, visibleWhen: ConditionSpec | undefined) => void;
+  setStepReview: (index: number, review: boolean) => void;
   moveStep: (index: number, dir: -1 | 1) => void;
   /** Assign a node to a step (or `null` to unassign); removes it from every other step. */
   assignNodeToStep: (nodeId: string, stepIndex: number | null) => void;
@@ -302,6 +303,18 @@ const creator: StateCreator<BuilderStore> = (set, get) => ({
     set((state) => ({ steps: state.steps.map((s, i) => (i === index ? { ...s, title } : s)) })),
 
   removeStep: (index) => set((state) => ({ steps: state.steps.filter((_, i) => i !== index) })),
+
+  setStepReview: (index, review) =>
+    set((state) => ({
+      steps: state.steps.map((s, i) => {
+        if (i !== index) return s;
+        // A review step owns no fields; turning it on unassigns them.
+        if (review) return { ...s, review: true, nodeIds: [] };
+        const next = { ...s, nodeIds: s.nodeIds };
+        delete next.review;
+        return next;
+      }),
+    })),
 
   setStepCondition: (index, visibleWhen) =>
     set((state) => ({

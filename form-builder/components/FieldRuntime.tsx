@@ -41,6 +41,8 @@ type FieldRuntime = {
   // Bumped when a wholesale value rewrite happens (autosave draft restore) —
   // source-sync hooks re-baseline instead of treating it as a source edit.
   restoreGeneration?: number;
+  // Review-step display for custom field types (fallback: String(value)).
+  reviewFormatters?: import("./reviewValue").ReviewFormatters;
 };
 
 export const FieldRuntimeContext = createContext<FieldRuntime>({

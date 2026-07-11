@@ -761,6 +761,48 @@ describe("validateFormConfig", () => {
     spy.mockRestore();
   });
 
+  it("review steps: accepted without fieldNames, rejected with them or when a step has neither", () => {
+    expect(() =>
+      validateFormConfig({
+        id: "t",
+        fields: [{ type: "text", name: "a" }],
+        steps: [
+          { title: "one", fieldNames: ["a"] },
+          { title: "review", review: true },
+        ],
+      }),
+    ).not.toThrow();
+    expect(() =>
+      validateFormConfig({
+        id: "t",
+        fields: [{ type: "text", name: "a" }],
+        steps: [{ title: "bad", review: true, fieldNames: ["a"] }],
+      }),
+    ).toThrow(/review: true instead/);
+    expect(() =>
+      validateFormConfig({
+        id: "t",
+        fields: [{ type: "text", name: "a" }],
+        steps: [{ title: "empty" } as never, { title: "one", fieldNames: ["a"] }],
+      }),
+    ).toThrow(/review: true instead/);
+  });
+
+  it("review steps do not satisfy the every-field-in-a-step rule", () =>
+    expect(() =>
+      validateFormConfig({
+        id: "t",
+        fields: [
+          { type: "text", name: "a" },
+          { type: "text", name: "unassigned" },
+        ],
+        steps: [
+          { title: "one", fieldNames: ["a"] },
+          { title: "review", review: true },
+        ],
+      }),
+    ).toThrow(/not assigned to any step/));
+
   it("step visibleWhen accepts value specs and rejects isValid", () => {
     expect(() =>
       validateFormConfig({

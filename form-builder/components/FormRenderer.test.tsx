@@ -323,6 +323,59 @@ describe("FormRenderer server errors", () => {
     expect(screen.getByLabelText("Final")).toBeTruthy();
   });
 
+  it("review step: summarizes earlier visible steps with live values and per-step edit links", async () => {
+    const reviewConfig: FormConfig = {
+      id: "review-wizard",
+      fields: [
+        { type: "text", name: "firstName", label: "First name" },
+        { type: "checkbox", name: "wantsExtras", label: "Extras?" },
+        { type: "text", name: "extra", label: "Extra detail" },
+        { type: "text", name: "nickname", label: "Nickname", visibleWhen: { field: "firstName", equals: "Ada" } },
+        { type: "submit", name: "go", text: "Go" },
+      ],
+      steps: [
+        { title: "About", fieldNames: ["firstName", "nickname", "wantsExtras"] },
+        { title: "Extras", fieldNames: ["extra"], visibleWhen: { field: "wantsExtras", equals: true } },
+        { title: "Review", review: true },
+      ],
+    };
+    render(<FormRenderer config={reviewConfig} onSubmit={vi.fn()} />);
+
+    await act(async () => {
+      fireEvent.change(screen.getByLabelText("First name"), { target: { value: "Grace" } });
+    });
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Next" }));
+    });
+    // Extras step is hidden (checkbox off) — landed straight on Review.
+    expect(document.querySelector('[aria-current="step"]')?.textContent).toContain("Review");
+
+    // Summary shows About's values; the hidden Extras section and the
+    // condition-hidden nickname row are absent.
+    expect(screen.getByText("Grace")).toBeTruthy();
+    expect(screen.queryByText("Extra detail")).toBeNull();
+    expect(screen.queryByText("Nickname")).toBeNull();
+    expect(screen.getByText("Extras?")).toBeTruthy();
+    expect(screen.getByText(defaultMessages.no)).toBeTruthy();
+
+    // Edit link jumps back to the owning step.
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Edit: About" }));
+    });
+    expect(document.querySelector('[aria-current="step"]')?.textContent).toContain("About");
+
+    // Values edited after the fact show live on return.
+    await act(async () => {
+      fireEvent.change(screen.getByLabelText("First name"), { target: { value: "Ada" } });
+    });
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Next" }));
+    });
+    expect(screen.getByText("Ada")).toBeTruthy();
+    // Nickname became visible (own condition) — row appears, unanswered.
+    expect(screen.getByText("Nickname")).toBeTruthy();
+  });
+
   it("jumps the stepper to the step containing the first errored field", async () => {
     const steppedConfig: FormConfig = {
       id: "wizard",
