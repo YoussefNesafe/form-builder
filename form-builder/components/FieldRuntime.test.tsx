@@ -136,6 +136,67 @@ describe("FieldGate", () => {
   });
 });
 
+describe("FieldGate copyFrom", () => {
+  afterEach(cleanup);
+
+  const billing = (values: Record<string, unknown>) => (
+    <Harness
+      field={{ type: "text", name: "billing", copyFrom: "shipping" }}
+      values={values}
+      onForm={(f) => (formRef = f)}
+    />
+  );
+  let formRef: UseFormReturn | undefined;
+
+  it("mirrors source changes, including clears", async () => {
+    render(billing({ shipping: "", billing: "" }));
+    await act(async () => formRef!.setValue("shipping", "12 Main St"));
+    expect(formRef!.getValues("billing")).toBe("12 Main St");
+    await act(async () => formRef!.setValue("shipping", ""));
+    expect(formRef!.getValues("billing")).toBe("");
+  });
+
+  it("seeds an empty target on mount without flags; keeps existing values", async () => {
+    render(billing({ shipping: "42 Oak Ave", billing: "" }));
+    await act(async () => {});
+    expect(formRef!.getValues("billing")).toBe("42 Oak Ave");
+    expect(formRef!.getFieldState("billing").isDirty).toBe(false);
+    cleanup();
+    render(billing({ shipping: "42 Oak Ave", billing: "kept draft" }));
+    await act(async () => {});
+    expect(formRef!.getValues("billing")).toBe("kept draft");
+  });
+
+  it("manual override sticks until the next source change (source wins again)", async () => {
+    render(billing({ shipping: "12 Main St", billing: "" }));
+    await act(async () => {});
+    await act(async () => formRef!.setValue("billing", "my own address", { shouldDirty: true }));
+    expect(formRef!.getValues("billing")).toBe("my own address");
+    await act(async () => formRef!.setValue("shipping", "99 New Rd"));
+    expect(formRef!.getValues("billing")).toBe("99 New Rd");
+  });
+
+  it("clones mirrored arrays (no shared identity with the source)", async () => {
+    let form: UseFormReturn | undefined;
+    render(
+      <Harness
+        field={{
+          type: "checkbox",
+          name: "copyTags",
+          copyFrom: "tags",
+          options: [{ label: "A", value: "a" }],
+        }}
+        values={{ tags: [], copyTags: [] }}
+        onForm={(f) => (form = f)}
+      />,
+    );
+    const source = ["a"];
+    await act(async () => form!.setValue("tags", source));
+    expect(form!.getValues("copyTags")).toEqual(["a"]);
+    expect(form!.getValues("copyTags")).not.toBe(source);
+  });
+});
+
 describe("renderField", () => {
   afterEach(cleanup);
 

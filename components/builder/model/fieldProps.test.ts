@@ -75,6 +75,7 @@ describe("field prop registry", () => {
       "disabledWhen",
       "enabledWhen",
       "enabledWhenVerified",
+      "copyFrom",
       // layout-only base props
       "content",
       "value",

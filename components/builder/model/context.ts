@@ -32,6 +32,7 @@ export function findContext(nodes: BuilderNode[], id: string, nested = false): N
  * - `textFamily`     → text/email/password/textarea siblings (rules.matches)
  * - `dateSource`     → non-range date siblings (minDateField/maxDateField)
  * - `timeSource`     → time siblings (minTimeField/maxTimeField)
+ * - `sameType`       → same-type siblings with matching multiple/range (copyFrom)
  * - `any`            → any named sibling
  * Self is always excluded.
  */
@@ -40,11 +41,20 @@ export function eligibleRefs(
   refKind: PropDescriptor["refKind"] | "builtin" | "any",
   selfId: string,
 ): string[] {
+  const self = siblings.find((n) => n._id === selfId);
   return siblings
     .filter((n) => n._id !== selfId)
     .filter((n) => typeof n.props.name === "string" && n.props.name)
     .filter((n) => {
       if (refKind === "otp") return n.type === "otp";
+      if (refKind === "sameType") {
+        return (
+          !!self &&
+          n.type === self.type &&
+          (n.props.multiple === true) === (self.props.multiple === true) &&
+          (n.props.range === true) === (self.props.range === true)
+        );
+      }
       if (refKind === "countrySource") {
         return n.type === "country" || (n.type === "select" && n.props.multiple !== true);
       }
@@ -75,6 +85,7 @@ const GROUP_FORBIDDEN_KEYS = new Set([
   "enabledWhenVerified",
   "dependsOn",
   "countryFrom",
+  "copyFrom",
   "minDateField",
   "maxDateField",
   "minTimeField",

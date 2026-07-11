@@ -27,7 +27,7 @@ export type PropDescriptor = {
   /** Options for `control: "select"`. */
   options?: { label: string; value: string }[];
   /** Which siblings a `control: "fieldRef"` may reference. */
-  refKind?: "otp" | "countrySource" | "textFamily" | "dateSource" | "timeSource" | "any";
+  refKind?: "otp" | "countrySource" | "textFamily" | "dateSource" | "timeSource" | "sameType" | "any";
   /** `control: "condition"`: offer the is valid / is invalid operators. */
   validityOps?: boolean;
   /** Props to clear when this one is set (mutually exclusive pairs). */
@@ -82,6 +82,16 @@ const BASE: PropDescriptor[] = [...IDENTITY, ...BEHAVIOR];
 
 const OPTIONS: PropDescriptor = { key: "options", label: "Options", control: "options" };
 
+// Only on types the engine allows as copy targets (no phone/otp/password/
+// file/signature/group/layout types).
+const COPY_FROM: PropDescriptor = {
+  key: "copyFrom",
+  label: "Copy from",
+  control: "fieldRef",
+  refKind: "sameType",
+  help: "Mirrors the named field until this one is edited; the source wins again on its next change.",
+};
+
 const AS_OPTIONS = [
   { label: "Heading 1", value: "h1" },
   { label: "Heading 2", value: "h2" },
@@ -99,9 +109,9 @@ const VARIANT_OPTIONS = ["default", "destructive", "outline", "secondary", "ghos
  * form-builder/core/types.ts. Drives the generic prop editor (Phase 4).
  */
 export const FIELD_PROPS: Record<FieldType, PropDescriptor[]> = {
-  text: [...BASE, { key: "rules", label: "Validation rules", control: "rules" }],
-  email: [...BASE, { key: "rules", label: "Validation rules", control: "rules" }],
-  textarea: [...BASE, { key: "rules", label: "Validation rules", control: "rules" }],
+  text: [...BASE, COPY_FROM, { key: "rules", label: "Validation rules", control: "rules" }],
+  email: [...BASE, COPY_FROM, { key: "rules", label: "Validation rules", control: "rules" }],
+  textarea: [...BASE, COPY_FROM, { key: "rules", label: "Validation rules", control: "rules" }],
   password: [
     ...BASE,
     { key: "rules", label: "Validation rules", control: "rules" },
@@ -109,11 +119,13 @@ export const FIELD_PROPS: Record<FieldType, PropDescriptor[]> = {
   ],
   masked: [
     ...BASE,
+    COPY_FROM,
     { key: "mask", label: "Mask", control: "mask", help: "# digit, A letter, * alphanumeric; other chars are literals." },
     { key: "message", label: "Error message", control: "text" },
   ],
   number: [
     ...BASE,
+    COPY_FROM,
     { key: "min", label: "Min", control: "number" },
     { key: "max", label: "Max", control: "number" },
     { key: "step", label: "Step", control: "number" },
@@ -131,21 +143,24 @@ export const FIELD_PROPS: Record<FieldType, PropDescriptor[]> = {
   ],
   select: [
     ...BASE,
+    COPY_FROM,
     OPTIONS,
     { key: "searchable", label: "Searchable", control: "boolean" },
     { key: "multiple", label: "Multiple", control: "boolean" },
   ],
   country: [
     ...BASE,
+    COPY_FROM,
     { key: "countries", label: "Countries (subset)", control: "countryList" },
     { key: "preferredCountries", label: "Preferred countries", control: "countryList" },
   ],
-  radio: [...BASE, OPTIONS],
-  segmented: [...BASE, OPTIONS],
-  checkbox: [...BASE, { ...OPTIONS, help: "Add options to make it a checkbox group; leave empty for a single checkbox." }],
-  switch: [...BASE, { ...OPTIONS, help: "Add options for a multi-switch; leave empty for a single switch." }],
+  radio: [...BASE, COPY_FROM, OPTIONS],
+  segmented: [...BASE, COPY_FROM, OPTIONS],
+  checkbox: [...BASE, COPY_FROM, { ...OPTIONS, help: "Add options to make it a checkbox group; leave empty for a single checkbox." }],
+  switch: [...BASE, COPY_FROM, { ...OPTIONS, help: "Add options for a multi-switch; leave empty for a single switch." }],
   date: [
     ...BASE,
+    COPY_FROM,
     { key: "range", label: "Range", control: "boolean" },
     { key: "minDate", label: "Min date", control: "date" },
     { key: "maxDate", label: "Max date", control: "date" },
@@ -166,6 +181,7 @@ export const FIELD_PROPS: Record<FieldType, PropDescriptor[]> = {
   ],
   time: [
     ...BASE,
+    COPY_FROM,
     { key: "minTime", label: "Min time", control: "time" },
     { key: "maxTime", label: "Max time", control: "time" },
     { key: "stepMinutes", label: "Step (minutes)", control: "number", integer: true, min: 1 },
@@ -186,10 +202,12 @@ export const FIELD_PROPS: Record<FieldType, PropDescriptor[]> = {
   ],
   rating: [
     ...BASE,
+    COPY_FROM,
     { key: "max", label: "Max stars", control: "number", integer: true, min: 2, max: 10, help: "2–10, defaults to 5." },
   ],
   slider: [
     ...BASE,
+    COPY_FROM,
     { key: "min", label: "Min", control: "number" },
     { key: "max", label: "Max", control: "number" },
     { key: "step", label: "Step", control: "number" },

@@ -125,6 +125,7 @@ function scrubRefs(node: BuilderNode, name: string): BuilderNode {
     "dependsOn",
     "enabledWhenVerified",
     "countryFrom",
+    "copyFrom",
     "minDateField",
     "maxDateField",
     "minTimeField",

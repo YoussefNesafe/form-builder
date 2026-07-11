@@ -60,7 +60,7 @@ export function FormRenderer({
     );
   }
 
-  const { form, messages: mergedMessages, draft } = useDynamicForm(config, {
+  const { form, messages: mergedMessages, draft, restoreGeneration } = useDynamicForm(config, {
     messages,
     // Without a verify capability the checker would block every otp field.
     otpVerified: controller.hasVerify ? controller.otpVerified : undefined,
@@ -92,8 +92,9 @@ export function FormRenderer({
       isFieldValid,
       verifiedFields: controller.verifiedFields,
       locale,
+      restoreGeneration,
     }),
-    [mergedMessages, controller.otp, controller.verifiedFields, isFieldValid, locale],
+    [mergedMessages, controller.otp, controller.verifiedFields, isFieldValid, locale, restoreGeneration],
   );
 
   const [formError, setFormError] = useState<string | null>(null);

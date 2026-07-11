@@ -125,8 +125,19 @@ payload sugar — authors compose the toggle themselves (checkbox +
   sticks until the next source change, first render after (re)mount is
   baseline (drafts not clobbered, cross-step changes skipped), seed sets no
   dirty/touched flags.
-- Validator: same-level sibling, exists, not self, same type, group-nested →
-  error, cross-step → dev-warn. `phone` keeps `countryFrom` (not both).
+- Validator: same-level sibling, exists, not self, same type (matching select
+  `multiple` / date `range` shape), group-nested → error, cross-step →
+  dev-warn, copyFrom cycles → error (array/object mirrors would ping-pong
+  forever; chains stay legal). `phone` keeps `countryFrom` (not both);
+  otp/password (credentials), file/signature, group and layout types are not
+  copy targets.
+- A condition-HIDDEN field keeps syncing (FieldGate stays mounted) — hidden
+  values are payload-stripped anyway and the field is current when it
+  reappears; step-unmounted fields re-baseline on remount instead.
+- Draft restore (autosave) bumps a restore generation through
+  FieldRuntimeContext; source-sync hooks re-baseline on it rather than
+  mirroring the restore as a source edit — otherwise a drafted manual
+  override would be clobbered by the restored source value.
 
 ## 5. Options-from-source
 

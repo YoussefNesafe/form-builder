@@ -3,6 +3,7 @@
 import { createContext, useContext, useMemo, type ReactNode } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { conditionFieldNames, conditionSpecMatches } from "../core/conditions";
+import { useCopyFromSync } from "../hooks/useSourceSync";
 import { defaultMessages, type Messages } from "../core/messages";
 import type { AnyFieldConfig, FormValues } from "../core/types";
 
@@ -37,6 +38,9 @@ type FieldRuntime = {
   // Names of otp fields whose current code passed verification.
   verifiedFields?: ReadonlySet<string>;
   locale?: FormLocale;
+  // Bumped when a wholesale value rewrite happens (autosave draft restore) —
+  // source-sync hooks re-baseline instead of treating it as a source edit.
+  restoreGeneration?: number;
 };
 
 export const FieldRuntimeContext = createContext<FieldRuntime>({
@@ -56,6 +60,9 @@ export function useFieldDisabled(config: AnyFieldConfig): boolean {
 export function FieldGate({ field, children }: { field: AnyFieldConfig; children: ReactNode }) {
   const { control } = useFormContext();
   const runtime = useFieldRuntime();
+  // Central mount point — copyFrom works for every field type without each
+  // component opting in. Inert when the field has no copyFrom.
+  useCopyFromSync(field);
 
   // One subscription for every source field across all three specs; specs
   // read values back out of it by name.

@@ -77,6 +77,7 @@ const baseFieldSchema = z.strictObject({
   disabledWhen: conditionSpecSchema(conditionSchema).optional(),
   enabledWhen: conditionSpecSchema(conditionSchema).optional(),
   enabledWhenVerified: z.string().min(1).optional(),
+  copyFrom: z.string().min(1).optional(),
   width: fieldWidthSchema.optional(),
 });
 
@@ -282,6 +283,21 @@ function formatIssues(issues: z.core.$ZodIssue[], path: string): string {
 // an isValid condition against them would silently always (or never) match.
 const VACUOUS_VALIDITY_TYPES = new Set<string>(["static", "submit", "hidden"]);
 
+// copyFrom targets a plain mirrored value. Excluded: phone (has countryFrom),
+// otp/password (credentials), file/signature (object/canvas state), group
+// (row arrays), and the no-input types.
+const COPY_FROM_UNSUPPORTED_TYPES = new Set<string>([
+  "phone",
+  "otp",
+  "password",
+  "file",
+  "signature",
+  "group",
+  "hidden",
+  "static",
+  "submit",
+]);
+
 const TEXT_FAMILY_TYPES = new Set<string>(["text", "email", "password", "textarea"]);
 const CROSS_BOUND_KEYS = ["minDateField", "maxDateField", "minTimeField", "maxTimeField"] as const;
 
@@ -381,6 +397,9 @@ function validateFields(fields: unknown[], path: string, insideGroup = false): v
           `Invalid form config at ${fieldPath}: ${crossRule.rule} is not supported inside groups`,
         );
       }
+      if ((raw as { copyFrom?: unknown }).copyFrom !== undefined) {
+        throw new Error(`Invalid form config at ${fieldPath}: copyFrom is not supported inside groups`);
+      }
     }
 
     if (type === "hidden" && !("value" in (raw as object))) {
@@ -410,6 +429,9 @@ function validateFields(fields: unknown[], path: string, insideGroup = false): v
       dependsOn?: unknown;
       enabledWhenVerified?: unknown;
       countryFrom?: unknown;
+      copyFrom?: unknown;
+      multiple?: unknown;
+      range?: unknown;
     };
 
     if (field.type === "otp" && field.dependsOn !== undefined) {
@@ -443,6 +465,48 @@ function validateFields(fields: unknown[], path: string, insideGroup = false): v
         throw new Error(
           `Invalid form config at ${path}[${index}]: isValid condition must reference a sibling built-in input field, got "${target}"`,
         );
+      }
+    }
+
+    if (field.copyFrom !== undefined) {
+      if (typeof field.type === "string" && COPY_FROM_UNSUPPORTED_TYPES.has(field.type)) {
+        throw new Error(
+          `Invalid form config at ${path}[${index}]: copyFrom is not supported on ${field.type} fields`,
+        );
+      }
+      const source = field.copyFrom as string;
+      const sourceRaw = fields.find((f) => (f as { name: string }).name === source) as
+        | { type?: unknown; multiple?: unknown; range?: unknown }
+        | undefined;
+      // Same type AND same value shape: a multi-select cannot mirror a single
+      // select (array vs scalar), a range date cannot mirror a plain one.
+      const sameShape =
+        sourceRaw !== undefined &&
+        sourceRaw.type === field.type &&
+        (field.type !== "select" || (sourceRaw.multiple === true) === (field.multiple === true)) &&
+        (field.type !== "date" || (sourceRaw.range === true) === (field.range === true));
+      if (source === field.name || !sameShape) {
+        throw new Error(
+          `Invalid form config at ${path}[${index}]: copyFrom must reference a same-type sibling field, got "${source}"`,
+        );
+      }
+      // Cycles (A↔B, or longer loops) would ping-pong forever on array/object
+      // values: each write is a fresh clone, so the identity no-op guard
+      // never terminates the loop. Chains (A←B←C) are fine.
+      const copyFromOf = new Map(
+        fields
+          .map((f) => f as { name: string; copyFrom?: unknown })
+          .filter((f) => typeof f.copyFrom === "string")
+          .map((f) => [f.name, f.copyFrom as string]),
+      );
+      let cursor: string | undefined = source;
+      for (let hops = 0; cursor !== undefined && hops <= fields.length; hops += 1) {
+        if (cursor === field.name) {
+          throw new Error(
+            `Invalid form config at ${path}[${index}]: copyFrom chain from "${field.name}" loops back to itself`,
+          );
+        }
+        cursor = copyFromOf.get(cursor);
       }
     }
 
@@ -538,6 +602,19 @@ function validateSteps(config: FormConfig): void {
       if (phoneStep !== undefined && sourceStep !== undefined && phoneStep !== sourceStep) {
         console.warn(
           `form-builder: phone field "${field.name}" (step ${phoneStep + 1}) syncs country from "${countryFrom}" (step ${sourceStep + 1}) — source changes while the phone field is unmounted are not applied on remount`,
+        );
+      }
+    }
+    // Same remount-baseline semantics as phone countryFrom: source changes
+    // made while the mirroring field is unmounted are skipped on remount.
+    for (const field of config.fields) {
+      const copyFrom = (field as { copyFrom?: string }).copyFrom;
+      if (copyFrom === undefined) continue;
+      const fieldStep = stepOf.get(field.name);
+      const sourceStep = stepOf.get(copyFrom);
+      if (fieldStep !== undefined && sourceStep !== undefined && fieldStep !== sourceStep) {
+        console.warn(
+          `form-builder: field "${field.name}" (step ${fieldStep + 1}) copies from "${copyFrom}" (step ${sourceStep + 1}) — source changes while the field is unmounted are not applied on remount`,
         );
       }
     }

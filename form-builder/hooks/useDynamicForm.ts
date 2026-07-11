@@ -172,6 +172,9 @@ export function useDynamicForm(
   const includeSignatures = autosave?.includeSignatures ?? false;
   const draftHash = useMemo(() => (draftId !== null ? draftConfigHash(config.fields) : ""), [draftId, config]);
   const [restoredStep, setRestoredStep] = useState<number | undefined>(undefined);
+  // Signals source-sync hooks (copyFrom, phone countryFrom) that a wholesale
+  // value rewrite happened — they re-baseline instead of mirroring it.
+  const [restoreGeneration, setRestoreGeneration] = useState(0);
   const draftStepRef = useRef<number | undefined>(undefined);
   // Child effects run before parent effects: the stepper announces its mount
   // step BEFORE this hook restores — writes before restore would clobber the
@@ -187,6 +190,7 @@ export function useDynamicForm(
     if (!draft) return;
     const sanitized = sanitizeDraftValues(config.fields, draft.values, includeSignatures);
     form.reset({ ...buildDefaultValues(config.fields), ...sanitized });
+    setRestoreGeneration((generation) => generation + 1);
     if (draft.step !== undefined) {
       draftStepRef.current = draft.step;
       setRestoredStep(draft.step);
@@ -264,5 +268,5 @@ export function useDynamicForm(
     [draftId, restoredStep, clearDraftAndPending, noteStep],
   );
 
-  return { form, schema, messages, draft };
+  return { form, schema, messages, draft, restoreGeneration };
 }

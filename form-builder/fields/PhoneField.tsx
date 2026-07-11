@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useId, useRef, useState, type ComponentProps } from "react";
-import { Controller, useFormContext, useWatch } from "react-hook-form";
+import { useId, useState, type ComponentProps } from "react";
+import { Controller, useFormContext } from "react-hook-form";
 import PhoneInput, { getCountryCallingCode, type Country } from "react-phone-number-input";
 import flags from "react-phone-number-input/flags";
 import { Check, ChevronDown } from "lucide-react";
@@ -20,6 +20,7 @@ import type { FieldComponentProps } from "../core/registry";
 import type { FieldConfig } from "../core/types";
 import { useFieldDisabled, useFieldRuntime } from "../components/FieldRuntime";
 import { FieldWrapper, fieldAriaDescribedBy } from "../ui/FieldWrapper";
+import { SKIP_SYNC, useSourceSync } from "../hooks/useSourceSync";
 import { applyCountryToPhoneValue } from "./phoneCountrySync";
 
 type PhoneFieldConfig = Extract<FieldConfig, { type: "phone" }>;
@@ -126,54 +127,34 @@ function CountrySelect({ value, onChange, options, disabled, className, emptyMes
 }
 
 // Opt-in countryFrom sync: watch the source select and rewrite this field's
-// calling code on change. Same useWatch pattern as otp dependsOn. The source
-// always wins on change; the user can still override via the country select
-// until the next source change (per design).
+// calling code on change. The source always wins on change; the user can
+// still override via the country select until the next source change.
+// Baseline/seed/flag semantics live in useSourceSync (shared with copyFrom).
 function useCountryFromSync(config: PhoneFieldConfig) {
-  const { control, getValues, setValue, getFieldState } = useFormContext();
-  const source = config.countryFrom;
-  // useWatch needs a name even when the feature is off; watching this field
-  // itself with disabled: true is a no-op placeholder.
-  const watched = useWatch({ control, name: source ?? config.name, disabled: !source });
-  const prev = useRef<unknown>(undefined);
-  const mounted = useRef(false);
-
-  useEffect(() => {
-    if (!source) return;
-    const iso = typeof watched === "string" && watched ? watched : undefined;
-    if (!mounted.current) {
-      // First render after (re)mount is baseline, not a change: a draft value
-      // must not be clobbered. Only an empty phone gets seeded.
-      mounted.current = true;
-      prev.current = watched;
-      if (iso && !getValues(config.name)) {
-        const next = applyCountryToPhoneValue("", iso);
-        // Seed is initialization, not an edit — no flags on purpose (the
-        // field stays pristine: not dirty, not touched, not validated).
-        if (next) setValue(config.name, next);
+  useSourceSync(config.name, config.countryFrom, {
+    seed: (sourceValue, currentValue) => {
+      // Only an empty phone gets seeded — a draft value must not be clobbered.
+      const iso = typeof sourceValue === "string" && sourceValue ? sourceValue : undefined;
+      if (!iso || currentValue) return SKIP_SYNC;
+      const next = applyCountryToPhoneValue("", iso);
+      return next === null ? SKIP_SYNC : next;
+    },
+    change: (sourceValue, currentValue) => {
+      const iso = typeof sourceValue === "string" && sourceValue ? sourceValue : undefined;
+      if (!iso) return SKIP_SYNC; // source cleared → keep current country
+      const current = typeof currentValue === "string" ? currentValue : "";
+      const next = applyCountryToPhoneValue(current, iso);
+      if (next === null) {
+        if (process.env.NODE_ENV !== "production") {
+          console.warn(
+            `form-builder: phone "${config.name}" countryFrom received non-ISO value "${String(sourceValue)}"`,
+          );
+        }
+        return SKIP_SYNC;
       }
-      return;
-    }
-    if (watched === prev.current) return;
-    prev.current = watched;
-    if (!iso) return; // source cleared → keep current country
-    const raw = getValues(config.name);
-    const current = typeof raw === "string" ? raw : "";
-    const next = applyCountryToPhoneValue(current, iso);
-    if (next === null) {
-      if (process.env.NODE_ENV !== "production") {
-        console.warn(
-          `form-builder: phone "${config.name}" countryFrom received non-ISO value "${String(watched)}"`,
-        );
-      }
-      return;
-    }
-    // Mode is onTouched: a touched field already shows validation state, so
-    // the rewrite must re-validate or a stale green/error border survives
-    // until the next blur. Untouched fields skip it — no premature errors.
-    const { isTouched } = getFieldState(config.name);
-    if (next !== current) setValue(config.name, next, { shouldDirty: true, shouldValidate: isTouched });
-  }, [watched, source, config.name, getValues, setValue, getFieldState]);
+      return next;
+    },
+  });
 }
 
 export function PhoneField({ field }: FieldComponentProps) {

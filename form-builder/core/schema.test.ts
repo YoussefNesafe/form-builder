@@ -476,6 +476,122 @@ describe("validateFormConfig", () => {
     ).toThrow(/not supported inside groups/);
   });
 
+  it("accepts copyFrom on a same-type sibling", () =>
+    expect(() =>
+      validateFormConfig({
+        id: "t",
+        fields: [
+          { type: "text", name: "shipping" },
+          { type: "text", name: "billing", copyFrom: "shipping" },
+          { type: "select", name: "a", multiple: true, options: [{ label: "X", value: "x" }] },
+          { type: "select", name: "b", multiple: true, options: [{ label: "X", value: "x" }], copyFrom: "a" },
+        ],
+      }),
+    ).not.toThrow());
+
+  it("rejects copyFrom referencing unknown, self, or different-type fields", () => {
+    for (const fields of [
+      [{ type: "text", name: "a", copyFrom: "gone" }],
+      [{ type: "text", name: "a", copyFrom: "a" }],
+      [
+        { type: "number", name: "n" },
+        { type: "text", name: "a", copyFrom: "n" },
+      ],
+    ]) {
+      expect(() => validateFormConfig({ id: "t", fields: fields as never })).toThrow(
+        /same-type sibling/,
+      );
+    }
+  });
+
+  it("rejects copyFrom shape mismatches (select multiple, date range)", () => {
+    expect(() =>
+      validateFormConfig({
+        id: "t",
+        fields: [
+          { type: "select", name: "single", options: [{ label: "X", value: "x" }] },
+          { type: "select", name: "multi", multiple: true, options: [{ label: "X", value: "x" }], copyFrom: "single" },
+        ],
+      }),
+    ).toThrow(/same-type sibling/);
+    expect(() =>
+      validateFormConfig({
+        id: "t",
+        fields: [
+          { type: "date", name: "plain" },
+          { type: "date", name: "span", range: true, copyFrom: "plain" },
+        ],
+      }),
+    ).toThrow(/same-type sibling/);
+  });
+
+  it("rejects copyFrom cycles, allows chains", () => {
+    expect(() =>
+      validateFormConfig({
+        id: "t",
+        fields: [
+          { type: "text", name: "a", copyFrom: "b" },
+          { type: "text", name: "b", copyFrom: "a" },
+        ],
+      }),
+    ).toThrow(/loops back/);
+    expect(() =>
+      validateFormConfig({
+        id: "t",
+        fields: [
+          { type: "text", name: "c" },
+          { type: "text", name: "b", copyFrom: "c" },
+          { type: "text", name: "a", copyFrom: "b" },
+        ],
+      }),
+    ).not.toThrow();
+  });
+
+  it("rejects copyFrom on unsupported types and inside groups", () => {
+    expect(() =>
+      validateFormConfig({
+        id: "t",
+        fields: [
+          { type: "password", name: "a" },
+          { type: "password", name: "b", copyFrom: "a" },
+        ],
+      }),
+    ).toThrow(/not supported on password/);
+    expect(() =>
+      validateFormConfig({
+        id: "t",
+        fields: [
+          {
+            type: "group",
+            name: "g",
+            fields: [
+              { type: "text", name: "a" },
+              { type: "text", name: "b", copyFrom: "a" },
+            ],
+          },
+        ],
+      }),
+    ).toThrow(/not supported inside groups/);
+  });
+
+  it("dev-warns when a copyFrom source sits on a different step", async () => {
+    const { vi } = await import("vitest");
+    const spy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    validateFormConfig({
+      id: "t",
+      fields: [
+        { type: "text", name: "shipping" },
+        { type: "text", name: "billing", copyFrom: "shipping" },
+      ],
+      steps: [
+        { title: "one", fieldNames: ["shipping"] },
+        { title: "two", fieldNames: ["billing"] },
+      ],
+    });
+    expect(spy).toHaveBeenCalledWith(expect.stringContaining("copies from"));
+    spy.mockRestore();
+  });
+
   it("dev-warns when a cross-field rule source sits on a different step", async () => {
     const { vi } = await import("vitest");
     const spy = vi.spyOn(console, "warn").mockImplementation(() => {});

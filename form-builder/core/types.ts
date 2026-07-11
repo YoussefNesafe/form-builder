@@ -67,6 +67,9 @@ export type BaseField = {
   enabledWhen?: ConditionSpec;
   // Field stays disabled until the named otp field is verified.
   enabledWhenVerified?: string;
+  // Mirror a same-type sibling until the user edits this field; the source
+  // wins again on its next change (same semantics as phone countryFrom).
+  copyFrom?: string;
   width?: ResponsiveFieldWidth;
 };
 

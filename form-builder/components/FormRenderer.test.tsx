@@ -127,6 +127,61 @@ describe("FormRenderer server errors", () => {
     await waitFor(() => expect(window.localStorage.getItem("form-builder:draft:draft-wizard")).toBeNull());
   });
 
+  it("autosave restore does not clobber a drafted copyFrom override (re-baseline, not mirror)", async () => {
+    window.localStorage.clear();
+    const { draftConfigHash } = await import("../core/autosave");
+    const copyConfig: FormConfig = {
+      id: "copy-draft",
+      fields: [
+        { type: "text", name: "shipping", label: "Shipping" },
+        { type: "text", name: "billing", label: "Billing", copyFrom: "shipping" },
+        { type: "submit", name: "go", text: "Go" },
+      ],
+    };
+    // The user had overridden billing before the draft was saved.
+    window.localStorage.setItem(
+      "form-builder:draft:copy-draft",
+      JSON.stringify({
+        hash: draftConfigHash(copyConfig.fields),
+        values: { shipping: "12 Main St", billing: "my own address" },
+      }),
+    );
+    render(<FormRenderer config={copyConfig} onSubmit={vi.fn()} autosave={{ debounceMs: 0 }} />);
+
+    await waitFor(() =>
+      expect((screen.getByLabelText("Shipping") as HTMLInputElement).value).toBe("12 Main St"),
+    );
+    // Without the restore-generation re-baseline the sync hook would treat
+    // the restore as a source edit and mirror shipping into billing.
+    expect((screen.getByLabelText("Billing") as HTMLInputElement).value).toBe("my own address");
+
+    // The sync still works for REAL source edits after the restore.
+    await act(async () => {
+      fireEvent.change(screen.getByLabelText("Shipping"), { target: { value: "99 New Rd" } });
+    });
+    await waitFor(() =>
+      expect((screen.getByLabelText("Billing") as HTMLInputElement).value).toBe("99 New Rd"),
+    );
+  });
+
+  it("copyFrom chains propagate hop by hop (C → B → A)", async () => {
+    const chainConfig: FormConfig = {
+      id: "chain",
+      fields: [
+        { type: "text", name: "c", label: "C" },
+        { type: "text", name: "b", label: "B", copyFrom: "c" },
+        { type: "text", name: "a", label: "A", copyFrom: "b" },
+        { type: "submit", name: "go", text: "Go" },
+      ],
+    };
+    render(<FormRenderer config={chainConfig} onSubmit={vi.fn()} />);
+    await act(async () => {
+      fireEvent.change(screen.getByLabelText("C"), { target: { value: "origin" } });
+    });
+    await waitFor(() => expect((screen.getByLabelText("B") as HTMLInputElement).value).toBe("origin"));
+    await waitFor(() => expect((screen.getByLabelText("A") as HTMLInputElement).value).toBe("origin"));
+  });
+
   it("jumps the stepper to the step containing the first errored field", async () => {
     const steppedConfig: FormConfig = {
       id: "wizard",
