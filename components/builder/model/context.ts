@@ -27,7 +27,8 @@ export function findContext(nodes: BuilderNode[], id: string, nested = false): N
  * Named sibling field names eligible for a `fieldRef`/`condition` control,
  * mirroring the engine's validation rules:
  * - `otp`            → sibling otp fields
- * - `countrySource`  → sibling country fields or single-value selects
+ * - `countrySource`  → sibling country fields or single-value static selects
+ * - `optionsSource`  → sibling country fields or single-value selects
  * - `builtin`        → built-in siblings (isValid targets need a zod schema)
  * - `textFamily`     → text/email/password/textarea siblings (rules.matches)
  * - `dateSource`     → non-range date siblings (minDateField/maxDateField)
@@ -56,6 +57,14 @@ export function eligibleRefs(
         );
       }
       if (refKind === "countrySource") {
+        // optionsFrom selects can't be verified as ISO sources (engine rule).
+        return (
+          n.type === "country" ||
+          (n.type === "select" && n.props.multiple !== true && n.props.optionsFrom === undefined)
+        );
+      }
+      // optionsFrom source: same shape rule, dynamic sources allowed (chains).
+      if (refKind === "optionsSource") {
         return n.type === "country" || (n.type === "select" && n.props.multiple !== true);
       }
       if (refKind === "textFamily") {
@@ -86,6 +95,7 @@ const GROUP_FORBIDDEN_KEYS = new Set([
   "dependsOn",
   "countryFrom",
   "copyFrom",
+  "optionsFrom",
   "minDateField",
   "maxDateField",
   "minTimeField",

@@ -574,6 +574,157 @@ describe("validateFormConfig", () => {
     ).toThrow(/not supported inside groups/);
   });
 
+  it("select: accepts exactly one of options/optionsFrom, rejects both or neither", () => {
+    const map = { a: [{ label: "X", value: "x" }] };
+    expect(() =>
+      validateFormConfig({
+        id: "t",
+        fields: [
+          { type: "select", name: "src", options: [{ label: "A", value: "a" }] },
+          { type: "select", name: "dep", optionsFrom: { field: "src", map } },
+        ],
+      }),
+    ).not.toThrow();
+    expect(() =>
+      validateFormConfig({
+        id: "t",
+        fields: [
+          { type: "select", name: "src", options: [{ label: "A", value: "a" }] },
+          {
+            type: "select",
+            name: "dep",
+            options: [{ label: "A", value: "a" }],
+            optionsFrom: { field: "src", map },
+          },
+        ],
+      }),
+    ).toThrow(/exactly one/);
+    expect(() =>
+      validateFormConfig({ id: "t", fields: [{ type: "select", name: "dep" }] }),
+    ).toThrow(/exactly one/);
+  });
+
+  it("rejects optionsFrom referencing unknown, self, multi-select, or non-select sources", () => {
+    const map = { a: [{ label: "X", value: "x" }] };
+    for (const fields of [
+      [{ type: "select", name: "dep", optionsFrom: { field: "gone", map } }],
+      [{ type: "select", name: "dep", optionsFrom: { field: "dep", map } }],
+      [
+        { type: "select", name: "src", multiple: true, options: [{ label: "A", value: "a" }] },
+        { type: "select", name: "dep", optionsFrom: { field: "src", map } },
+      ],
+      [
+        { type: "text", name: "src" },
+        { type: "select", name: "dep", optionsFrom: { field: "src", map } },
+      ],
+    ]) {
+      expect(() => validateFormConfig({ id: "t", fields: fields as never })).toThrow(
+        /single-value select or country field/,
+      );
+    }
+  });
+
+  it("accepts a country field as an optionsFrom source; rejects optionsFrom inside groups", () => {
+    expect(() =>
+      validateFormConfig({
+        id: "t",
+        fields: [
+          { type: "country", name: "residence" },
+          { type: "select", name: "city", optionsFrom: { field: "residence", map: { AE: [{ label: "Dubai", value: "dxb" }] } } },
+        ],
+      }),
+    ).not.toThrow();
+    expect(() =>
+      validateFormConfig({
+        id: "t",
+        fields: [
+          {
+            type: "group",
+            name: "g",
+            fields: [
+              { type: "select", name: "src", options: [{ label: "A", value: "a" }] },
+              { type: "select", name: "dep", optionsFrom: { field: "src", map: { a: [] } } },
+            ],
+          },
+        ],
+      }),
+    ).toThrow(/not supported inside groups/);
+  });
+
+  it("rejects optionsFrom cycles, allows chains", () => {
+    const map = { a: [{ label: "X", value: "x" }] };
+    expect(() =>
+      validateFormConfig({
+        id: "t",
+        fields: [
+          { type: "select", name: "a", optionsFrom: { field: "b", map } },
+          { type: "select", name: "b", optionsFrom: { field: "a", map } },
+        ],
+      }),
+    ).toThrow(/loops back/);
+    expect(() =>
+      validateFormConfig({
+        id: "t",
+        fields: [
+          { type: "select", name: "c", options: [{ label: "A", value: "a" }] },
+          { type: "select", name: "b", optionsFrom: { field: "c", map } },
+          { type: "select", name: "a", optionsFrom: { field: "b", map: { x: [] } } },
+        ],
+      }),
+    ).not.toThrow();
+  });
+
+  it("dev-warns when an optionsFrom source sits on a different step", async () => {
+    const { vi } = await import("vitest");
+    const spy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    validateFormConfig({
+      id: "t",
+      fields: [
+        { type: "select", name: "src", options: [{ label: "A", value: "a" }] },
+        { type: "select", name: "dep", optionsFrom: { field: "src", map: { a: [{ label: "X", value: "x" }] } } },
+      ],
+      steps: [
+        { title: "one", fieldNames: ["src"] },
+        { title: "two", fieldNames: ["dep"] },
+      ],
+    });
+    expect(spy).toHaveBeenCalledWith(expect.stringContaining("derives options from"));
+    spy.mockRestore();
+  });
+
+  it("dev-warns when a source option value has no map entry", async () => {
+    const { vi } = await import("vitest");
+    const spy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    validateFormConfig({
+      id: "t",
+      fields: [
+        {
+          type: "select",
+          name: "src",
+          options: [
+            { label: "A", value: "a" },
+            { label: "B", value: "b" },
+          ],
+        },
+        { type: "select", name: "dep", optionsFrom: { field: "src", map: { a: [{ label: "X", value: "x" }] } } },
+      ],
+    });
+    expect(spy).toHaveBeenCalledWith(expect.stringContaining('no map entry for source option "b"'));
+    spy.mockRestore();
+  });
+
+  it("rejects phone countryFrom pointing at an optionsFrom select", () =>
+    expect(() =>
+      validateFormConfig({
+        id: "t",
+        fields: [
+          { type: "select", name: "src", options: [{ label: "A", value: "AE" }] },
+          { type: "select", name: "dyn", optionsFrom: { field: "src", map: { AE: [{ label: "AE", value: "AE" }] } } },
+          { type: "phone", name: "mobile", countryFrom: "dyn" },
+        ],
+      }),
+    ).toThrow(/cannot be verified as country codes/));
+
   it("dev-warns when a copyFrom source sits on a different step", async () => {
     const { vi } = await import("vitest");
     const spy = vi.spyOn(console, "warn").mockImplementation(() => {});

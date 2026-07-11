@@ -23,6 +23,7 @@ import {
   TimeControl,
 } from "./controls/primitives";
 import { OptionsEditor } from "./controls/OptionsEditor";
+import { OptionsFromEditor } from "./controls/OptionsFromEditor";
 import { ConditionEditor } from "./controls/ConditionEditor";
 import { WidthEditor } from "./controls/WidthEditor";
 import { RulesEditor } from "./controls/RulesEditor";
@@ -48,6 +49,7 @@ const CONTROLS: Record<PropDescriptor["control"], AnyControl> = {
   json: JsonControl,
   fieldRef: FieldRefControl,
   options: OptionsEditor,
+  optionsFrom: OptionsFromEditor,
   condition: ConditionEditor,
   width: WidthEditor,
   rules: RulesEditor,

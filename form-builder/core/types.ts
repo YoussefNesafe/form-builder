@@ -109,7 +109,16 @@ export type FieldConfig =
   | (BaseField & { type: "number"; min?: number; max?: number; step?: number })
   | (BaseField & { type: "otp"; length: number; dependsOn?: string })
   | (BaseField & { type: "phone"; defaultCountry?: string; preferredCountries?: string[]; countryFrom?: string })
-  | (BaseField & { type: "select"; options: Option[]; searchable?: boolean; multiple?: boolean })
+  // Exactly one of options/optionsFrom (validator-enforced). optionsFrom
+  // derives the option list from a sibling's current value via the config-
+  // carried map (CMS-friendly); a missing key yields an empty, disabled select.
+  | (BaseField & {
+      type: "select";
+      options?: Option[];
+      optionsFrom?: { field: string; map: Record<string, Option[]> };
+      searchable?: boolean;
+      multiple?: boolean;
+    })
   // Values are ISO 3166-1 alpha-2 codes; valid as a phone countryFrom source.
   | (BaseField & { type: "country"; countries?: string[]; preferredCountries?: string[] })
   | (BaseField & { type: "radio"; options: Option[] })

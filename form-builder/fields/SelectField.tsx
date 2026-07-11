@@ -1,7 +1,7 @@
 "use client";
 
 import { useId, useState } from "react";
-import { Controller, useFormContext } from "react-hook-form";
+import { Controller, useFormContext, useWatch } from "react-hook-form";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,6 +24,7 @@ import { cn } from "@/lib/utils";
 import type { FieldComponentProps } from "../core/registry";
 import type { FieldConfig, Option } from "../core/types";
 import { useFieldDisabled, useFieldRuntime } from "../components/FieldRuntime";
+import { SKIP_SYNC, useSourceSync } from "../hooks/useSourceSync";
 import { FieldWrapper, fieldAriaDescribedBy } from "../ui/FieldWrapper";
 
 type SelectFieldConfig = Extract<FieldConfig, { type: "select" }>;
@@ -32,13 +33,56 @@ function optionByString(options: Option[], selected: string): Option["value"] | 
   return options.find((option) => String(option.value) === selected)?.value;
 }
 
+const isBlankSource = (value: unknown): boolean => value === undefined || value === null || value === "";
+
+// Blank source offers nothing — and never aliases into a branch literally
+// keyed "undefined"/"null" via String().
+function branchFor(map: Record<string, Option[]>, sourceValue: unknown): Option[] {
+  return isBlankSource(sourceValue) ? [] : (map[String(sourceValue)] ?? []);
+}
+
+/** Static options, or the optionsFrom branch for the source's current value. */
+function useSelectOptions(config: SelectFieldConfig): Option[] {
+  const { control } = useFormContext();
+  const source = config.optionsFrom?.field;
+  const sourceValue = useWatch({ control, name: source ?? config.name, disabled: !source });
+  if (config.optionsFrom) return branchFor(config.optionsFrom.map, sourceValue);
+  return config.options ?? [];
+}
+
+// Source changed → the current value may belong to the previous branch.
+// Single: reset it; multiple: keep only entries still offered. Blank values
+// and mount/draft-restore baselines are left alone (useSourceSync semantics).
+function useOptionsFromReset(config: SelectFieldConfig) {
+  const map = config.optionsFrom?.map;
+  const multiple = config.multiple === true;
+  useSourceSync(config.name, config.optionsFrom?.field, {
+    seed: () => SKIP_SYNC,
+    change: (sourceValue, currentValue) => {
+      const allowed = new Set(branchFor(map ?? {}, sourceValue).map((option) => option.value));
+      if (multiple) {
+        if (!Array.isArray(currentValue) || currentValue.length === 0) return SKIP_SYNC;
+        const kept = currentValue.filter((entry) => allowed.has(entry as Option["value"]));
+        return kept.length === currentValue.length ? SKIP_SYNC : kept;
+      }
+      if (currentValue === undefined || currentValue === null || currentValue === "") return SKIP_SYNC;
+      return allowed.has(currentValue as Option["value"]) ? SKIP_SYNC : undefined;
+    },
+  });
+}
+
 export function SelectField({ field }: FieldComponentProps) {
   const config = field as SelectFieldConfig;
   const { control } = useFormContext();
-  const disabled = useFieldDisabled(config);
+  const fieldDisabled = useFieldDisabled(config);
   const { messages } = useFieldRuntime();
   const id = useId();
   const [open, setOpen] = useState(false);
+  const options = useSelectOptions(config);
+  useOptionsFromReset(config);
+  // An empty optionsFrom branch (no map entry for the source value, or the
+  // source is still blank) has nothing to offer — disabled placeholder state.
+  const disabled = fieldDisabled || (!!config.optionsFrom && options.length === 0);
 
   const useCombobox = !!config.searchable || !!config.multiple;
 
@@ -71,12 +115,12 @@ export function SelectField({ field }: FieldComponentProps) {
                 <span className="truncate">
                   {config.multiple
                     ? Array.isArray(rhf.value) && rhf.value.length
-                      ? config.options
+                      ? options
                           .filter((option) => (rhf.value as Option["value"][]).includes(option.value))
                           .map((option) => option.label)
                           .join(", ")
                       : (config.placeholder ?? "")
-                    : (config.options.find((option) => option.value === rhf.value)?.label ??
+                    : (options.find((option) => option.value === rhf.value)?.label ??
                       config.placeholder ??
                       "")}
                 </span>
@@ -89,7 +133,7 @@ export function SelectField({ field }: FieldComponentProps) {
                 <CommandList>
                   <CommandEmpty>{messages.noOptions}</CommandEmpty>
                   <CommandGroup>
-                    {config.options.map((option) => {
+                    {options.map((option) => {
                       const selected = config.multiple
                         ? Array.isArray(rhf.value) && (rhf.value as Option["value"][]).includes(option.value)
                         : rhf.value === option.value;
@@ -125,7 +169,7 @@ export function SelectField({ field }: FieldComponentProps) {
         ) : (
           <Select
             value={rhf.value === undefined || rhf.value === null ? "" : String(rhf.value)}
-            onValueChange={(selected) => rhf.onChange(optionByString(config.options, selected))}
+            onValueChange={(selected) => rhf.onChange(optionByString(options, selected))}
             disabled={disabled}
           >
             <SelectTrigger
@@ -139,7 +183,7 @@ export function SelectField({ field }: FieldComponentProps) {
               <SelectValue placeholder={config.placeholder} />
             </SelectTrigger>
             <SelectContent>
-              {config.options.map((option) => (
+              {options.map((option) => (
                 <SelectItem key={option.value} value={String(option.value)} disabled={option.disabled}>
                   {option.label}
                 </SelectItem>

@@ -756,3 +756,64 @@ describe("cross-field rules", () => {
     expect(schema.safeParse({ deadline: "2026-07-11", reminder: "2026-07-11" }).success).toBe(true);
   });
 });
+
+describe("optionsFrom", () => {
+  const cityMap = {
+    US: [{ label: "New York", value: "nyc" }, { label: "Austin", value: "atx" }],
+    AE: [{ label: "Dubai", value: "dxb" }],
+  };
+  const fields: FieldConfig[] = [
+    { type: "select", name: "country", options: [{ label: "US", value: "US" }, { label: "AE", value: "AE" }] },
+    { type: "select", name: "city", optionsFrom: { field: "country", map: cityMap } },
+  ];
+
+  it("passes a value from the current source branch, rejects one from another branch", () => {
+    const schema = buildFieldsSchema(fields, messages);
+    expect(schema.safeParse({ country: "US", city: "nyc" }).success).toBe(true);
+    const wrongBranch = schema.safeParse({ country: "AE", city: "nyc" });
+    expect(wrongBranch.success).toBe(false);
+    if (!wrongBranch.success) {
+      expect(wrongBranch.error.issues[0].path).toEqual(["city"]);
+      expect(wrongBranch.error.issues[0].message).toBe(messages.invalidOption);
+    }
+  });
+
+  it("blank dependent value never errors (required owns emptiness)", () => {
+    const schema = buildFieldsSchema(fields, messages);
+    expect(schema.safeParse({ country: "US", city: undefined }).success).toBe(true);
+    expect(schema.safeParse({ country: undefined, city: undefined }).success).toBe(true);
+  });
+
+  it("multiple: every entry must belong to the current branch", () => {
+    const multiFields: FieldConfig[] = [
+      fields[0],
+      { type: "select", name: "cities", multiple: true, optionsFrom: { field: "country", map: cityMap } },
+    ];
+    const schema = buildFieldsSchema(multiFields, messages);
+    expect(schema.safeParse({ country: "US", cities: ["nyc", "atx"] }).success).toBe(true);
+    expect(schema.safeParse({ country: "US", cities: ["nyc", "dxb"] }).success).toBe(false);
+    expect(schema.safeParse({ country: "US", cities: [] }).success).toBe(true);
+  });
+
+  it("rule drops when the source is not in the field list (condition-hidden)", () => {
+    const schema = buildFieldsSchema([fields[1]], messages);
+    expect(schema.safeParse({ city: "nyc" }).success).toBe(true);
+  });
+});
+
+describe("optionsFrom blank source", () => {
+  it("a blank source allows nothing — stale pre-filled values error, even against an \"undefined\" branch key", () => {
+    const fields: FieldConfig[] = [
+      { type: "select", name: "country", options: [{ label: "US", value: "US" }] },
+      {
+        type: "select",
+        name: "city",
+        optionsFrom: { field: "country", map: { undefined: [{ label: "Sneaky", value: "nyc" }] } },
+      },
+    ];
+    const schema = buildFieldsSchema(fields, messages);
+    const result = schema.safeParse({ country: undefined, city: "nyc" });
+    expect(result.success).toBe(false);
+    if (!result.success) expect(result.error.issues[0].message).toBe(messages.invalidOption);
+  });
+});

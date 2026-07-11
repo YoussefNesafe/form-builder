@@ -160,11 +160,16 @@ export function toZodSchema(
     }
 
     case "select": {
+      // optionsFrom: the field schema validates against the union of ALL
+      // branches (shape + required); membership in the CURRENT source
+      // branch needs the sibling's value, so it lives in the form-level
+      // refine (same layer as cross-field rules — isValid oracle constraint).
+      const options = field.optionsFrom ? Object.values(field.optionsFrom.map).flat() : (field.options ?? []);
       if (field.multiple) {
-        const schema = z.array(optionValueSchema(field.options));
+        const schema = z.array(optionValueSchema(options));
         return field.required ? schema.min(1, messages.required) : schema.optional();
       }
-      const value = optionValueSchema(field.options, field.required ? messages.required : undefined);
+      const value = optionValueSchema(options, field.required ? messages.required : undefined);
       return field.required ? value : optionalClearable(value);
     }
 
@@ -370,7 +375,34 @@ function crossRulePasses(rule: CrossRule, target: unknown, source: unknown): boo
 }
 
 function isBlank(value: unknown): boolean {
-  return value === undefined || value === null || value === "";
+  return value === undefined || value === null || value === "" || (Array.isArray(value) && value.length === 0);
+}
+
+type OptionsFromRule = {
+  field: string;
+  source: string;
+  map: Record<string, Option[]>;
+  multiple: boolean;
+};
+
+/**
+ * optionsFrom branch-membership rules — like cross rules, resolved against
+ * the SAME field list so a condition-hidden source drops the rule.
+ */
+function collectOptionsFromRules(fields: AnyFieldConfig[]): OptionsFromRule[] {
+  const names = new Set(fields.map((field) => field.name));
+  const rules: OptionsFromRule[] = [];
+  for (const field of fields) {
+    if (!isBuiltInField(field) || field.type !== "select" || !field.optionsFrom) continue;
+    if (!names.has(field.optionsFrom.field)) continue;
+    rules.push({
+      field: field.name,
+      source: field.optionsFrom.field,
+      map: field.optionsFrom.map,
+      multiple: field.multiple === true,
+    });
+  }
+  return rules;
 }
 
 export function buildFieldsSchema(
@@ -390,7 +422,8 @@ export function buildFieldsSchema(
   // schema — the isValid condition oracle safeParses field schemas in
   // isolation and must stay ignorant of siblings.
   const crossRules = collectCrossRules(fields, messages);
-  if (crossRules.length === 0) return objectSchema;
+  const optionsFromRules = collectOptionsFromRules(fields);
+  if (crossRules.length === 0 && optionsFromRules.length === 0) return objectSchema;
   return objectSchema.superRefine((values, ctx) => {
     for (const rule of crossRules) {
       const target = (values as Record<string, unknown>)[rule.field];
@@ -400,6 +433,23 @@ export function buildFieldsSchema(
       if (isBlank(target) || isBlank(source)) continue;
       if (!crossRulePasses(rule, target, source)) {
         ctx.addIssue({ code: "custom", path: [rule.field], message: rule.message });
+      }
+    }
+    for (const rule of optionsFromRules) {
+      const target = (values as Record<string, unknown>)[rule.field];
+      if (isBlank(target)) continue;
+      const sourceValue = (values as Record<string, unknown>)[rule.source];
+      // Blank source explicitly allows NOTHING (a stale pre-filled value must
+      // not submit) — and never aliases into a branch literally keyed
+      // "undefined" via String().
+      const allowed = isBlank(sourceValue)
+        ? new Set<Option["value"]>()
+        : new Set((rule.map[String(sourceValue)] ?? []).map((option) => option.value));
+      const passes = rule.multiple
+        ? Array.isArray(target) && target.every((entry) => allowed.has(entry as Option["value"]))
+        : allowed.has(target as Option["value"]);
+      if (!passes) {
+        ctx.addIssue({ code: "custom", path: [rule.field], message: messages.invalidOption });
       }
     }
   });

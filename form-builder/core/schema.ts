@@ -186,11 +186,23 @@ const fieldSchemasByType: Record<FieldConfig["type"], z.ZodType> = {
     preferredCountries: z.array(countryCodeSchema).optional(),
     countryFrom: z.string().min(1).optional(),
   }),
-  select: baseFieldSchema.extend({
-    options: z.array(optionSchema).min(1),
-    searchable: z.boolean().optional(),
-    multiple: z.boolean().optional(),
-  }),
+  select: baseFieldSchema
+    .extend({
+      options: z.array(optionSchema).min(1).optional(),
+      optionsFrom: z
+        .strictObject({
+          field: z.string().min(1),
+          // Empty branch arrays are legal: an intentionally empty branch
+          // renders a disabled select.
+          map: z.record(z.string(), z.array(optionSchema)),
+        })
+        .optional(),
+      searchable: z.boolean().optional(),
+      multiple: z.boolean().optional(),
+    })
+    .refine((field) => (field.options === undefined) !== (field.optionsFrom === undefined), {
+      message: "select needs exactly one of options or optionsFrom",
+    }),
   country: baseFieldSchema
     .extend({
       countries: z.array(countryCodeSchema).min(1).optional(),
@@ -400,6 +412,9 @@ function validateFields(fields: unknown[], path: string, insideGroup = false): v
       if ((raw as { copyFrom?: unknown }).copyFrom !== undefined) {
         throw new Error(`Invalid form config at ${fieldPath}: copyFrom is not supported inside groups`);
       }
+      if ((raw as { optionsFrom?: unknown }).optionsFrom !== undefined) {
+        throw new Error(`Invalid form config at ${fieldPath}: optionsFrom is not supported inside groups`);
+      }
     }
 
     if (type === "hidden" && !("value" in (raw as object))) {
@@ -465,6 +480,54 @@ function validateFields(fields: unknown[], path: string, insideGroup = false): v
         throw new Error(
           `Invalid form config at ${path}[${index}]: isValid condition must reference a sibling built-in input field, got "${target}"`,
         );
+      }
+    }
+
+    const optionsFrom = (raw as { optionsFrom?: { field: string; map: Record<string, unknown> } }).optionsFrom;
+    if (optionsFrom !== undefined) {
+      const source = optionsFrom.field;
+      const sourceRaw = fields.find((f) => (f as { name: string }).name === source) as
+        | { type?: unknown; multiple?: unknown; options?: { value: unknown }[] }
+        | undefined;
+      // Same source rule as phone countryFrom: a country field, or a single-
+      // value select (map keys are String(source value)).
+      const validSource =
+        sourceRaw !== undefined &&
+        (sourceRaw.type === "country" || (sourceRaw.type === "select" && sourceRaw.multiple !== true));
+      if (source === field.name || !validSource) {
+        throw new Error(
+          `Invalid form config at ${path}[${index}]: optionsFrom must reference a sibling single-value select or country field, got "${source}"`,
+        );
+      }
+      // An optionsFrom cycle converges to a dead pair — every pick on one
+      // side clears the other (blank source allows nothing) — meaningless
+      // config; reject like copyFrom cycles. Chains stay legal.
+      const optionsFromOf = new Map(
+        fields
+          .map((f) => f as { name: string; optionsFrom?: { field?: unknown } })
+          .filter((f) => typeof f.optionsFrom?.field === "string")
+          .map((f) => [f.name, f.optionsFrom!.field as string]),
+      );
+      let cursor: string | undefined = source;
+      for (let hops = 0; cursor !== undefined && hops <= fields.length; hops += 1) {
+        if (cursor === field.name) {
+          throw new Error(
+            `Invalid form config at ${path}[${index}]: optionsFrom chain from "${field.name}" loops back to itself`,
+          );
+        }
+        cursor = optionsFromOf.get(cursor);
+      }
+
+      // A source option value with no map key yields an empty, disabled
+      // dependent select — legal, but usually an oversight.
+      if (process.env.NODE_ENV !== "production" && sourceRaw.type === "select") {
+        for (const option of sourceRaw.options ?? []) {
+          if (!(String(option.value) in optionsFrom.map)) {
+            console.warn(
+              `form-builder: select "${field.name}" optionsFrom has no map entry for source option "${String(option.value)}" — that branch renders an empty select`,
+            );
+          }
+        }
       }
     }
 
@@ -539,12 +602,19 @@ function validateFields(fields: unknown[], path: string, insideGroup = false): v
         type?: unknown;
         multiple?: unknown;
         options?: { value: unknown }[];
+        optionsFrom?: unknown;
       };
       // A country field is ISO by construction — no option checks needed.
       if (sourceRaw.type !== "country") {
         if (sourceRaw.type !== "select" || sourceRaw.multiple === true) {
           throw new Error(
             `Invalid form config at ${path}[${index}]: phone countryFrom must reference a single-value select or country field, got "${source}"`,
+          );
+        }
+        // Dynamic options cannot be statically verified as ISO codes.
+        if (sourceRaw.optionsFrom !== undefined) {
+          throw new Error(
+            `Invalid form config at ${path}[${index}]: phone countryFrom source "${source}" uses optionsFrom — its values cannot be verified as country codes; use a static select or a country field`,
           );
         }
         const countries = getCountries() as string[];
@@ -615,6 +685,22 @@ function validateSteps(config: FormConfig): void {
       if (fieldStep !== undefined && sourceStep !== undefined && fieldStep !== sourceStep) {
         console.warn(
           `form-builder: field "${field.name}" (step ${fieldStep + 1}) copies from "${copyFrom}" (step ${sourceStep + 1}) — source changes while the field is unmounted are not applied on remount`,
+        );
+      }
+    }
+    // Options derive from a value picked on another step: works (values
+    // persist), but stale-value RESET only runs while the dependent select
+    // is mounted — a source edit on another step defers cleanup to the
+    // form-level membership refine at submit.
+    for (const field of config.fields) {
+      const optionsFrom =
+        field.type === "select" ? (field as { optionsFrom?: { field: string } }).optionsFrom : undefined;
+      if (optionsFrom === undefined) continue;
+      const fieldStep = stepOf.get(field.name);
+      const sourceStep = stepOf.get(optionsFrom.field);
+      if (fieldStep !== undefined && sourceStep !== undefined && fieldStep !== sourceStep) {
+        console.warn(
+          `form-builder: select "${field.name}" (step ${fieldStep + 1}) derives options from "${optionsFrom.field}" (step ${sourceStep + 1}) — a source edit while the select is unmounted defers stale-value cleanup to validation`,
         );
       }
     }

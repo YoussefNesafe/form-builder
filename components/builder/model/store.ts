@@ -136,6 +136,11 @@ function scrubRefs(node: BuilderNode, name: string): BuilderNode {
       changed = true;
     }
   }
+  const optionsFrom = props.optionsFrom as { field?: unknown } | undefined;
+  if (optionsFrom && typeof optionsFrom === "object" && optionsFrom.field === name) {
+    delete props.optionsFrom;
+    changed = true;
+  }
   const rules = props.rules as { matches?: string; matchesMessage?: string } | undefined;
   if (rules && typeof rules === "object" && rules.matches === name) {
     const rest = { ...rules };

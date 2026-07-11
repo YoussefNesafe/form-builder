@@ -18,7 +18,8 @@ export type PropControl =
   | "penColor"
   | "date"
   | "time"
-  | "json";
+  | "json"
+  | "optionsFrom";
 
 export type PropDescriptor = {
   key: string;
@@ -27,7 +28,15 @@ export type PropDescriptor = {
   /** Options for `control: "select"`. */
   options?: { label: string; value: string }[];
   /** Which siblings a `control: "fieldRef"` may reference. */
-  refKind?: "otp" | "countrySource" | "textFamily" | "dateSource" | "timeSource" | "sameType" | "any";
+  refKind?:
+    | "otp"
+    | "countrySource"
+    | "optionsSource"
+    | "textFamily"
+    | "dateSource"
+    | "timeSource"
+    | "sameType"
+    | "any";
   /** `control: "condition"`: offer the is valid / is invalid operators. */
   validityOps?: boolean;
   /** Props to clear when this one is set (mutually exclusive pairs). */
@@ -144,7 +153,14 @@ export const FIELD_PROPS: Record<FieldType, PropDescriptor[]> = {
   select: [
     ...BASE,
     COPY_FROM,
-    OPTIONS,
+    { ...OPTIONS, clears: ["optionsFrom"] },
+    {
+      key: "optionsFrom",
+      label: "Options from field",
+      control: "optionsFrom",
+      clears: ["options"],
+      help: "Options depend on another field's value — one option list per source value.",
+    },
     { key: "searchable", label: "Searchable", control: "boolean" },
     { key: "multiple", label: "Multiple", control: "boolean" },
   ],

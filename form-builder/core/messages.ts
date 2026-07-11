@@ -44,6 +44,8 @@ export type Messages = {
   removeFile: (name: string) => string;
   noOptions: string;
   ratingValue: (n: number, max: number) => string;
+  // optionsFrom: value not in the option branch of the source's current value.
+  invalidOption: string;
   // Cross-field rules — label is the source field's label (fallback: name).
   matches: (label: string) => string;
   dateAfter: (label: string) => string;
@@ -96,6 +98,7 @@ export const defaultMessages: Messages = {
   removeFile: (name) => `Remove ${name}`,
   noOptions: "No options",
   ratingValue: (n, max) => `${n} of ${max}`,
+  invalidOption: "Select a valid option",
   matches: (label) => `Must match ${label}`,
   dateAfter: (label) => `Must be on or after ${label}`,
   dateBefore: (label) => `Must be on or before ${label}`,

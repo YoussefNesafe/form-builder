@@ -150,11 +150,22 @@ neither).
 - Stale-value invalidation: when the source changes and the current value is
   not in the new option list, the dependent select resets (same class of bug
   as otp `dependsOn` staleness).
-- Validation schema derives allowed values per current source value — the
-  visible-fields resolver already re-derives per values snapshot.
-- Validator: source sibling exists/not self/not group-nested; source should
-  be a single-value select or country field; dev-warn when a source option
-  value has no key in `map` (that branch yields an empty dependent select).
+- A BLANK source allows nothing: a stale pre-filled dependent value errors
+  (`invalidOption`) instead of silently submitting; the lookup never aliases
+  into a branch literally keyed "undefined". optionsFrom cycles are rejected
+  by the validator (they converge to a dead pair whose every pick clears the
+  other side); chains are legal.
+- Validation: the field's own schema validates against the UNION of all
+  branches (shape + required) — branch membership needs the sibling's value,
+  so it lives in the form-level superRefine alongside the cross-field rules
+  (the isValid oracle must keep parsing field schemas in isolation). New
+  message: `invalidOption`.
+- Validator: source sibling exists/not self/not group-nested; source must be
+  a single-value select or country field (dynamic selects allowed as sources
+  — chains; resets converge to blank, no loop); dev-warn when a STATIC
+  source option value has no key in `map` (empty dependent branch); phone
+  `countryFrom` may NOT point at an optionsFrom select (values not
+  statically verifiable as ISO).
 - Builder: mapping editor (per source-option key → options list) — the
   biggest builder cost in this batch; reuses OptionsEditor per key.
 
