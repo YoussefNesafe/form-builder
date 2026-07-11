@@ -24,7 +24,7 @@ export function DocsPagination() {
       {prev ? (
         <Link
           href={prev.href}
-          className="flex flex-col gap-[4px] tablet:gap-[4px] desktop:gap-[4px] rounded-[10px] tablet:rounded-[10px] desktop:rounded-[10px] border border-border p-[14px] tablet:p-[14px] desktop:p-[14px] transition-colors hover:border-foreground/30 focus-visible:border-foreground focus-visible:outline-none"
+          className="flex flex-col gap-[4px] tablet:gap-[4px] desktop:gap-[4px] rounded-[10px] tablet:rounded-[10px] desktop:rounded-[10px] border border-border-interactive p-[14px] tablet:p-[14px] desktop:p-[14px] transition-colors hover:border-border-interactive-hover focus-visible:border-foreground focus-visible:outline-none"
         >
           <span className="text-[12px] tablet:text-[12px] desktop:text-[12px] text-muted-foreground">Previous</span>
           <span className="text-[14px] tablet:text-[14px] desktop:text-[14px] font-medium text-foreground">
@@ -37,7 +37,7 @@ export function DocsPagination() {
       {next ? (
         <Link
           href={next.href}
-          className="flex flex-col items-end gap-[4px] tablet:gap-[4px] desktop:gap-[4px] rounded-[10px] tablet:rounded-[10px] desktop:rounded-[10px] border border-border p-[14px] tablet:p-[14px] desktop:p-[14px] text-right transition-colors hover:border-foreground/30 focus-visible:border-foreground focus-visible:outline-none"
+          className="flex flex-col items-end gap-[4px] tablet:gap-[4px] desktop:gap-[4px] rounded-[10px] tablet:rounded-[10px] desktop:rounded-[10px] border border-border-interactive p-[14px] tablet:p-[14px] desktop:p-[14px] text-right transition-colors hover:border-border-interactive-hover focus-visible:border-foreground focus-visible:outline-none"
         >
           <span className="text-[12px] tablet:text-[12px] desktop:text-[12px] text-muted-foreground">Next</span>
           <span className="text-[14px] tablet:text-[14px] desktop:text-[14px] font-medium text-foreground">

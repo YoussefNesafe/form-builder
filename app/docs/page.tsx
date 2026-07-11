@@ -52,7 +52,7 @@ export default function DocsIndexPage() {
           <li key={page.href}>
             <Link
               href={page.href}
-              className="flex flex-col gap-[4px] tablet:gap-[4px] desktop:gap-[4px] rounded-[12px] tablet:rounded-[12px] desktop:rounded-[12px] border border-border bg-card p-[16px] tablet:p-[16px] desktop:p-[16px] transition-colors hover:border-foreground/30 focus-visible:border-foreground focus-visible:outline-none"
+              className="flex flex-col gap-[4px] tablet:gap-[4px] desktop:gap-[4px] rounded-[12px] tablet:rounded-[12px] desktop:rounded-[12px] border border-border-interactive bg-card p-[16px] tablet:p-[16px] desktop:p-[16px] transition-colors hover:border-border-interactive-hover focus-visible:border-foreground focus-visible:outline-none"
             >
               <span className="text-[15px] tablet:text-[15px] desktop:text-[15px] font-medium text-card-foreground">
                 {page.title}

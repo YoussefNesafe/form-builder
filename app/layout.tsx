@@ -15,6 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://form-builder.youssefnesafe.com"),
   title: {
     default: "Form Builder — Design forms visually, ship real React code",
     template: "%s · Form Builder",
@@ -26,6 +27,10 @@ export const metadata: Metadata = {
     description:
       "Visual form builder that exports type-safe, Zod-validated React Hook Form code. 24 field types, multi-step wizards, conditional logic — code you own, no hosted service.",
     type: "website",
+    url: "/",
+  },
+  twitter: {
+    card: "summary_large_image",
   },
 };
 
