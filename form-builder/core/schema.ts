@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { getCountries } from "libphonenumber-js";
 import { getRegisteredTypes } from "./registry";
-import { toConditionGroups } from "./conditions";
+import { conditionFieldNames, toConditionGroups } from "./conditions";
 import type { ConditionSpec, FieldConfig, FormConfig } from "./types";
 
 const countryCodeSchema = z.string().refine(
@@ -284,7 +284,17 @@ const formConfigShellSchema = z.object({
   title: z.string().optional(),
   description: z.string().optional(),
   fields: z.array(z.record(z.string(), z.unknown())).min(1),
-  steps: z.array(z.object({ title: z.string(), fieldNames: z.array(z.string()).min(1) })).optional(),
+  steps: z
+    .array(
+      z.object({
+        title: z.string(),
+        fieldNames: z.array(z.string()).min(1),
+        // Value operators only — a hidden step hides its fields from the
+        // validation schema, so validity-driven step visibility would loop.
+        visibleWhen: conditionSpecSchema(valueConditionSchema).optional(),
+      }),
+    )
+    .optional(),
 });
 
 function formatIssues(issues: z.core.$ZodIssue[], path: string): string {
@@ -650,6 +660,23 @@ function validateSteps(config: FormConfig): void {
   if (process.env.NODE_ENV !== "production") {
     const stepOf = new Map<string, number>();
     config.steps.forEach((step, index) => step.fieldNames.forEach((name) => stepOf.set(name, index)));
+    // Step visibility decided by fields the user has not reached yet is
+    // legal (defaults decide) but usually a config smell.
+    config.steps.forEach((step, index) => {
+      for (const source of conditionFieldNames(step.visibleWhen)) {
+        const sourceStep = stepOf.get(source);
+        if (sourceStep !== undefined && sourceStep > index) {
+          console.warn(
+            `form-builder: step "${step.title}" (step ${index + 1}) is shown/hidden by "${source}" (step ${sourceStep + 1}) — a later step's value decides an earlier step's visibility`,
+          );
+        }
+      }
+    });
+    if (config.steps.every((step) => step.visibleWhen !== undefined)) {
+      console.warn(
+        "form-builder: every step has a visibleWhen — a value combination could hide the whole wizard",
+      );
+    }
     for (const field of config.fields) {
       const dependsOn = field.type === "otp" ? (field as { dependsOn?: string }).dependsOn : undefined;
       if (dependsOn === undefined) continue;

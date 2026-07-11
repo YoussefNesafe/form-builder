@@ -1,4 +1,4 @@
-import type { AnyFieldConfig, Condition, ConditionSpec, FormValues } from "./types";
+import type { AnyFieldConfig, Condition, ConditionSpec, FormConfig, FormValues } from "./types";
 
 /** Validity oracle: source field's zod schema passing for the given value. */
 export type IsFieldValid = (fieldName: string, value: unknown) => boolean;
@@ -73,10 +73,35 @@ export function getVisibleFields(fields: AnyFieldConfig[], values: FormValues): 
   return fields.filter((field) => evaluateCondition(field.visibleWhen, values));
 }
 
+/** Field names owned by steps whose visibleWhen does not match. */
+export function hiddenStepFieldNames(config: FormConfig, values: FormValues): Set<string> {
+  const hidden = new Set<string>();
+  for (const step of config.steps ?? []) {
+    if (!evaluateCondition(step.visibleWhen, values)) {
+      for (const name of step.fieldNames) hidden.add(name);
+    }
+  }
+  return hidden;
+}
+
+/**
+ * Effective visibility: a field's own visibleWhen AND its owning step's.
+ * The single source the resolver validates against — hidden-step fields are
+ * excluded from the schema and stripped from the payload exactly like
+ * condition-hidden fields.
+ */
+export function visibleFieldsFor(config: FormConfig, values: FormValues): AnyFieldConfig[] {
+  const stepHidden = hiddenStepFieldNames(config, values);
+  return getVisibleFields(config.fields, values).filter((field) => !stepHidden.has(field.name));
+}
+
 /**
  * For headless getValues() consumers. The handleSubmit path does not need
  * this: the condition-aware resolver's schema is strip-mode, so the parsed
  * submit payload already excludes condition-hidden values.
+ *
+ * Fields-only — it cannot see step visibility. With conditional steps,
+ * derive the visible set via visibleFieldsFor(config, values) instead.
  */
 export function stripInvisibleValues(fields: AnyFieldConfig[], values: FormValues): FormValues {
   const visibleNames = new Set(getVisibleFields(fields, values).map((field) => field.name));

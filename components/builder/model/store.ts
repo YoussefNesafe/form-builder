@@ -20,6 +20,7 @@ export type BuilderActions = {
   addStep: () => void;
   renameStep: (index: number, title: string) => void;
   removeStep: (index: number) => void;
+  setStepCondition: (index: number, visibleWhen: ConditionSpec | undefined) => void;
   moveStep: (index: number, dir: -1 | 1) => void;
   /** Assign a node to a step (or `null` to unassign); removes it from every other step. */
   assignNodeToStep: (nodeId: string, stepIndex: number | null) => void;
@@ -151,19 +152,28 @@ function scrubRefs(node: BuilderNode, name: string): BuilderNode {
     changed = true;
   }
   for (const key of ["visibleWhen", "disabledWhen", "enabledWhen"]) {
-    const spec = props[key] as ConditionSpec | undefined;
-    if (!spec || !toConditionGroups(spec).flat().some((c) => c.field === name)) continue;
-    // Drop only the leaves referencing the deleted field; a group emptied
-    // this way is dropped too (an empty AND-group would match everything).
-    const groups = toConditionGroups(spec)
-      .map((group) => group.filter((c) => c.field !== name))
-      .filter((group) => group.length > 0);
-    const next = fromConditionGroups(groups);
-    if (next === undefined) delete props[key];
-    else props[key] = next;
+    const scrubbed = scrubSpec(props[key] as ConditionSpec | undefined, name);
+    if (!scrubbed.changed) continue;
+    if (scrubbed.spec === undefined) delete props[key];
+    else props[key] = scrubbed.spec;
     changed = true;
   }
   return changed ? { ...node, props } : node;
+}
+
+// Drop only the leaves referencing the deleted field; a group emptied this
+// way is dropped too (an empty AND-group would match everything).
+function scrubSpec(
+  spec: ConditionSpec | undefined,
+  name: string,
+): { spec?: ConditionSpec; changed: boolean } {
+  if (!spec || !toConditionGroups(spec).flat().some((c) => c.field === name)) {
+    return { spec, changed: false };
+  }
+  const groups = toConditionGroups(spec)
+    .map((group) => group.filter((c) => c.field !== name))
+    .filter((group) => group.length > 0);
+  return { spec: fromConditionGroups(groups), changed: true };
 }
 
 /** Every `_id` in the tree — used to advance the id counter after rehydration. */
@@ -252,10 +262,18 @@ const creator: StateCreator<BuilderStore> = (set, get) => ({
         nodes: prune(state.nodes),
         // Clear selection if the selected node was anywhere in the removed subtree.
         selectedId: state.selectedId && removedIds.has(state.selectedId) ? null : state.selectedId,
-        steps: state.steps.map((step) => ({
-          ...step,
-          nodeIds: step.nodeIds.filter((nid) => !removedIds.has(nid)),
-        })),
+        steps: state.steps.map((step) => {
+          const next = { ...step, nodeIds: step.nodeIds.filter((nid) => !removedIds.has(nid)) };
+          // Step conditions reference fields by NAME — scrub like sibling refs.
+          if (name) {
+            const scrubbed = scrubSpec(step.visibleWhen, name);
+            if (scrubbed.changed) {
+              if (scrubbed.spec === undefined) delete next.visibleWhen;
+              else next.visibleWhen = scrubbed.spec;
+            }
+          }
+          return next;
+        }),
       };
     });
   },
@@ -284,6 +302,13 @@ const creator: StateCreator<BuilderStore> = (set, get) => ({
     set((state) => ({ steps: state.steps.map((s, i) => (i === index ? { ...s, title } : s)) })),
 
   removeStep: (index) => set((state) => ({ steps: state.steps.filter((_, i) => i !== index) })),
+
+  setStepCondition: (index, visibleWhen) =>
+    set((state) => ({
+      steps: state.steps.map((s, i) =>
+        i === index ? (visibleWhen === undefined ? { title: s.title, nodeIds: s.nodeIds } : { ...s, visibleWhen }) : s,
+      ),
+    })),
 
   moveStep: (index, dir) =>
     set((state) => {

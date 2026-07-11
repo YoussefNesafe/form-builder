@@ -1,4 +1,4 @@
-import type { FieldType } from "@/form-builder";
+import type { ConditionSpec, FieldType } from "@/form-builder";
 
 /**
  * A field in the builder. `_id` is stable across edits; `name` lives in `props`
@@ -13,7 +13,7 @@ export type BuilderNode = {
 };
 
 /** A wizard step referencing nodes by `_id` (resolved to `fieldNames` on export). */
-export type BuilderStep = { title: string; nodeIds: string[] };
+export type BuilderStep = { title: string; nodeIds: string[]; visibleWhen?: ConditionSpec };
 
 export type OutputMode = "ts" | "json";
 

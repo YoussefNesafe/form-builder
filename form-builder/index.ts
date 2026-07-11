@@ -12,6 +12,7 @@ export type {
   ButtonVariant,
   FieldWidth,
   ResponsiveFieldWidth,
+  StepConfig,
   FormValues,
 } from "./core/types";
 export { BUILT_IN_FIELD_TYPES, isBuiltInField } from "./core/types";
@@ -42,7 +43,7 @@ export {
 } from "./hooks/useOtpController";
 export type { OtpVerifiedChecker } from "./core/validation";
 export type { OtpRuntime } from "./components/FieldRuntime";
-export { stripInvisibleValues } from "./core/conditions";
+export { stripInvisibleValues, visibleFieldsFor, hiddenStepFieldNames } from "./core/conditions";
 export {
   applyServerErrors,
   type ServerErrorResult,

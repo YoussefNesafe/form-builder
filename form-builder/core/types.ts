@@ -169,12 +169,22 @@ export function isBuiltInField(field: AnyFieldConfig): field is FieldConfig {
   return (BUILT_IN_FIELD_TYPES as readonly string[]).includes(field.type);
 }
 
+export type StepConfig = {
+  title: string;
+  fieldNames: string[];
+  // Value operators only (validator rejects isValid — visibility drives the
+  // schema). A hidden step's fields are condition-hidden everywhere:
+  // excluded from validation, stripped from the payload, skipped by the
+  // stepper.
+  visibleWhen?: ConditionSpec;
+};
+
 export type FormConfig = {
   id: string;
   title?: string;
   description?: string;
   fields: AnyFieldConfig[];
-  steps?: { title: string; fieldNames: string[] }[];
+  steps?: StepConfig[];
 };
 
 export type FormValues = Record<string, unknown>;

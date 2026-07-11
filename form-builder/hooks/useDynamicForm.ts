@@ -12,7 +12,7 @@ import {
   saveDraft,
   type AutosaveOptions,
 } from "../core/autosave";
-import { getVisibleFields } from "../core/conditions";
+import { visibleFieldsFor } from "../core/conditions";
 import { mergeMessages, type Messages } from "../core/messages";
 import { validateFormConfig } from "../core/schema";
 import {
@@ -92,7 +92,9 @@ function conditionAwareResolver(
   otpVerified?: OtpVerifiedChecker,
 ): Resolver<FormValues> {
   return (values, context, options) => {
-    const visibleSchema = buildFieldsSchema(getVisibleFields(config.fields, values), messages, otpVerified);
+    // Field-level visibleWhen AND step-level visibleWhen (hidden step =
+    // hidden fields) — one visibility source for schema and payload.
+    const visibleSchema = buildFieldsSchema(visibleFieldsFor(config, values), messages, otpVerified);
     return zodResolver(visibleSchema)(values, context, options);
   };
 }

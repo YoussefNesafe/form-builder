@@ -4,6 +4,7 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import { FormProvider } from "react-hook-form";
 import type { AutosaveOptions } from "../core/autosave";
 import type { Messages } from "../core/messages";
+import { hiddenStepFieldNames } from "../core/conditions";
 import { applyServerErrors, type ServerErrorResult } from "../core/serverErrors";
 import { isBuiltInField, type FormConfig, type FormValues } from "../core/types";
 import { toZodSchema } from "../core/validation";
@@ -118,7 +119,11 @@ export function FormRenderer({
       const outcome = applyServerErrors(form.setError, result, config.fields);
       if (outcome.formError) setFormError(outcome.formError);
       const first = outcome.applied[0];
-      if (first !== undefined) {
+      // A host may address a field on a step that is currently hidden — the
+      // jump would just bounce back and the focus is a no-op; skip the noise
+      // (documented limitation: that error stays invisible until cleared).
+      const stepHidden = hiddenStepFieldNames(config, values).has(first?.split(".")[0] ?? "");
+      if (first !== undefined && !stepHidden) {
         stepJumpRef.current?.(first);
         // After a step jump the field mounts on the next paint; setFocus on
         // an unmounted field is a no-op, so defer one tick either way.

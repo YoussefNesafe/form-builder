@@ -112,6 +112,37 @@ describe("useDynamicForm", () => {
     expect("details" in onSubmit.mock.calls[0][0]).toBe(false);
   });
 
+  it("hidden-step required fields do not block submit and are stripped from the payload", async () => {
+    const steppedConfig: FormConfig = {
+      id: "cs",
+      fields: [
+        { type: "checkbox", name: "wantsExtras" },
+        { type: "text", name: "extra", required: true },
+      ],
+      steps: [
+        { title: "Base", fieldNames: ["wantsExtras"] },
+        { title: "Extras", fieldNames: ["extra"], visibleWhen: { field: "wantsExtras", equals: true } },
+      ],
+    };
+    const { result } = renderHook(() => useDynamicForm(steppedConfig));
+    const onSubmit = vi.fn();
+    await act(async () => {
+      result.current.form.setValue("extra", "stale");
+      await result.current.form.handleSubmit(onSubmit)();
+    });
+    expect(onSubmit).toHaveBeenCalled();
+    expect("extra" in onSubmit.mock.calls[0][0]).toBe(false);
+
+    // Step visible → its required field blocks again.
+    onSubmit.mockClear();
+    await act(async () => {
+      result.current.form.setValue("wantsExtras", true);
+      result.current.form.setValue("extra", "");
+      await result.current.form.handleSubmit(onSubmit)();
+    });
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
   it("pins v1 limitation: condition-hidden field INSIDE a group still validates", async () => {
     const groupConfig: FormConfig = {
       id: "g",

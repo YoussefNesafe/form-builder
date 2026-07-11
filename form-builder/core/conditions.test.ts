@@ -4,10 +4,12 @@ import {
   conditionSpecMatches,
   evaluateCondition,
   getVisibleFields,
+  hiddenStepFieldNames,
   stripInvisibleValues,
   toConditionGroups,
+  visibleFieldsFor,
 } from "./conditions";
-import type { FieldConfig } from "./types";
+import type { FieldConfig, FormConfig } from "./types";
 
 describe("evaluateCondition", () => {
   it("equals matches and mismatches", () => {
@@ -141,5 +143,39 @@ describe("visibility helpers", () => {
   it("stripInvisibleValues drops hidden-by-condition values, keeps unknown keys", () => {
     const values = { other: false, details: "stale", utm: "x", extra: 1 };
     expect(stripInvisibleValues(fields, values)).toEqual({ other: false, utm: "x", extra: 1 });
+  });
+});
+
+describe("conditional steps", () => {
+  const config: FormConfig = {
+    id: "t",
+    fields: [
+      { type: "checkbox", name: "wantsExtras" },
+      { type: "text", name: "basic" },
+      { type: "text", name: "extra1" },
+      { type: "text", name: "extra2", visibleWhen: { field: "basic", equals: "show" } },
+    ],
+    steps: [
+      { title: "Base", fieldNames: ["wantsExtras", "basic"] },
+      { title: "Extras", fieldNames: ["extra1", "extra2"], visibleWhen: { field: "wantsExtras", equals: true } },
+    ],
+  };
+
+  it("hiddenStepFieldNames collects fields of non-matching steps", () => {
+    expect(hiddenStepFieldNames(config, { wantsExtras: false })).toEqual(new Set(["extra1", "extra2"]));
+    expect(hiddenStepFieldNames(config, { wantsExtras: true })).toEqual(new Set());
+  });
+
+  it("visibleFieldsFor combines field-level and step-level visibility", () => {
+    const names = (values: Record<string, unknown>) => visibleFieldsFor(config, values).map((f) => f.name);
+    expect(names({ wantsExtras: false, basic: "show" })).toEqual(["wantsExtras", "basic"]);
+    expect(names({ wantsExtras: true, basic: "show" })).toEqual(["wantsExtras", "basic", "extra1", "extra2"]);
+    // Step visible but the field's own condition hides extra2.
+    expect(names({ wantsExtras: true, basic: "" })).toEqual(["wantsExtras", "basic", "extra1"]);
+  });
+
+  it("configs without steps are unaffected", () => {
+    const flat: FormConfig = { id: "f", fields: [{ type: "text", name: "a" }] };
+    expect(visibleFieldsFor(flat, {}).map((f) => f.name)).toEqual(["a"]);
   });
 });

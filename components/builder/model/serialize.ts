@@ -56,6 +56,7 @@ export function serialize(state: SerializeInput): FormConfig {
       .map((step) => ({
         title: step.title,
         fieldNames: step.nodeIds.map((id) => nameById.get(id)).filter((n): n is string => Boolean(n)),
+        ...(step.visibleWhen !== undefined ? { visibleWhen: step.visibleWhen } : {}),
       }))
       // The engine rejects a step with no field names; an all-removed step
       // would otherwise brick the whole config.

@@ -150,6 +150,33 @@ describe("builder store", () => {
     expect(orNode.props.disabledWhen).toEqual({ field: "lastName", equals: "y" });
   });
 
+  it("step conditions: set, serialize, and scrub when the source field is deleted", () => {
+    const s = createBuilderStore();
+    s.getState().addNode("checkbox");
+    const checkboxId = s.getState().nodes[0]._id;
+    s.getState().updateProps(checkboxId, { name: "extras" });
+    s.getState().addNode("text");
+    s.getState().updateProps(s.getState().nodes[1]._id, { name: "detail" });
+    s.getState().toggleMultiStep(true);
+    s.getState().addStep();
+    s.getState().assignNodeToStep(s.getState().nodes[1]._id, 1);
+    s.getState().setStepCondition(1, { field: "extras", equals: true });
+    expect(s.getState().steps[1].visibleWhen).toEqual({ field: "extras", equals: true });
+
+    // Serializes onto the step config.
+    const config = serialize(s.getState());
+    expect(config.steps?.[1].visibleWhen).toEqual({ field: "extras", equals: true });
+
+    // Deleting the source scrubs the step condition.
+    s.getState().removeNode(checkboxId);
+    expect(s.getState().steps[1].visibleWhen).toBeUndefined();
+
+    // Clearing removes the key entirely.
+    s.getState().setStepCondition(0, { field: "detail", equals: "x" });
+    s.getState().setStepCondition(0, undefined);
+    expect("visibleWhen" in s.getState().steps[0]).toBe(false);
+  });
+
   it("scrubs cross-field rule references when the source field is deleted", () => {
     const s = createBuilderStore();
     s.getState().addNode("password");

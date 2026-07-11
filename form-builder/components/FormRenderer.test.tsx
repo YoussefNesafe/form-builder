@@ -1,12 +1,25 @@
 ﻿// @vitest-environment jsdom
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { FormProvider, useForm, type UseFormReturn } from "react-hook-form";
 import { registerBuiltInFields } from "../fields";
+import { defaultMessages } from "../core/messages";
 import type { FormConfig } from "../core/types";
+import { buildDefaultValues } from "../hooks/useDynamicForm";
+import { FieldRuntimeContext } from "./FieldRuntime";
 import { FormRenderer } from "./FormRenderer";
+import { FormStepper } from "./FormStepper";
 
 registerBuiltInFields();
 afterEach(cleanup);
+
+// Some field primitives observe size; jsdom has no ResizeObserver.
+class ResizeObserverStub {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+window.ResizeObserver = window.ResizeObserver ?? (ResizeObserverStub as typeof ResizeObserver);
 
 // Submit buttons gate on formState.isValid, which the resolver computes
 // asynchronously after mount — wait for the gate to open before clicking.
@@ -180,6 +193,134 @@ describe("FormRenderer server errors", () => {
     });
     await waitFor(() => expect((screen.getByLabelText("B") as HTMLInputElement).value).toBe("origin"));
     await waitFor(() => expect((screen.getByLabelText("A") as HTMLInputElement).value).toBe("origin"));
+  });
+
+  it("conditional steps: hidden step leaves the dots and Next skips it; appears when its condition matches", async () => {
+    const conditionalConfig: FormConfig = {
+      id: "cond-steps",
+      fields: [
+        { type: "checkbox", name: "wantsExtras", label: "Extras?" },
+        { type: "text", name: "extra", label: "Extra" },
+        { type: "text", name: "final", label: "Final" },
+        { type: "submit", name: "go", text: "Go" },
+      ],
+      steps: [
+        { title: "Base", fieldNames: ["wantsExtras"] },
+        { title: "Extras", fieldNames: ["extra"], visibleWhen: { field: "wantsExtras", equals: true } },
+        { title: "Finish", fieldNames: ["final"] },
+      ],
+    };
+    render(<FormRenderer config={conditionalConfig} onSubmit={vi.fn()} />);
+
+    // Condition false: the Extras dot is not rendered, numbering compacts.
+    expect(screen.queryByText("Extras")).toBeNull();
+    expect(screen.getByText("Finish")).toBeTruthy();
+
+    // Next skips straight to Finish.
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Next" }));
+    });
+    expect(screen.getByLabelText("Final")).toBeTruthy();
+    expect(document.querySelector('[aria-current="step"]')?.textContent).toContain("Finish");
+
+    // Back returns to Base; enabling the condition reveals the step.
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Back" }));
+    });
+    await act(async () => {
+      fireEvent.click(screen.getByRole("checkbox"));
+    });
+    expect(screen.getByText("Extras")).toBeTruthy();
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Next" }));
+    });
+    expect(screen.getByLabelText("Extra")).toBeTruthy();
+    expect(document.querySelector('[aria-current="step"]')?.textContent).toContain("Extras");
+  });
+
+  it("conditional steps: the current step disappearing moves the user to the nearest visible step", async () => {
+    const conditionalConfig: FormConfig = {
+      id: "cond-steps-2",
+      fields: [
+        { type: "checkbox", name: "wantsExtras", label: "Extras?" },
+        { type: "text", name: "extra", label: "Extra" },
+        { type: "text", name: "final", label: "Final" },
+        { type: "submit", name: "go", text: "Go" },
+      ],
+      steps: [
+        { title: "Base", fieldNames: ["wantsExtras"] },
+        { title: "Extras", fieldNames: ["extra"], visibleWhen: { field: "wantsExtras", equals: true } },
+        { title: "Finish", fieldNames: ["final"] },
+      ],
+    };
+    render(<FormRenderer config={conditionalConfig} onSubmit={vi.fn()} />);
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("checkbox"));
+    });
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Next" }));
+    });
+    expect(document.querySelector('[aria-current="step"]')?.textContent).toContain("Extras");
+
+    // Un-checking from... the source is on step Base; simulate the condition
+    // flipping while standing ON the Extras step via the hidden checkbox not
+    // being rendered — instead navigate back, uncheck, forward:
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Back" }));
+    });
+    await act(async () => {
+      fireEvent.click(screen.getByRole("checkbox"));
+    });
+    // Extras gone again; Next lands on Finish.
+    expect(screen.queryByText("Extras")).toBeNull();
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Next" }));
+    });
+    expect(document.querySelector('[aria-current="step"]')?.textContent).toContain("Finish");
+  });
+
+  it("conditional steps: the current step hiding UNDER the user bounces to the nearest visible step", async () => {
+    const conditionalConfig: FormConfig = {
+      id: "cond-bounce",
+      fields: [
+        { type: "checkbox", name: "wantsExtras", label: "Extras?" },
+        { type: "text", name: "extra", label: "Extra" },
+        { type: "text", name: "final", label: "Final" },
+      ],
+      steps: [
+        { title: "Base", fieldNames: ["wantsExtras"] },
+        { title: "Extras", fieldNames: ["extra"], visibleWhen: { field: "wantsExtras", equals: true } },
+        { title: "Finish", fieldNames: ["final"] },
+      ],
+    };
+    let form: UseFormReturn | undefined;
+    function StepperHarness() {
+      const f = useForm({ defaultValues: buildDefaultValues(conditionalConfig.fields) });
+      form = f;
+      return (
+        <FormProvider {...f}>
+          <FieldRuntimeContext.Provider value={{ disabled: false, messages: defaultMessages }}>
+            <FormStepper config={conditionalConfig} />
+          </FieldRuntimeContext.Provider>
+        </FormProvider>
+      );
+    }
+    render(<StepperHarness />);
+
+    // Walk onto the conditional step.
+    await act(async () => form!.setValue("wantsExtras", true));
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Next" }));
+    });
+    expect(document.querySelector('[aria-current="step"]')?.textContent).toContain("Extras");
+
+    // Flip the source PROGRAMMATICALLY while standing on it (cross-step
+    // copyFrom / host setValue class) — the stepper must bounce to the
+    // nearest visible step (next preferred: Finish).
+    await act(async () => form!.setValue("wantsExtras", false));
+    expect(document.querySelector('[aria-current="step"]')?.textContent).toContain("Finish");
+    expect(screen.getByLabelText("Final")).toBeTruthy();
   });
 
   it("jumps the stepper to the step containing the first errored field", async () => {

@@ -761,6 +761,71 @@ describe("validateFormConfig", () => {
     spy.mockRestore();
   });
 
+  it("step visibleWhen accepts value specs and rejects isValid", () => {
+    expect(() =>
+      validateFormConfig({
+        id: "t",
+        fields: [
+          { type: "checkbox", name: "extras" },
+          { type: "text", name: "a" },
+        ],
+        steps: [
+          { title: "one", fieldNames: ["extras"] },
+          { title: "two", fieldNames: ["a"], visibleWhen: [{ field: "extras", equals: true }] },
+        ],
+      }),
+    ).not.toThrow();
+    expect(() =>
+      validateFormConfig({
+        id: "t",
+        fields: [
+          { type: "text", name: "src" },
+          { type: "text", name: "a" },
+        ],
+        steps: [
+          { title: "one", fieldNames: ["src"] },
+          { title: "two", fieldNames: ["a"], visibleWhen: { field: "src", isValid: true } },
+        ],
+      }),
+    ).toThrow(/isValid/);
+  });
+
+  it("dev-warns when a step's visibility source lives on a later step", async () => {
+    const { vi } = await import("vitest");
+    const spy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    validateFormConfig({
+      id: "t",
+      fields: [
+        { type: "text", name: "a" },
+        { type: "checkbox", name: "late" },
+      ],
+      steps: [
+        { title: "one", fieldNames: ["a"], visibleWhen: { field: "late", equals: true } },
+        { title: "two", fieldNames: ["late"] },
+      ],
+    });
+    expect(spy).toHaveBeenCalledWith(expect.stringContaining("later step"));
+    spy.mockRestore();
+  });
+
+  it("dev-warns when every step is conditional", async () => {
+    const { vi } = await import("vitest");
+    const spy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    validateFormConfig({
+      id: "t",
+      fields: [
+        { type: "checkbox", name: "a" },
+        { type: "checkbox", name: "b" },
+      ],
+      steps: [
+        { title: "one", fieldNames: ["a"], visibleWhen: { field: "b", equals: true } },
+        { title: "two", fieldNames: ["b"], visibleWhen: { field: "a", equals: true } },
+      ],
+    });
+    expect(spy).toHaveBeenCalledWith(expect.stringContaining("hide the whole wizard"));
+    spy.mockRestore();
+  });
+
   it("dev-warns when an isValid source sits on a different step", async () => {
     const { vi } = await import("vitest");
     const spy = vi.spyOn(console, "warn").mockImplementation(() => {});

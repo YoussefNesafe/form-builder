@@ -183,7 +183,18 @@ feedback argument as field visibleWhen; the validator rejects isValid).
   (visibility filters at render/navigation time).
 - Dev-warn when a step's visibleWhen sources live on later steps (visibility
   decided by values the user has not reached — legal, defaults decide, but
-  usually a config smell). Dev-warn when every step could be hidden.
+  usually a config smell). Dev-warn when every step could be hidden; at
+  runtime an all-hidden wizard renders nothing (+ dev-warn).
+- If the CURRENT step turns hidden under the user, the stepper moves to the
+  nearest visible step (next preferred, else previous); the render guard and
+  the fallback effect share the destination, so no transient wrong-step frame.
+- Server-error mapping skips the step-jump/focus when the errored field's
+  step is hidden under current values (the jump would bounce and the error
+  stays invisible — documented limitation, same family as dotted paths under
+  non-group roots).
+- Builder: per-step "Visible when" ConditionEditor in the StepsPanel (value
+  ops only — no validityOps); step conditions serialize onto the step config
+  and scrub their leaves when the referenced field is deleted.
 
 ## 7. Review step
 
