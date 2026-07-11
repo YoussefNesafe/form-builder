@@ -26,6 +26,13 @@ export const DOCS_NAV_GROUPS: DocsNavGroup[] = [
     ],
   },
   {
+    title: "Concepts",
+    items: [
+      { href: "/docs/conditions", title: "Conditions" },
+      { href: "/docs/wizards", title: "Multi-step wizards" },
+    ],
+  },
+  {
     title: "Reference",
     items: [{ href: "/docs/field-types", title: "Field types" }],
   },

@@ -11,6 +11,10 @@ const DESCRIPTIONS: Record<string, string> = {
     "Copy the form-builder/ folder into your app, add the shadcn primitives it depends on, and register the built-in fields.",
   "/docs/your-first-form":
     "A minimal FormConfig — two fields and a submit button — rendered live, plus what you get for free.",
+  "/docs/conditions":
+    "visibleWhen, disabledWhen, and enabledWhen — the real Condition operators, the isValid oracle, and the group-nesting limitation.",
+  "/docs/wizards":
+    "The steps config shape, Next/Back gating, conditional steps, and the read-only review step.",
   "/docs/field-types":
     "Every built-in field type the registry ships, generated from the package's own type list so it can't drift.",
 };
