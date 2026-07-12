@@ -63,7 +63,10 @@ local draft.
 
 The engine is copy-in, not an npm package — same model as shadcn/ui.
 
-1. Copy the `form-builder/` folder into your Next.js project.
+1. Copy the `form-builder/` folder into your Next.js project (or grab a
+   ready-made `form-builder.zip` from the **Download** button on the
+   [Installation docs page](https://form-builder.youssefnesafe.com/docs/installation)
+   — same contents, zero manual copying).
 2. Copy `components.json` conventions or add the shadcn primitives the
    engine's fields depend on:
    ```bash
@@ -76,7 +79,15 @@ The engine is copy-in, not an npm package — same model as shadcn/ui.
    itself stays a **devDependency** (it's a codegen CLI, not a runtime lib);
    `app/globals.css` pulls its base layer in with `@import "shadcn/tailwind.css";`
    — add the same import to your own global stylesheet.
-3. Install the runtime peer dependencies the engine's fields use:
+3. Add the required CSS: the `--breakpoint-tablet`/`--breakpoint-desktop`
+   `@theme` keys the engine's `tablet:`/`desktop:` classes need, the
+   `--color-*`/`--radius-*` design tokens the shadcn primitives render color
+   and radius through, and `@custom-variant dark (&:is(.dark *));` (without
+   it `dark:` classes follow the OS theme instead of a `.dark` class). See
+   the [Installation docs page](https://form-builder.youssefnesafe.com/docs/installation)
+   for the exact, copy-pasteable block sourced from this repo's own
+   `app/globals.css`.
+4. Install the runtime peer dependencies the engine's fields use:
    ```bash
    yarn add react-hook-form @hookform/resolvers zod zustand \
      class-variance-authority clsx tailwind-merge cmdk date-fns \
@@ -85,7 +96,7 @@ The engine is copy-in, not an npm package — same model as shadcn/ui.
    ```
    Plus `tailwindcss@^4` and `@tailwindcss/postcss` if you don't already
    have Tailwind 4 set up.
-4. Call `registerBuiltInFields()` once (e.g. in a root layout or app entry)
+5. Call `registerBuiltInFields()` once (e.g. in a root layout or app entry)
    before rendering any `FormRenderer`, then import `FormRenderer`,
    `useDynamicForm`, and the rest of the public surface from
    `form-builder/index.ts` — that's the only file consumers should import

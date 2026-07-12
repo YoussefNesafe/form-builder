@@ -3,11 +3,14 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "predev": "node scripts/zip-form-builder.mjs",
     "dev": "next dev",
+    "prebuild": "node scripts/zip-form-builder.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "vitest run"
+    "test": "vitest run",
+    "zip:form-builder": "node scripts/zip-form-builder.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",
@@ -44,6 +47,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@vitejs/plugin-react": "^6.0.3",
+    "adm-zip": "^0.6.0",
     "eslint": "^9",
     "eslint-config-next": "16.2.10",
     "jsdom": "^29.1.1",

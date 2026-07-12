@@ -12,6 +12,7 @@ export default defineConfig({
       "app/**/*.test.{ts,tsx}",
       "lib/**/*.test.{ts,tsx}",
       "locales/**/*.test.{ts,tsx}",
+      "scripts/**/*.test.{ts,tsx,mjs}",
     ],
     passWithNoTests: true,
   },

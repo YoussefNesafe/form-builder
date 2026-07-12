@@ -17,6 +17,9 @@
 /.next/
 /out/
 
+# generated at build/dev time by scripts/zip-form-builder.mjs
+/public/form-builder.zip
+
 # production
 /build
 

@@ -1,6 +1,7 @@
 import type { TocItem } from "@/components/docs/DocsToc";
 import { CopyPackageFolderSection } from "./CopyPackageFolderSection";
 import { AddShadcnPrimitivesSection } from "./AddShadcnPrimitivesSection";
+import { CssSetupSection } from "./CssSetupSection";
 import { InstallPeerDependenciesSection } from "./InstallPeerDependenciesSection";
 import { RegisterFieldsSection } from "./RegisterFieldsSection";
 import { ImportEntryPointSection } from "./ImportEntryPointSection";
@@ -12,6 +13,7 @@ import { ImportEntryPointSection } from "./ImportEntryPointSection";
 export const SECTIONS: { id: string; title: string; Section: React.ComponentType }[] = [
   CopyPackageFolderSection,
   AddShadcnPrimitivesSection,
+  CssSetupSection,
   InstallPeerDependenciesSection,
   RegisterFieldsSection,
   ImportEntryPointSection,
