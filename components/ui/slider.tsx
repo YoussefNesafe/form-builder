@@ -31,14 +31,14 @@ function Slider({
       min={min}
       max={max}
       className={cn(
-        "relative flex w-full touch-none items-center select-none data-disabled:opacity-50 data-vertical:h-full data-vertical:min-h-[160px] tablet:data-vertical:min-h-[160px] desktop:data-vertical:min-h-[160px] data-vertical:w-auto data-vertical:flex-col",
+        "relative flex w-full touch-none items-center select-none data-disabled:opacity-50 data-vertical:h-full data-vertical:min-h-[42.72vw] tablet:data-vertical:min-h-[20vw] desktop:data-vertical:min-h-[8.32vw] data-vertical:w-auto data-vertical:flex-col",
         className
       )}
       {...props}
     >
       <SliderPrimitive.Track
         data-slot="slider-track"
-        className="relative grow overflow-hidden rounded-full bg-muted data-horizontal:h-[4px] tablet:data-horizontal:h-[4px] desktop:data-horizontal:h-[4px] data-horizontal:w-full data-vertical:h-full data-vertical:w-[4px] tablet:data-vertical:w-[4px] desktop:data-vertical:w-[4px]"
+        className="relative grow overflow-hidden rounded-full bg-muted data-horizontal:h-[1.068vw] tablet:data-horizontal:h-[0.5vw] desktop:data-horizontal:h-[0.208vw] data-horizontal:w-full data-vertical:h-full data-vertical:w-[1.068vw] tablet:data-vertical:w-[0.5vw] desktop:data-vertical:w-[0.208vw]"
       >
         <SliderPrimitive.Range
           data-slot="slider-range"
@@ -49,7 +49,7 @@ function Slider({
         <SliderPrimitive.Thumb
           data-slot="slider-thumb"
           key={index}
-          className="relative block size-[12px] tablet:size-[12px] desktop:size-[12px] shrink-0 rounded-full border border-ring bg-white ring-ring/50 transition-[color,box-shadow] select-none after:absolute after:-inset-[8px] tablet:after:-inset-[8px] desktop:after:-inset-[8px] hover:ring-3 tablet:hover:ring-3 desktop:hover:ring-3 focus-visible:ring-3 tablet:focus-visible:ring-3 desktop:focus-visible:ring-3 focus-visible:outline-hidden active:ring-3 tablet:active:ring-3 desktop:active:ring-3 disabled:pointer-events-none disabled:opacity-50"
+          className="relative block size-[3.204vw] tablet:size-[1.5vw] desktop:size-[0.624vw] shrink-0 rounded-full border border-ring bg-white ring-ring/50 transition-[color,box-shadow] select-none after:absolute after:-inset-[2.136vw] tablet:after:-inset-[1vw] desktop:after:-inset-[0.416vw] hover:ring-3 tablet:hover:ring-3 desktop:hover:ring-3 focus-visible:ring-3 tablet:focus-visible:ring-3 desktop:focus-visible:ring-3 focus-visible:outline-hidden active:ring-3 tablet:active:ring-3 desktop:active:ring-3 disabled:pointer-events-none disabled:opacity-50"
         />
       ))}
     </SliderPrimitive.Root>

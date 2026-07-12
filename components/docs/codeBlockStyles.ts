@@ -9,14 +9,14 @@
 
 /** Rounded border + muted background — the block's outer box. */
 export const CODE_BLOCK_CONTAINER_CLASS =
-  "rounded-[10px] tablet:rounded-[10px] desktop:rounded-[10px] border border-border bg-muted";
+  "rounded-[2.67vw] tablet:rounded-[1.25vw] desktop:rounded-[0.52vw] border border-border bg-muted";
 
 /** Monospace body copy size/line-height. */
 export const CODE_BLOCK_TEXT_CLASS =
-  "text-[13px] tablet:text-[13px] desktop:text-[13px] font-mono leading-[20px] tablet:leading-[20px] desktop:leading-[20px]";
+  "text-[3.471vw] tablet:text-[1.625vw] desktop:text-[0.676vw] font-mono leading-[5.34vw] tablet:leading-[2.5vw] desktop:leading-[1.04vw]";
 
 /** Inner spacing for the code content. */
-export const CODE_BLOCK_PADDING_CLASS = "p-[14px] tablet:p-[14px] desktop:p-[14px]";
+export const CODE_BLOCK_PADDING_CLASS = "p-[3.738vw] tablet:p-[1.75vw] desktop:p-[0.728vw]";
 
 /** Extra right-inset reserved for the absolutely-positioned CopyButton overlay. */
-export const CODE_BLOCK_COPY_PADDING_CLASS = "pe-[44px] tablet:pe-[44px] desktop:pe-[44px]";
+export const CODE_BLOCK_COPY_PADDING_CLASS = "pe-[11.748vw] tablet:pe-[5.5vw] desktop:pe-[2.288vw]";

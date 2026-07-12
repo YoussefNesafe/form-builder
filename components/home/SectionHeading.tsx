@@ -21,7 +21,7 @@ export function SectionHeading({ children, center = true, className, id }: Secti
       id={id}
       className={cn(
         center && "text-center",
-        "text-[24px] tablet:text-[28px] desktop:text-[32px] font-semibold tracking-[-0.5px] tablet:tracking-[-0.9px] desktop:tracking-[-1.3px]",
+        "text-[6.408vw] tablet:text-[3.5vw] desktop:text-[1.664vw] font-semibold tracking-[-0.133vw] tablet:tracking-[-0.112vw] desktop:tracking-[-0.068vw]",
         className,
       )}
     >

@@ -59,12 +59,12 @@ export function GroupField({ field }: FieldComponentProps) {
       disabled={disabled}
       error={groupError}
     >
-      <div className="flex flex-col gap-[16px] tablet:gap-[16px] desktop:gap-[16px]">
+      <div className="flex flex-col gap-[4.272vw] tablet:gap-[2vw] desktop:gap-[0.832vw]">
         {rows.map((row, index) => (
-          <div key={row.id} className="flex flex-col gap-[16px] tablet:gap-[16px] desktop:gap-[16px]">
+          <div key={row.id} className="flex flex-col gap-[4.272vw] tablet:gap-[2vw] desktop:gap-[0.832vw]">
             {index > 0 && <Separator />}
-            <div className="grid grid-cols-4 items-start gap-[16px] tablet:gap-[16px] desktop:gap-[16px]">
-              <div className="col-span-3 grid grid-cols-12 gap-[16px] tablet:gap-[16px] desktop:gap-[16px]">
+            <div className="grid grid-cols-4 items-start gap-[4.272vw] tablet:gap-[2vw] desktop:gap-[0.832vw]">
+              <div className="col-span-3 grid grid-cols-12 gap-[4.272vw] tablet:gap-[2vw] desktop:gap-[0.832vw]">
                 {config.fields.map((inner) => renderField(withNamePrefix(inner, `${config.name}.${index}`)))}
               </div>
               <Button
@@ -75,7 +75,7 @@ export function GroupField({ field }: FieldComponentProps) {
                 aria-label={messages.removeRow(index + 1)}
                 onClick={() => remove(index)}
               >
-                <Trash2 className="size-[16px] tablet:size-[16px] desktop:size-[16px]" />
+                <Trash2 className="size-[4.272vw] tablet:size-[2vw] desktop:size-[0.832vw]" />
               </Button>
             </div>
           </div>
@@ -87,7 +87,7 @@ export function GroupField({ field }: FieldComponentProps) {
           onClick={() => append(buildDefaultValues(config.fields))}
           className="w-fit"
         >
-          <Plus className="me-[8px] tablet:me-[8px] desktop:me-[8px] size-[16px] tablet:size-[16px] desktop:size-[16px]" />
+          <Plus className="me-[2.136vw] tablet:me-[1vw] desktop:me-[0.416vw] size-[4.272vw] tablet:size-[2vw] desktop:size-[0.832vw]" />
           {config.placeholder ?? messages.addRow}
         </Button>
       </div>

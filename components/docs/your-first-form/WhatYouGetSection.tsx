@@ -6,7 +6,7 @@ const title = "What you got for free";
 function Section() {
   return (
     <DocsSection id={id} title="What you got for free">
-      <ul className="flex flex-col gap-[6px] tablet:gap-[6px] desktop:gap-[6px] text-[15px] tablet:text-[15px] desktop:text-[15px] leading-[25px] tablet:leading-[25px] desktop:leading-[25px] text-muted-foreground">
+      <ul className="flex flex-col gap-[1.602vw] tablet:gap-[0.75vw] desktop:gap-[0.312vw] text-[4.005vw] tablet:text-[1.875vw] desktop:text-[0.78vw] leading-[6.675vw] tablet:leading-[3.125vw] desktop:leading-[1.3vw] text-muted-foreground">
         <li>
           <strong className="text-foreground">Zod validation</strong> — a schema is derived from the config
           (each field&apos;s <IC>required</IC>, type, and rules), never hand-duplicated in a separate schema

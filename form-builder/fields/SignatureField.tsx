@@ -122,7 +122,7 @@ function SignatureCanvas({
   };
 
   return (
-    <div className="flex flex-col gap-[8px] tablet:gap-[8px] desktop:gap-[8px]">
+    <div className="flex flex-col gap-[2.136vw] tablet:gap-[1vw] desktop:gap-[0.416vw]">
       <canvas
         ref={canvasRef}
         id={id}
@@ -132,7 +132,7 @@ function SignatureCanvas({
         // aria-invalid is not valid on role="img" — the error state is
         // conveyed by the destructive border and the described-by error text.
         className={cn(
-          "w-full touch-none rounded-[10px] tablet:rounded-[10px] desktop:rounded-[10px] border bg-transparent",
+          "w-full touch-none rounded-[2.67vw] tablet:rounded-[1.25vw] desktop:rounded-[0.52vw] border bg-transparent",
           invalid ? "border-destructive" : "border-input",
           disabled && "opacity-50",
         )}

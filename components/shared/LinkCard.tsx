@@ -38,20 +38,20 @@ export function LinkCard({ href, title, description, kicker, children, className
       href={href}
       aria-label={ariaLabel}
       className={cn(
-        "flex flex-col gap-[4px] tablet:gap-[4px] desktop:gap-[4px] rounded-[12px] tablet:rounded-[12px] desktop:rounded-[12px] border border-border-interactive bg-card p-[16px] tablet:p-[16px] desktop:p-[16px] transition-colors hover:border-border-interactive-hover focus-visible:border-foreground focus-visible:outline-none",
+        "flex flex-col gap-[1.068vw] tablet:gap-[0.5vw] desktop:gap-[0.208vw] rounded-[3.204vw] tablet:rounded-[1.5vw] desktop:rounded-[0.624vw] border border-border-interactive bg-card p-[4.272vw] tablet:p-[2vw] desktop:p-[0.832vw] transition-colors hover:border-border-interactive-hover focus-visible:border-foreground focus-visible:outline-none",
         className,
       )}
     >
       {children}
       {kicker && (
-        <span className="text-[11px] tablet:text-[11px] desktop:text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+        <span className="text-[2.937vw] tablet:text-[1.375vw] desktop:text-[0.572vw] font-medium uppercase tracking-wide text-muted-foreground">
           {kicker}
         </span>
       )}
-      <span className="text-[15px] tablet:text-[15px] desktop:text-[15px] font-medium text-card-foreground">
+      <span className="text-[4.005vw] tablet:text-[1.875vw] desktop:text-[0.78vw] font-medium text-card-foreground">
         {title}
       </span>
-      <span className="text-[13px] tablet:text-[13px] desktop:text-[13px] text-muted-foreground">{description}</span>
+      <span className="text-[3.471vw] tablet:text-[1.625vw] desktop:text-[0.676vw] text-muted-foreground">{description}</span>
     </Link>
   );
 }

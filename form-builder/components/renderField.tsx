@@ -11,7 +11,7 @@ export function renderField(field: AnyFieldConfig) {
   if (!Component) {
     if (process.env.NODE_ENV === "production") return null;
     return (
-      <div key={field.name} className="col-span-12 border border-destructive p-[8px] tablet:p-[8px] desktop:p-[8px] text-destructive">
+      <div key={field.name} className="col-span-12 border border-destructive p-[2.136vw] tablet:p-[1vw] desktop:p-[0.416vw] text-destructive">
         Unknown field type &quot;{field.type}&quot;
       </div>
     );

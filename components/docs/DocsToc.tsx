@@ -54,15 +54,15 @@ export function DocsToc({ items }: { items: TocItem[] }) {
   return (
     <nav
       aria-labelledby="docs-toc-heading"
-      className="hidden desktop:sticky desktop:top-[80px] desktop:block desktop:w-[216px] desktop:shrink-0 desktop:self-start desktop:py-[48px]"
+      className="hidden desktop:sticky desktop:top-[4.16vw] desktop:block desktop:w-[11.232vw] desktop:shrink-0 desktop:self-start desktop:py-[2.496vw]"
     >
       <span
         id="docs-toc-heading"
-        className="desktop:text-[11px] font-medium uppercase tracking-wide text-muted-foreground"
+        className="desktop:text-[0.572vw] font-medium uppercase tracking-wide text-muted-foreground"
       >
         {docs.toc.onThisPage}
       </span>
-      <ul className="desktop:mt-[12px] flex flex-col">
+      <ul className="desktop:mt-[0.624vw] flex flex-col">
         {items.map((item) => {
           const active = item.id === activeId;
           return (
@@ -71,7 +71,7 @@ export function DocsToc({ items }: { items: TocItem[] }) {
                 href={`#${item.id}`}
                 aria-current={active ? "location" : undefined}
                 className={cn(
-                  "desktop:block desktop:py-[4px] desktop:text-[13px] border-l-2 desktop:pl-[12px] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground",
+                  "desktop:block desktop:py-[0.208vw] desktop:text-[0.676vw] border-l-2 desktop:pl-[0.624vw] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground",
                   active
                     ? "border-foreground font-medium text-foreground"
                     : "border-transparent text-muted-foreground hover:text-foreground",

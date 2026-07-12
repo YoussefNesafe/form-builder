@@ -124,7 +124,7 @@ export function SelectField({ field }: FieldComponentProps) {
                       config.placeholder ??
                       "")}
                 </span>
-                <ChevronsUpDown className="ms-[8px] tablet:ms-[8px] desktop:ms-[8px] size-[16px] tablet:size-[16px] desktop:size-[16px] shrink-0 opacity-50" />
+                <ChevronsUpDown className="ms-[2.136vw] tablet:ms-[1vw] desktop:ms-[0.416vw] size-[4.272vw] tablet:size-[2vw] desktop:size-[0.832vw] shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-(--radix-popover-trigger-width) p-0" align="start">
@@ -156,7 +156,7 @@ export function SelectField({ field }: FieldComponentProps) {
                             }
                           }}
                         >
-                          <Check className={cn("me-[8px] tablet:me-[8px] desktop:me-[8px] size-[16px] tablet:size-[16px] desktop:size-[16px]", selected ? "opacity-100" : "opacity-0")} />
+                          <Check className={cn("me-[2.136vw] tablet:me-[1vw] desktop:me-[0.416vw] size-[4.272vw] tablet:size-[2vw] desktop:size-[0.832vw]", selected ? "opacity-100" : "opacity-0")} />
                           {option.label}
                         </CommandItem>
                       );

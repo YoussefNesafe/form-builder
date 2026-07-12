@@ -19,7 +19,7 @@ function SelectGroup({
   return (
     <SelectPrimitive.Group
       data-slot="select-group"
-      className={cn("scroll-my-[4px] tablet:scroll-my-[4px] desktop:scroll-my-[4px] p-[4px] tablet:p-[4px] desktop:p-[4px]", className)}
+      className={cn("scroll-my-[1.068vw] tablet:scroll-my-[0.5vw] desktop:scroll-my-[0.208vw] p-[1.068vw] tablet:p-[0.5vw] desktop:p-[0.208vw]", className)}
       {...props}
     />
   )
@@ -44,14 +44,14 @@ function SelectTrigger({
       data-slot="select-trigger"
       data-size={size}
       className={cn(
-        "flex w-fit items-center justify-between gap-[6px] tablet:gap-[6px] desktop:gap-[6px] rounded-[10px] tablet:rounded-[10px] desktop:rounded-[10px] border border-input bg-transparent py-[8px] tablet:py-[8px] desktop:py-[8px] pe-[8px] tablet:pe-[8px] desktop:pe-[8px] ps-[10px] tablet:ps-[10px] desktop:ps-[10px] text-[14px] tablet:text-[14px] desktop:text-[14px] whitespace-nowrap transition-colors outline-none select-none focus-visible:border-ring focus-visible:ring-3 tablet:focus-visible:ring-3 desktop:focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 tablet:aria-invalid:ring-3 desktop:aria-invalid:ring-3 aria-invalid:ring-destructive/20 data-placeholder:text-muted-foreground data-[size=default]:h-[32px] tablet:data-[size=default]:h-[32px] desktop:data-[size=default]:h-[32px] data-[size=sm]:h-[28px] tablet:data-[size=sm]:h-[28px] desktop:data-[size=sm]:h-[28px] data-[size=sm]:rounded-[8px] tablet:data-[size=sm]:rounded-[8px] desktop:data-[size=sm]:rounded-[8px] *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-[6px] tablet:*:data-[slot=select-value]:gap-[6px] desktop:*:data-[slot=select-value]:gap-[6px] dark:bg-input/30 dark:hover:bg-input/50 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-[16px] tablet:[&_svg:not([class*='size-'])]:size-[16px] desktop:[&_svg:not([class*='size-'])]:size-[16px]",
+        "flex w-fit items-center justify-between gap-[1.602vw] tablet:gap-[0.75vw] desktop:gap-[0.312vw] rounded-[2.67vw] tablet:rounded-[1.25vw] desktop:rounded-[0.52vw] border border-input bg-transparent py-[2.136vw] tablet:py-[1vw] desktop:py-[0.416vw] pe-[2.136vw] tablet:pe-[1vw] desktop:pe-[0.416vw] ps-[2.67vw] tablet:ps-[1.25vw] desktop:ps-[0.52vw] text-[3.738vw] tablet:text-[1.75vw] desktop:text-[0.728vw] whitespace-nowrap transition-colors outline-none select-none focus-visible:border-ring focus-visible:ring-3 tablet:focus-visible:ring-3 desktop:focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 tablet:aria-invalid:ring-3 desktop:aria-invalid:ring-3 aria-invalid:ring-destructive/20 data-placeholder:text-muted-foreground data-[size=default]:h-[8.544vw] tablet:data-[size=default]:h-[4vw] desktop:data-[size=default]:h-[1.664vw] data-[size=sm]:h-[7.476vw] tablet:data-[size=sm]:h-[3.5vw] desktop:data-[size=sm]:h-[1.456vw] data-[size=sm]:rounded-[2.136vw] tablet:data-[size=sm]:rounded-[1vw] desktop:data-[size=sm]:rounded-[0.416vw] *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-[1.602vw] tablet:*:data-[slot=select-value]:gap-[0.75vw] desktop:*:data-[slot=select-value]:gap-[0.312vw] dark:bg-input/30 dark:hover:bg-input/50 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-[4.272vw] tablet:[&_svg:not([class*='size-'])]:size-[2vw] desktop:[&_svg:not([class*='size-'])]:size-[0.832vw]",
         className
       )}
       {...props}
     >
       {children}
       <SelectPrimitive.Icon asChild>
-        <ChevronDownIcon className="pointer-events-none size-[16px] tablet:size-[16px] desktop:size-[16px] text-muted-foreground" />
+        <ChevronDownIcon className="pointer-events-none size-[4.272vw] tablet:size-[2vw] desktop:size-[0.832vw] text-muted-foreground" />
       </SelectPrimitive.Icon>
     </SelectPrimitive.Trigger>
   )
@@ -69,7 +69,7 @@ function SelectContent({
       <SelectPrimitive.Content
         data-slot="select-content"
         data-align-trigger={position === "item-aligned"}
-        className={cn("relative z-50 max-h-(--radix-select-content-available-height) min-w-[144px] tablet:min-w-[144px] desktop:min-w-[144px] origin-(--radix-select-content-transform-origin) overflow-x-hidden overflow-y-auto rounded-[10px] tablet:rounded-[10px] desktop:rounded-[10px] bg-popover text-popover-foreground shadow-md ring-1 tablet:ring-1 desktop:ring-1 ring-foreground/10 duration-100 data-[align-trigger=true]:animate-none data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95", position ==="popper"&&"data-[side=bottom]:translate-y-[4px] tablet:data-[side=bottom]:translate-y-[4px] desktop:data-[side=bottom]:translate-y-[4px] data-[side=left]:-translate-x-[4px] tablet:data-[side=left]:-translate-x-[4px] desktop:data-[side=left]:-translate-x-[4px] rtl:data-[side=left]:translate-x-[4px] tablet:rtl:data-[side=left]:translate-x-[4px] desktop:rtl:data-[side=left]:translate-x-[4px] data-[side=right]:translate-x-[4px] tablet:data-[side=right]:translate-x-[4px] desktop:data-[side=right]:translate-x-[4px] rtl:data-[side=right]:-translate-x-[4px] tablet:rtl:data-[side=right]:-translate-x-[4px] desktop:rtl:data-[side=right]:-translate-x-[4px] data-[side=top]:-translate-y-[4px] tablet:data-[side=top]:-translate-y-[4px] desktop:data-[side=top]:-translate-y-[4px]", className )}
+        className={cn("relative z-50 max-h-(--radix-select-content-available-height) min-w-[38.448vw] tablet:min-w-[18vw] desktop:min-w-[7.488vw] origin-(--radix-select-content-transform-origin) overflow-x-hidden overflow-y-auto rounded-[2.67vw] tablet:rounded-[1.25vw] desktop:rounded-[0.52vw] bg-popover text-popover-foreground shadow-md ring-1 tablet:ring-1 desktop:ring-1 ring-foreground/10 duration-100 data-[align-trigger=true]:animate-none data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95", position ==="popper"&&"data-[side=bottom]:translate-y-[1.068vw] tablet:data-[side=bottom]:translate-y-[0.5vw] desktop:data-[side=bottom]:translate-y-[0.208vw] data-[side=left]:-translate-x-[1.068vw] tablet:data-[side=left]:-translate-x-[0.5vw] desktop:data-[side=left]:-translate-x-[0.208vw] rtl:data-[side=left]:translate-x-[1.068vw] tablet:rtl:data-[side=left]:translate-x-[0.5vw] desktop:rtl:data-[side=left]:translate-x-[0.208vw] data-[side=right]:translate-x-[1.068vw] tablet:data-[side=right]:translate-x-[0.5vw] desktop:data-[side=right]:translate-x-[0.208vw] rtl:data-[side=right]:-translate-x-[1.068vw] tablet:rtl:data-[side=right]:-translate-x-[0.5vw] desktop:rtl:data-[side=right]:-translate-x-[0.208vw] data-[side=top]:-translate-y-[1.068vw] tablet:data-[side=top]:-translate-y-[0.5vw] desktop:data-[side=top]:-translate-y-[0.208vw]", className )}
         position={position}
         align={align}
         {...props}
@@ -97,7 +97,7 @@ function SelectLabel({
   return (
     <SelectPrimitive.Label
       data-slot="select-label"
-      className={cn("px-[6px] tablet:px-[6px] desktop:px-[6px] py-[4px] tablet:py-[4px] desktop:py-[4px] text-[12px] tablet:text-[12px] desktop:text-[12px] text-muted-foreground", className)}
+      className={cn("px-[1.602vw] tablet:px-[0.75vw] desktop:px-[0.312vw] py-[1.068vw] tablet:py-[0.5vw] desktop:py-[0.208vw] text-[3.204vw] tablet:text-[1.5vw] desktop:text-[0.624vw] text-muted-foreground", className)}
       {...props}
     />
   )
@@ -112,12 +112,12 @@ function SelectItem({
     <SelectPrimitive.Item
       data-slot="select-item"
       className={cn(
-        "relative flex w-full cursor-default items-center gap-[6px] tablet:gap-[6px] desktop:gap-[6px] rounded-[8px] tablet:rounded-[8px] desktop:rounded-[8px] py-[4px] tablet:py-[4px] desktop:py-[4px] pe-[32px] tablet:pe-[32px] desktop:pe-[32px] ps-[6px] tablet:ps-[6px] desktop:ps-[6px] text-[14px] tablet:text-[14px] desktop:text-[14px] outline-hidden select-none focus:bg-accent focus:text-accent-foreground not-data-[variant=destructive]:focus:**:text-accent-foreground data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-[16px] tablet:[&_svg:not([class*='size-'])]:size-[16px] desktop:[&_svg:not([class*='size-'])]:size-[16px] *:[span]:last:flex *:[span]:last:items-center *:[span]:last:gap-[8px] tablet:*:[span]:last:gap-[8px] desktop:*:[span]:last:gap-[8px]",
+        "relative flex w-full cursor-default items-center gap-[1.602vw] tablet:gap-[0.75vw] desktop:gap-[0.312vw] rounded-[2.136vw] tablet:rounded-[1vw] desktop:rounded-[0.416vw] py-[1.068vw] tablet:py-[0.5vw] desktop:py-[0.208vw] pe-[8.544vw] tablet:pe-[4vw] desktop:pe-[1.664vw] ps-[1.602vw] tablet:ps-[0.75vw] desktop:ps-[0.312vw] text-[3.738vw] tablet:text-[1.75vw] desktop:text-[0.728vw] outline-hidden select-none focus:bg-accent focus:text-accent-foreground not-data-[variant=destructive]:focus:**:text-accent-foreground data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-[4.272vw] tablet:[&_svg:not([class*='size-'])]:size-[2vw] desktop:[&_svg:not([class*='size-'])]:size-[0.832vw] *:[span]:last:flex *:[span]:last:items-center *:[span]:last:gap-[2.136vw] tablet:*:[span]:last:gap-[1vw] desktop:*:[span]:last:gap-[0.416vw]",
         className
       )}
       {...props}
     >
-      <span className="pointer-events-none absolute end-[8px] tablet:end-[8px] desktop:end-[8px] flex size-[16px] tablet:size-[16px] desktop:size-[16px] items-center justify-center">
+      <span className="pointer-events-none absolute end-[2.136vw] tablet:end-[1vw] desktop:end-[0.416vw] flex size-[4.272vw] tablet:size-[2vw] desktop:size-[0.832vw] items-center justify-center">
         <SelectPrimitive.ItemIndicator>
           <CheckIcon className="pointer-events-none" />
         </SelectPrimitive.ItemIndicator>
@@ -134,7 +134,7 @@ function SelectSeparator({
   return (
     <SelectPrimitive.Separator
       data-slot="select-separator"
-      className={cn("pointer-events-none -mx-[4px] tablet:-mx-[4px] desktop:-mx-[4px] my-[4px] tablet:my-[4px] desktop:my-[4px] h-px bg-border", className)}
+      className={cn("pointer-events-none -mx-[1.068vw] tablet:-mx-[0.5vw] desktop:-mx-[0.208vw] my-[1.068vw] tablet:my-[0.5vw] desktop:my-[0.208vw] h-px bg-border", className)}
       {...props}
     />
   )
@@ -148,7 +148,7 @@ function SelectScrollUpButton({
     <SelectPrimitive.ScrollUpButton
       data-slot="select-scroll-up-button"
       className={cn(
-        "z-10 flex cursor-default items-center justify-center bg-popover py-[4px] tablet:py-[4px] desktop:py-[4px] [&_svg:not([class*='size-'])]:size-[16px] tablet:[&_svg:not([class*='size-'])]:size-[16px] desktop:[&_svg:not([class*='size-'])]:size-[16px]",
+        "z-10 flex cursor-default items-center justify-center bg-popover py-[1.068vw] tablet:py-[0.5vw] desktop:py-[0.208vw] [&_svg:not([class*='size-'])]:size-[4.272vw] tablet:[&_svg:not([class*='size-'])]:size-[2vw] desktop:[&_svg:not([class*='size-'])]:size-[0.832vw]",
         className
       )}
       {...props}
@@ -167,7 +167,7 @@ function SelectScrollDownButton({
     <SelectPrimitive.ScrollDownButton
       data-slot="select-scroll-down-button"
       className={cn(
-        "z-10 flex cursor-default items-center justify-center bg-popover py-[4px] tablet:py-[4px] desktop:py-[4px] [&_svg:not([class*='size-'])]:size-[16px] tablet:[&_svg:not([class*='size-'])]:size-[16px] desktop:[&_svg:not([class*='size-'])]:size-[16px]",
+        "z-10 flex cursor-default items-center justify-center bg-popover py-[1.068vw] tablet:py-[0.5vw] desktop:py-[0.208vw] [&_svg:not([class*='size-'])]:size-[4.272vw] tablet:[&_svg:not([class*='size-'])]:size-[2vw] desktop:[&_svg:not([class*='size-'])]:size-[0.832vw]",
         className
       )}
       {...props}

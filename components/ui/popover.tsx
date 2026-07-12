@@ -30,7 +30,7 @@ function PopoverContent({
         align={align}
         sideOffset={sideOffset}
         className={cn(
-          "z-50 flex w-[288px] tablet:w-[288px] desktop:w-[288px] origin-(--radix-popover-content-transform-origin) flex-col gap-[10px] tablet:gap-[10px] desktop:gap-[10px] rounded-[10px] tablet:rounded-[10px] desktop:rounded-[10px] bg-popover p-[10px] tablet:p-[10px] desktop:p-[10px] text-[14px] tablet:text-[14px] desktop:text-[14px] text-popover-foreground shadow-md ring-1 tablet:ring-1 desktop:ring-1 ring-foreground/10 outline-hidden duration-100 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
+          "z-50 flex w-[76.896vw] tablet:w-[36vw] desktop:w-[14.976vw] origin-(--radix-popover-content-transform-origin) flex-col gap-[2.67vw] tablet:gap-[1.25vw] desktop:gap-[0.52vw] rounded-[2.67vw] tablet:rounded-[1.25vw] desktop:rounded-[0.52vw] bg-popover p-[2.67vw] tablet:p-[1.25vw] desktop:p-[0.52vw] text-[3.738vw] tablet:text-[1.75vw] desktop:text-[0.728vw] text-popover-foreground shadow-md ring-1 tablet:ring-1 desktop:ring-1 ring-foreground/10 outline-hidden duration-100 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
           className
         )}
         {...props}
@@ -49,7 +49,7 @@ function PopoverHeader({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="popover-header"
-      className={cn("flex flex-col gap-[2px] tablet:gap-[2px] desktop:gap-[2px] text-[14px] tablet:text-[14px] desktop:text-[14px]", className)}
+      className={cn("flex flex-col gap-[0.534vw] tablet:gap-[0.25vw] desktop:gap-[0.104vw] text-[3.738vw] tablet:text-[1.75vw] desktop:text-[0.728vw]", className)}
       {...props}
     />
   )

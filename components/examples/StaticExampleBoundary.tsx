@@ -24,12 +24,12 @@ export class StaticExampleBoundary extends Component<{ children: ReactNode }, St
       return (
         <Alert
           role="alert"
-          className="flex flex-col gap-[6px] tablet:gap-[6px] desktop:gap-[6px] p-[16px] tablet:p-[16px] desktop:p-[16px]"
+          className="flex flex-col gap-[1.602vw] tablet:gap-[0.75vw] desktop:gap-[0.312vw] p-[4.272vw] tablet:p-[2vw] desktop:p-[0.832vw]"
         >
-          <span className="text-[13px] tablet:text-[13px] desktop:text-[13px] font-medium text-destructive">
+          <span className="text-[3.471vw] tablet:text-[1.625vw] desktop:text-[0.676vw] font-medium text-destructive">
             {examples.boundary.failedTitle}
           </span>
-          <p className="text-[12px] tablet:text-[12px] desktop:text-[12px] text-muted-foreground">
+          <p className="text-[3.204vw] tablet:text-[1.5vw] desktop:text-[0.624vw] text-muted-foreground">
             {this.state.message}
           </p>
         </Alert>

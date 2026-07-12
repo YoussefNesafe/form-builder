@@ -27,7 +27,8 @@ export function CodeOutputPanel() {
   const code = useMemo(() => toCode(config, outputMode), [config, outputMode]);
   // useSerializedConfig skips validation (error: null) while there are no
   // fields yet — this pane, unlike PreviewPanel, still needs a message for that case.
-  const error = nodes.length === 0 ? builder.output.addAtLeastOneField : validationError;
+  const error =
+    nodes.length === 0 ? builder.output.addAtLeastOneField : validationError;
 
   const copy = async () => {
     try {
@@ -40,8 +41,8 @@ export function CodeOutputPanel() {
   };
 
   return (
-    <div className="flex min-h-0 flex-col gap-[12px] tablet:gap-[12px] desktop:gap-[12px]">
-      <div className="flex items-center justify-between gap-[8px] tablet:gap-[8px] desktop:gap-[8px]">
+    <div className="flex min-h-0 flex-col gap-[3.204vw] tablet:gap-[1.5vw] desktop:gap-[0.624vw]">
+      <div className="flex items-center justify-between gap-[2.136vw] tablet:gap-[1vw] desktop:gap-[0.416vw]">
         <SegmentedControl
           aria-label={builder.output.formatAriaLabel}
           options={MODES}
@@ -56,14 +57,14 @@ export function CodeOutputPanel() {
 
       {/* Deliberately NOT the shared `Alert` primitive (components/ui/alert.tsx):
           this note is a single-line, structurally distinct callout (no
-          title/description split) that sits between rounded-[10px] neighbors
+          title/description split) that sits between rounded-[2.67vw] neighbors
           (the format toggle above, the code block below) — Alert's normalized
-          rounded-[12px] would clash with that 10px context. Staff-approved
+          rounded-[3.204vw] would clash with that 10px context. Staff-approved
           call site exemption; see the Slice 4 review. */}
       {error && (
         <p
           role="status"
-          className="rounded-[10px] tablet:rounded-[10px] desktop:rounded-[10px] border border-destructive/40 bg-destructive/10 px-[10px] tablet:px-[10px] desktop:px-[10px] py-[6px] tablet:py-[6px] desktop:py-[6px] text-[12px] tablet:text-[12px] desktop:text-[12px] text-destructive"
+          className="rounded-[2.67vw] tablet:rounded-[1.25vw] desktop:rounded-[0.52vw] border border-destructive/40 bg-destructive/10 px-[2.67vw] tablet:px-[1.25vw] desktop:px-[0.52vw] py-[1.602vw] tablet:py-[0.75vw] desktop:py-[0.312vw] text-[3.204vw] tablet:text-[1.5vw] desktop:text-[0.624vw] text-destructive"
         >
           {fmt(builder.output.notValidYet, { error })}
         </p>
@@ -71,7 +72,7 @@ export function CodeOutputPanel() {
 
       <pre
         dir="ltr"
-        className="max-h-[420px] tablet:max-h-[420px] desktop:max-h-[420px] overflow-auto rounded-[10px] tablet:rounded-[10px] desktop:rounded-[10px] border border-border bg-muted p-[12px] tablet:p-[12px] desktop:p-[12px] text-[12px] tablet:text-[12px] desktop:text-[12px]"
+        className="max-h-[112.14vw] tablet:max-h-[52.5vw] desktop:max-h-[21.84vw] overflow-auto rounded-[2.67vw] tablet:rounded-[1.25vw] desktop:rounded-[0.52vw] border border-border bg-muted p-[3.204vw] tablet:p-[1.5vw] desktop:p-[0.624vw] text-[3.204vw] tablet:text-[1.5vw] desktop:text-[0.624vw]"
       >
         {code}
       </pre>

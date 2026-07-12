@@ -53,7 +53,7 @@ export function LandingDemoForm() {
   const [submitted, setSubmitted] = useState(false);
 
   return (
-    <div className="flex flex-col gap-[16px] tablet:gap-[16px] desktop:gap-[16px]">
+    <div className="flex flex-col gap-[4.272vw] tablet:gap-[2vw] desktop:gap-[0.832vw]">
       {!submitted && (
         <StaticExampleBoundary>
           <FormRenderer config={landingDemoConfig} onSubmit={() => setSubmitted(true)} />
@@ -65,7 +65,7 @@ export function LandingDemoForm() {
         role="status"
         className={
           submitted
-            ? "text-[14px] tablet:text-[14px] desktop:text-[14px] text-muted-foreground"
+            ? "text-[3.738vw] tablet:text-[1.75vw] desktop:text-[0.728vw] text-muted-foreground"
             : "sr-only"
         }
       >

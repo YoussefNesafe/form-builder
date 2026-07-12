@@ -5,8 +5,8 @@ import { DocsToc, type TocItem } from "@/components/docs/DocsToc";
 // Static full class strings per gap value — Tailwind can't see built names,
 // same rule as the cva variants (AGENTS.md).
 const GAP_CLASS = {
-  "20": "gap-[20px] tablet:gap-[20px] desktop:gap-[20px]",
-  "28": "gap-[28px] tablet:gap-[28px] desktop:gap-[28px]",
+  "20": "gap-[5.34vw] tablet:gap-[2.5vw] desktop:gap-[1.04vw]",
+  "28": "gap-[7.476vw] tablet:gap-[3.5vw] desktop:gap-[1.456vw]",
 } as const;
 
 /**
@@ -24,8 +24,8 @@ export function DocsPageShell({
   children: ReactNode;
 }) {
   return (
-    <div className="flex flex-col desktop:flex-row gap-0 desktop:gap-[32px] items-start">
-      <div className={cn("min-w-0 w-full desktop:max-w-[720px] flex flex-col", GAP_CLASS[gap])}>
+    <div className="flex flex-col desktop:flex-row gap-0 desktop:gap-[1.664vw] items-start">
+      <div className={cn("min-w-0 w-full desktop:max-w-[37.44vw] flex flex-col", GAP_CLASS[gap])}>
         {children}
       </div>
       <DocsToc items={toc} />

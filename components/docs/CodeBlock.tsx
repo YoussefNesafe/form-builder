@@ -78,7 +78,7 @@ export function CodeBlock({
         <CopyButton
           text={code}
           label={copyLabel}
-          className="absolute top-[6px] right-[6px] tablet:top-[6px] tablet:right-[6px] desktop:top-[6px] desktop:right-[6px]"
+          className="absolute top-[1.602vw] right-[1.602vw] tablet:top-[0.75vw] tablet:right-[0.75vw] desktop:top-[0.312vw] desktop:right-[0.312vw]"
         />
       )}
     </div>

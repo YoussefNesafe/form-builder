@@ -26,7 +26,7 @@ function Section() {
         complete operator list (the validator rejects a condition with none of them set). A{" "}
         <IC>ConditionSpec</IC> is one of three shapes, all evaluating to the same normalized form internally:
       </P>
-      <ul className="flex flex-col gap-[6px] tablet:gap-[6px] desktop:gap-[6px] text-[14px] tablet:text-[14px] desktop:text-[14px] text-muted-foreground">
+      <ul className="flex flex-col gap-[1.602vw] tablet:gap-[0.75vw] desktop:gap-[0.312vw] text-[3.738vw] tablet:text-[1.75vw] desktop:text-[0.728vw] text-muted-foreground">
         <li>
           <strong className="text-foreground">A single condition</strong> — the object above, on its own.
         </li>

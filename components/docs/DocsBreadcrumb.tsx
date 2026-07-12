@@ -25,9 +25,9 @@ export function DocsBreadcrumb() {
   return (
     <nav
       aria-label={docs.breadcrumb.label}
-      className="mb-[12px] tablet:mb-[12px] desktop:mb-[12px] text-[12px] tablet:text-[12px] desktop:text-[12px] text-muted-foreground"
+      className="mb-[3.204vw] tablet:mb-[1.5vw] desktop:mb-[0.624vw] text-[3.204vw] tablet:text-[1.5vw] desktop:text-[0.624vw] text-muted-foreground"
     >
-      <ol className="flex items-center gap-[6px] tablet:gap-[6px] desktop:gap-[6px]">
+      <ol className="flex items-center gap-[1.602vw] tablet:gap-[0.75vw] desktop:gap-[0.312vw]">
         <li>
           <Link href="/docs" className="hover:text-foreground">
             {docs.breadcrumb.docs}

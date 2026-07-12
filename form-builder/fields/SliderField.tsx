@@ -31,7 +31,7 @@ export function SliderField({ field }: FieldComponentProps) {
             disabled={disabled}
             error={fieldState.error}
           >
-            <div className="flex items-center gap-[12px] tablet:gap-[12px] desktop:gap-[12px]">
+            <div className="flex items-center gap-[3.204vw] tablet:gap-[1.5vw] desktop:gap-[0.624vw]">
               <Slider
                 ref={rhf.ref}
                 id={id}
@@ -48,7 +48,7 @@ export function SliderField({ field }: FieldComponentProps) {
                   error: fieldState.error,
                 })}
               />
-              <span className="w-[40px] tablet:w-[40px] desktop:w-[40px] text-end text-[14px] tablet:text-[14px] desktop:text-[14px] text-muted-foreground">{value}</span>
+              <span className="w-[10.68vw] tablet:w-[5vw] desktop:w-[2.08vw] text-end text-[3.738vw] tablet:text-[1.75vw] desktop:text-[0.728vw] text-muted-foreground">{value}</span>
             </div>
           </FieldWrapper>
         );

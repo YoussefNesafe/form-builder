@@ -161,25 +161,25 @@ export function FormStepper({
   };
 
   return (
-    <div className="flex flex-col gap-[24px] tablet:gap-[24px] desktop:gap-[24px]">
+    <div className="flex flex-col gap-[6.408vw] tablet:gap-[3vw] desktop:gap-[1.248vw]">
       <ol
         ref={stepListRef}
         tabIndex={-1}
         aria-label={messages.steps}
-        className="flex items-center gap-[16px] tablet:gap-[16px] desktop:gap-[16px] outline-none"
+        className="flex items-center gap-[4.272vw] tablet:gap-[2vw] desktop:gap-[0.832vw] outline-none"
       >
         {visibleIndices.map((index, displayIndex) => (
           <li
             key={index}
             aria-current={index === effectiveStep ? "step" : undefined}
             className={cn(
-              "flex items-center gap-[8px] tablet:gap-[8px] desktop:gap-[8px] text-[14px] tablet:text-[14px] desktop:text-[14px]",
+              "flex items-center gap-[2.136vw] tablet:gap-[1vw] desktop:gap-[0.416vw] text-[3.738vw] tablet:text-[1.75vw] desktop:text-[0.728vw]",
               index === effectiveStep ? "font-medium text-foreground" : "text-muted-foreground",
             )}
           >
             <span
               className={cn(
-                "flex size-[24px] tablet:size-[24px] desktop:size-[24px] items-center justify-center rounded-full border text-[12px] tablet:text-[12px] desktop:text-[12px]",
+                "flex size-[6.408vw] tablet:size-[3vw] desktop:size-[1.248vw] items-center justify-center rounded-full border text-[3.204vw] tablet:text-[1.5vw] desktop:text-[0.624vw]",
                 index === effectiveStep && "border-primary bg-primary text-primary-foreground",
                 displayIndex < position && "border-primary text-primary",
               )}

@@ -50,8 +50,8 @@ export function SegmentedField({ field }: FieldComponentProps) {
             aria-invalid={!!fieldState.error}
             onBlur={rhf.onBlur}
             className={cn(
-              "flex h-[32px] tablet:h-[32px] desktop:h-[32px] w-full overflow-hidden",
-              "rounded-[10px] tablet:rounded-[10px] desktop:rounded-[10px] border",
+              "flex h-[8.544vw] tablet:h-[4vw] desktop:h-[1.664vw] w-full overflow-hidden",
+              "rounded-[2.67vw] tablet:rounded-[1.25vw] desktop:rounded-[0.52vw] border",
               fieldState.error ? "border-destructive" : "border-input",
             )}
           >
@@ -62,8 +62,8 @@ export function SegmentedField({ field }: FieldComponentProps) {
                 value={String(option.value)}
                 disabled={disabled || option.disabled}
                 className={cn(
-                  "flex-1 min-w-0 truncate px-[10px] tablet:px-[10px] desktop:px-[10px]",
-                  "text-[16px] tablet:text-[14px] desktop:text-[14px] transition-colors outline-none",
+                  "flex-1 min-w-0 truncate px-[2.67vw] tablet:px-[1.25vw] desktop:px-[0.52vw]",
+                  "text-[4.272vw] tablet:text-[1.75vw] desktop:text-[0.728vw] transition-colors outline-none",
                   "border-s border-input first:border-s-0",
                   // Flat mandate: selected + focus states via color only.
                   "data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground",

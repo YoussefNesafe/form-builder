@@ -61,7 +61,7 @@ function DialogContent({
       <DialogPrimitive.Content
         data-slot="dialog-content"
         className={cn(
-          "fixed top-1/2 start-1/2 z-50 grid w-full max-w-[calc(100%-32px)] tablet:max-w-[384px] desktop:max-w-[384px] -translate-x-1/2 rtl:translate-x-1/2 -translate-y-1/2 gap-[16px] tablet:gap-[16px] desktop:gap-[16px] rounded-[14px] tablet:rounded-[14px] desktop:rounded-[14px] bg-popover p-[16px] tablet:p-[16px] desktop:p-[16px] text-[14px] tablet:text-[14px] desktop:text-[14px] text-popover-foreground ring-1 tablet:ring-1 desktop:ring-1 ring-foreground/10 duration-100 outline-none data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
+          "fixed top-1/2 start-1/2 z-50 grid w-full max-w-[calc(100%-32px)] tablet:max-w-[48vw] desktop:max-w-[19.968vw] -translate-x-1/2 rtl:translate-x-1/2 -translate-y-1/2 gap-[4.272vw] tablet:gap-[2vw] desktop:gap-[0.832vw] rounded-[3.738vw] tablet:rounded-[1.75vw] desktop:rounded-[0.728vw] bg-popover p-[4.272vw] tablet:p-[2vw] desktop:p-[0.832vw] text-[3.738vw] tablet:text-[1.75vw] desktop:text-[0.728vw] text-popover-foreground ring-1 tablet:ring-1 desktop:ring-1 ring-foreground/10 duration-100 outline-none data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
           className
         )}
         {...props}
@@ -71,7 +71,7 @@ function DialogContent({
           <DialogPrimitive.Close data-slot="dialog-close" asChild>
             <Button
               variant="ghost"
-              className="absolute top-[8px] tablet:top-[8px] desktop:top-[8px] end-[8px] tablet:end-[8px] desktop:end-[8px]"
+              className="absolute top-[2.136vw] tablet:top-[1vw] desktop:top-[0.416vw] end-[2.136vw] tablet:end-[1vw] desktop:end-[0.416vw]"
               size="icon-sm"
             >
               <XIcon
@@ -89,7 +89,7 @@ function DialogHeader({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="dialog-header"
-      className={cn("flex flex-col gap-[8px] tablet:gap-[8px] desktop:gap-[8px]", className)}
+      className={cn("flex flex-col gap-[2.136vw] tablet:gap-[1vw] desktop:gap-[0.416vw]", className)}
       {...props}
     />
   )
@@ -107,7 +107,7 @@ function DialogFooter({
     <div
       data-slot="dialog-footer"
       className={cn(
-        "-mx-[16px] tablet:-mx-[16px] desktop:-mx-[16px] -mb-[16px] tablet:-mb-[16px] desktop:-mb-[16px] flex flex-col-reverse gap-[8px] tablet:gap-[8px] desktop:gap-[8px] rounded-b-[14px] tablet:rounded-b-[14px] desktop:rounded-b-[14px] border-t bg-muted/50 p-[16px] tablet:p-[16px] desktop:p-[16px] tablet:flex-row tablet:justify-end",
+        "-mx-[4.272vw] tablet:-mx-[2vw] desktop:-mx-[0.832vw] -mb-[4.272vw] tablet:-mb-[2vw] desktop:-mb-[0.832vw] flex flex-col-reverse gap-[2.136vw] tablet:gap-[1vw] desktop:gap-[0.416vw] rounded-b-[3.738vw] tablet:rounded-b-[1.75vw] desktop:rounded-b-[0.728vw] border-t bg-muted/50 p-[4.272vw] tablet:p-[2vw] desktop:p-[0.832vw] tablet:flex-row tablet:justify-end",
         className
       )}
       {...props}
@@ -130,7 +130,7 @@ function DialogTitle({
     <DialogPrimitive.Title
       data-slot="dialog-title"
       className={cn(
-        "font-heading text-[16px] tablet:text-[16px] desktop:text-[16px] leading-none font-medium",
+        "font-heading text-[4.272vw] tablet:text-[2vw] desktop:text-[0.832vw] leading-none font-medium",
         className
       )}
       {...props}
@@ -146,7 +146,7 @@ function DialogDescription({
     <DialogPrimitive.Description
       data-slot="dialog-description"
       className={cn(
-        "text-[14px] tablet:text-[14px] desktop:text-[14px] text-muted-foreground *:[a]:underline *:[a]:underline-offset-3 *:[a]:hover:text-foreground",
+        "text-[3.738vw] tablet:text-[1.75vw] desktop:text-[0.728vw] text-muted-foreground *:[a]:underline *:[a]:underline-offset-3 *:[a]:hover:text-foreground",
         className
       )}
       {...props}

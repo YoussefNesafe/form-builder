@@ -24,7 +24,7 @@ export function BuilderHeaderActions() {
   const [resetOpen, setResetOpen] = useState(false);
 
   return (
-    <div className="flex items-center gap-[8px] tablet:gap-[8px] desktop:gap-[8px]">
+    <div className="flex items-center gap-[2.136vw] tablet:gap-[1vw] desktop:gap-[0.416vw]">
       <Dialog>
         <DialogTrigger asChild>
           <Button variant="default" size="sm">
@@ -32,7 +32,7 @@ export function BuilderHeaderActions() {
             {builder.header.exportButton}
           </Button>
         </DialogTrigger>
-        <DialogContent className="w-[calc(100vw-32px)] tablet:w-[640px] desktop:w-[720px] max-w-[720px] tablet:max-w-[720px] desktop:max-w-[720px]">
+        <DialogContent className="w-[calc(100vw-8.544vw)] tablet:w-[80vw] desktop:w-[37.44vw] max-w-[192.24vw] tablet:max-w-[90vw] desktop:max-w-[37.44vw]">
           <DialogHeader>
             <DialogTitle>{builder.header.exportDialogTitle}</DialogTitle>
             <DialogDescription>
@@ -58,10 +58,12 @@ export function BuilderHeaderActions() {
             {builder.header.resetButton}
           </Button>
         </DialogTrigger>
-        <DialogContent className="w-[calc(100vw-32px)] tablet:w-[420px] desktop:w-[420px] max-w-[420px] tablet:max-w-[420px] desktop:max-w-[420px]">
+        <DialogContent className="w-[calc(100vw-8.544vw)] tablet:w-[52.5vw] desktop:w-[21.84vw] max-w-[112.14vw] tablet:max-w-[52.5vw] desktop:max-w-[21.84vw]">
           <DialogHeader>
             <DialogTitle>{builder.header.resetDialogTitle}</DialogTitle>
-            <DialogDescription>{builder.header.resetDialogDescription}</DialogDescription>
+            <DialogDescription>
+              {builder.header.resetDialogDescription}
+            </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <DialogClose asChild>

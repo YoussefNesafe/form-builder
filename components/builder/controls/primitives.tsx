@@ -23,7 +23,9 @@ export function TextControl({ id, value, onChange }: ControlProps<string>) {
     <Input
       id={id}
       value={value ?? ""}
-      onChange={(e) => onChange(e.target.value === "" ? undefined : e.target.value)}
+      onChange={(e) =>
+        onChange(e.target.value === "" ? undefined : e.target.value)
+      }
     />
   );
 }
@@ -33,12 +35,19 @@ export function TextareaControl({ id, value, onChange }: ControlProps<string>) {
     <Textarea
       id={id}
       value={value ?? ""}
-      onChange={(e) => onChange(e.target.value === "" ? undefined : e.target.value)}
+      onChange={(e) =>
+        onChange(e.target.value === "" ? undefined : e.target.value)
+      }
     />
   );
 }
 
-export function NumberControl({ id, value, onChange, descriptor }: ControlProps<number>) {
+export function NumberControl({
+  id,
+  value,
+  onChange,
+  descriptor,
+}: ControlProps<number>) {
   const { min, max, step, integer } = descriptor;
   return (
     <Input
@@ -59,7 +68,13 @@ export function NumberControl({ id, value, onChange, descriptor }: ControlProps<
 }
 
 export function BooleanControl({ id, value, onChange }: ControlProps<boolean>) {
-  return <Switch id={id} checked={value === true} onCheckedChange={(c) => onChange(c || undefined)} />;
+  return (
+    <Switch
+      id={id}
+      checked={value === true}
+      onCheckedChange={(c) => onChange(c || undefined)}
+    />
+  );
 }
 
 export function DateControl({ id, value, onChange }: ControlProps<string>) {
@@ -68,7 +83,9 @@ export function DateControl({ id, value, onChange }: ControlProps<string>) {
       id={id}
       type="date"
       value={value ?? ""}
-      onChange={(e) => onChange(e.target.value === "" ? undefined : e.target.value)}
+      onChange={(e) =>
+        onChange(e.target.value === "" ? undefined : e.target.value)
+      }
     />
   );
 }
@@ -79,36 +96,48 @@ export function TimeControl({ id, value, onChange }: ControlProps<string>) {
       id={id}
       type="time"
       value={value ?? ""}
-      onChange={(e) => onChange(e.target.value === "" ? undefined : e.target.value)}
+      onChange={(e) =>
+        onChange(e.target.value === "" ? undefined : e.target.value)
+      }
     />
   );
 }
 
 export function PenColorControl({ id, value, onChange }: ControlProps<string>) {
   return (
-    <div className="flex items-center gap-[8px] tablet:gap-[8px] desktop:gap-[8px]">
+    <div className="flex items-center gap-[2.136vw] tablet:gap-[1vw] desktop:gap-[0.416vw]">
       <Input
         aria-label={C.penColorAriaLabel}
         type="color"
         value={value ?? "#000000"}
         onChange={(e) => onChange(e.target.value)}
-        className="h-[32px] tablet:h-[32px] desktop:h-[32px] w-[44px] tablet:w-[44px] desktop:w-[44px] p-[2px] tablet:p-[2px] desktop:p-[2px]"
+        className="h-[8.544vw] tablet:h-[4vw] desktop:h-[1.664vw] w-[11.748vw] tablet:w-[5.5vw] desktop:w-[2.288vw] p-[0.534vw] tablet:p-[0.25vw] desktop:p-[0.104vw]"
       />
       <Input
         id={id}
         value={value ?? ""}
         placeholder={C.penColorPlaceholder}
-        onChange={(e) => onChange(e.target.value === "" ? undefined : e.target.value)}
+        onChange={(e) =>
+          onChange(e.target.value === "" ? undefined : e.target.value)
+        }
       />
     </div>
   );
 }
 
 /** Optional single-choice from descriptor.options. `NONE_VALUE` clears. */
-export function SelectControl({ id, value, onChange, descriptor }: ControlProps<string>) {
+export function SelectControl({
+  id,
+  value,
+  onChange,
+  descriptor,
+}: ControlProps<string>) {
   const options = descriptor.options ?? [];
   return (
-    <Select value={value ?? NONE_VALUE} onValueChange={(v) => onChange(v === NONE_VALUE ? undefined : v)}>
+    <Select
+      value={value ?? NONE_VALUE}
+      onValueChange={(v) => onChange(v === NONE_VALUE ? undefined : v)}
+    >
       <SelectTrigger id={id} className="w-full">
         <SelectValue placeholder={C.selectDefault} />
       </SelectTrigger>
@@ -125,10 +154,23 @@ export function SelectControl({ id, value, onChange, descriptor }: ControlProps<
 }
 
 /** Reference a sibling field by name; eligible set depends on descriptor.refKind. */
-export function FieldRefControl({ id, value, onChange, descriptor, ctx }: ControlProps<string>) {
-  const names = eligibleRefs(ctx.siblings, descriptor.refKind ?? "any", ctx.node._id);
+export function FieldRefControl({
+  id,
+  value,
+  onChange,
+  descriptor,
+  ctx,
+}: ControlProps<string>) {
+  const names = eligibleRefs(
+    ctx.siblings,
+    descriptor.refKind ?? "any",
+    ctx.node._id,
+  );
   return (
-    <Select value={value ?? NONE_VALUE} onValueChange={(v) => onChange(v === NONE_VALUE ? undefined : v)}>
+    <Select
+      value={value ?? NONE_VALUE}
+      onValueChange={(v) => onChange(v === NONE_VALUE ? undefined : v)}
+    >
       <SelectTrigger id={id} className="w-full">
         <SelectValue placeholder={C.fieldRefNone} />
       </SelectTrigger>
@@ -151,7 +193,12 @@ export function MaskControl(props: ControlProps<string>) {
 
 /** Arbitrary JSON value (hidden fields). Falls back to a plain string when unparseable. */
 export function JsonControl({ id, value, onChange }: ControlProps<unknown>) {
-  const text = value === undefined ? "" : typeof value === "string" ? value : JSON.stringify(value);
+  const text =
+    value === undefined
+      ? ""
+      : typeof value === "string"
+        ? value
+        : JSON.stringify(value);
   return (
     <Textarea
       id={id}

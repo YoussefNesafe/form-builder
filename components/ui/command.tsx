@@ -25,7 +25,7 @@ function Command({
     <CommandPrimitive
       data-slot="command"
       className={cn(
-        "flex size-full flex-col overflow-hidden rounded-[14px]! tablet:rounded-[14px]! desktop:rounded-[14px]! bg-popover p-[4px] tablet:p-[4px] desktop:p-[4px] text-popover-foreground",
+        "flex size-full flex-col overflow-hidden rounded-[3.738vw]! tablet:rounded-[1.75vw]! desktop:rounded-[0.728vw]! bg-popover p-[1.068vw] tablet:p-[0.5vw] desktop:p-[0.208vw] text-popover-foreground",
         className
       )}
       {...props}
@@ -54,7 +54,7 @@ function CommandDialog({
       </DialogHeader>
       <DialogContent
         className={cn(
-          "top-1/3 translate-y-0 overflow-hidden rounded-[14px]! tablet:rounded-[14px]! desktop:rounded-[14px]! p-0",
+          "top-1/3 translate-y-0 overflow-hidden rounded-[3.738vw]! tablet:rounded-[1.75vw]! desktop:rounded-[0.728vw]! p-0",
           className
         )}
         showCloseButton={showCloseButton}
@@ -70,18 +70,18 @@ function CommandInput({
   ...props
 }: React.ComponentProps<typeof CommandPrimitive.Input>) {
   return (
-    <div data-slot="command-input-wrapper" className="p-[4px] tablet:p-[4px] desktop:p-[4px] pb-0">
-      <InputGroup className="h-[32px]! tablet:h-[32px]! desktop:h-[32px]! rounded-[10px]! tablet:rounded-[10px]! desktop:rounded-[10px]! border-input/30 bg-input/30 shadow-none! *:data-[slot=input-group-addon]:ps-[8px]! tablet:*:data-[slot=input-group-addon]:ps-[8px]! desktop:*:data-[slot=input-group-addon]:ps-[8px]!">
+    <div data-slot="command-input-wrapper" className="p-[1.068vw] tablet:p-[0.5vw] desktop:p-[0.208vw] pb-0">
+      <InputGroup className="h-[8.544vw]! tablet:h-[4vw]! desktop:h-[1.664vw]! rounded-[2.67vw]! tablet:rounded-[1.25vw]! desktop:rounded-[0.52vw]! border-input/30 bg-input/30 shadow-none! *:data-[slot=input-group-addon]:ps-[2.136vw]! tablet:*:data-[slot=input-group-addon]:ps-[1vw]! desktop:*:data-[slot=input-group-addon]:ps-[0.416vw]!">
         <CommandPrimitive.Input
           data-slot="command-input"
           className={cn(
-            "w-full text-[14px] tablet:text-[14px] desktop:text-[14px] outline-hidden disabled:cursor-not-allowed disabled:opacity-50",
+            "w-full text-[3.738vw] tablet:text-[1.75vw] desktop:text-[0.728vw] outline-hidden disabled:cursor-not-allowed disabled:opacity-50",
             className
           )}
           {...props}
         />
         <InputGroupAddon>
-          <SearchIcon className="size-[16px] tablet:size-[16px] desktop:size-[16px] shrink-0 opacity-50" />
+          <SearchIcon className="size-[4.272vw] tablet:size-[2vw] desktop:size-[0.832vw] shrink-0 opacity-50" />
         </InputGroupAddon>
       </InputGroup>
     </div>
@@ -96,7 +96,7 @@ function CommandList({
     <CommandPrimitive.List
       data-slot="command-list"
       className={cn(
-        "no-scrollbar max-h-[288px] tablet:max-h-[288px] desktop:max-h-[288px] scroll-py-[4px] tablet:scroll-py-[4px] desktop:scroll-py-[4px] overflow-x-hidden overflow-y-auto outline-none",
+        "no-scrollbar max-h-[76.896vw] tablet:max-h-[36vw] desktop:max-h-[14.976vw] scroll-py-[1.068vw] tablet:scroll-py-[0.5vw] desktop:scroll-py-[0.208vw] overflow-x-hidden overflow-y-auto outline-none",
         className
       )}
       {...props}
@@ -111,7 +111,7 @@ function CommandEmpty({
   return (
     <CommandPrimitive.Empty
       data-slot="command-empty"
-      className={cn("py-[24px] tablet:py-[24px] desktop:py-[24px] text-center text-[14px] tablet:text-[14px] desktop:text-[14px]", className)}
+      className={cn("py-[6.408vw] tablet:py-[3vw] desktop:py-[1.248vw] text-center text-[3.738vw] tablet:text-[1.75vw] desktop:text-[0.728vw]", className)}
       {...props}
     />
   )
@@ -125,7 +125,7 @@ function CommandGroup({
     <CommandPrimitive.Group
       data-slot="command-group"
       className={cn(
-        "overflow-hidden p-[4px] tablet:p-[4px] desktop:p-[4px] text-foreground **:[[cmdk-group-heading]]:px-[8px] tablet:**:[[cmdk-group-heading]]:px-[8px] desktop:**:[[cmdk-group-heading]]:px-[8px] **:[[cmdk-group-heading]]:py-[6px] tablet:**:[[cmdk-group-heading]]:py-[6px] desktop:**:[[cmdk-group-heading]]:py-[6px] **:[[cmdk-group-heading]]:text-[12px] tablet:**:[[cmdk-group-heading]]:text-[12px] desktop:**:[[cmdk-group-heading]]:text-[12px] **:[[cmdk-group-heading]]:font-medium **:[[cmdk-group-heading]]:text-muted-foreground",
+        "overflow-hidden p-[1.068vw] tablet:p-[0.5vw] desktop:p-[0.208vw] text-foreground **:[[cmdk-group-heading]]:px-[2.136vw] tablet:**:[[cmdk-group-heading]]:px-[1vw] desktop:**:[[cmdk-group-heading]]:px-[0.416vw] **:[[cmdk-group-heading]]:py-[1.602vw] tablet:**:[[cmdk-group-heading]]:py-[0.75vw] desktop:**:[[cmdk-group-heading]]:py-[0.312vw] **:[[cmdk-group-heading]]:text-[3.204vw] tablet:**:[[cmdk-group-heading]]:text-[1.5vw] desktop:**:[[cmdk-group-heading]]:text-[0.624vw] **:[[cmdk-group-heading]]:font-medium **:[[cmdk-group-heading]]:text-muted-foreground",
         className
       )}
       {...props}
@@ -140,7 +140,7 @@ function CommandSeparator({
   return (
     <CommandPrimitive.Separator
       data-slot="command-separator"
-      className={cn("-mx-[4px] tablet:-mx-[4px] desktop:-mx-[4px] h-px bg-border", className)}
+      className={cn("-mx-[1.068vw] tablet:-mx-[0.5vw] desktop:-mx-[0.208vw] h-px bg-border", className)}
       {...props}
     />
   )
@@ -155,7 +155,7 @@ function CommandItem({
     <CommandPrimitive.Item
       data-slot="command-item"
       className={cn(
-        "group/command-item relative flex cursor-default items-center gap-[8px] tablet:gap-[8px] desktop:gap-[8px] rounded-[6px] tablet:rounded-[6px] desktop:rounded-[6px] px-[8px] tablet:px-[8px] desktop:px-[8px] py-[6px] tablet:py-[6px] desktop:py-[6px] text-[14px] tablet:text-[14px] desktop:text-[14px] outline-hidden select-none in-data-[slot=dialog-content]:rounded-[10px]! tablet:in-data-[slot=dialog-content]:rounded-[10px]! desktop:in-data-[slot=dialog-content]:rounded-[10px]! data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 data-selected:bg-muted data-selected:text-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-[16px] tablet:[&_svg:not([class*='size-'])]:size-[16px] desktop:[&_svg:not([class*='size-'])]:size-[16px] data-selected:*:[svg]:text-foreground",
+        "group/command-item relative flex cursor-default items-center gap-[2.136vw] tablet:gap-[1vw] desktop:gap-[0.416vw] rounded-[1.602vw] tablet:rounded-[0.75vw] desktop:rounded-[0.312vw] px-[2.136vw] tablet:px-[1vw] desktop:px-[0.416vw] py-[1.602vw] tablet:py-[0.75vw] desktop:py-[0.312vw] text-[3.738vw] tablet:text-[1.75vw] desktop:text-[0.728vw] outline-hidden select-none in-data-[slot=dialog-content]:rounded-[2.67vw]! tablet:in-data-[slot=dialog-content]:rounded-[1.25vw]! desktop:in-data-[slot=dialog-content]:rounded-[0.52vw]! data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 data-selected:bg-muted data-selected:text-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-[4.272vw] tablet:[&_svg:not([class*='size-'])]:size-[2vw] desktop:[&_svg:not([class*='size-'])]:size-[0.832vw] data-selected:*:[svg]:text-foreground",
         className
       )}
       {...props}
@@ -174,7 +174,7 @@ function CommandShortcut({
     <span
       data-slot="command-shortcut"
       className={cn(
-        "ms-auto text-[12px] tablet:text-[12px] desktop:text-[12px] tracking-widest text-muted-foreground group-data-selected/command-item:text-foreground",
+        "ms-auto text-[3.204vw] tablet:text-[1.5vw] desktop:text-[0.624vw] tracking-widest text-muted-foreground group-data-selected/command-item:text-foreground",
         className
       )}
       {...props}

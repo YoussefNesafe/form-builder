@@ -11,7 +11,11 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { builder } from "@/locales/en/builder";
 import { fmt } from "@/locales/fmt";
 import { COUNTRIES, countryLabel } from "./countries";
@@ -37,7 +41,13 @@ function CountryPickerShell({
   return (
     <Popover open={open} onOpenChange={onOpenChange}>
       <PopoverTrigger asChild>
-        <Button id={id} variant="outline" size="sm" role="combobox" className="w-full justify-between">
+        <Button
+          id={id}
+          variant="outline"
+          size="sm"
+          role="combobox"
+          className="w-full justify-between"
+        >
           <span className="truncate">{triggerLabel}</span>
           <ChevronsUpDown className="opacity-60" />
         </Button>
@@ -56,17 +66,29 @@ function CountryPickerShell({
 }
 
 /** Single ISO alpha-2 country picker (searchable). */
-export function CountryCodeControl({ id, value, onChange }: ControlProps<string>) {
+export function CountryCodeControl({
+  id,
+  value,
+  onChange,
+}: ControlProps<string>) {
   const [open, setOpen] = useState(false);
   return (
     <CountryPickerShell
       id={id}
       open={open}
       onOpenChange={setOpen}
-      triggerLabel={value ? `${countryLabel(value)} (${value})` : C.selectCountry}
+      triggerLabel={
+        value ? `${countryLabel(value)} (${value})` : C.selectCountry
+      }
     >
       {value && (
-        <CommandItem value={CLEAR_VALUE} onSelect={() => { onChange(undefined); setOpen(false); }}>
+        <CommandItem
+          value={CLEAR_VALUE}
+          onSelect={() => {
+            onChange(undefined);
+            setOpen(false);
+          }}
+        >
           <X className="opacity-60" />
           {C.clear}
         </CommandItem>
@@ -75,7 +97,10 @@ export function CountryCodeControl({ id, value, onChange }: ControlProps<string>
         <CommandItem
           key={c.code}
           value={`${c.label} ${c.code}`}
-          onSelect={() => { onChange(c.code); setOpen(false); }}
+          onSelect={() => {
+            onChange(c.code);
+            setOpen(false);
+          }}
         >
           <Check className={value === c.code ? "opacity-100" : "opacity-0"} />
           {c.label} <span className="text-muted-foreground">({c.code})</span>
@@ -86,24 +111,30 @@ export function CountryCodeControl({ id, value, onChange }: ControlProps<string>
 }
 
 /** Multi ISO alpha-2 country picker; stores a string[]. */
-export function CountryListControl({ id, value, onChange }: ControlProps<string[]>) {
+export function CountryListControl({
+  id,
+  value,
+  onChange,
+}: ControlProps<string[]>) {
   const [open, setOpen] = useState(false);
   const selected = value ?? [];
   const toggle = (code: string) => {
-    const next = selected.includes(code) ? selected.filter((c) => c !== code) : [...selected, code];
+    const next = selected.includes(code)
+      ? selected.filter((c) => c !== code)
+      : [...selected, code];
     onChange(next.length ? next : undefined);
   };
 
   return (
-    <div className="flex flex-col gap-[6px] tablet:gap-[6px] desktop:gap-[6px]">
+    <div className="flex flex-col gap-[1.602vw] tablet:gap-[0.75vw] desktop:gap-[0.312vw]">
       {selected.length > 0 && (
-        <div className="flex flex-wrap gap-[4px] tablet:gap-[4px] desktop:gap-[4px]">
+        <div className="flex flex-wrap gap-[1.068vw] tablet:gap-[0.5vw] desktop:gap-[0.208vw]">
           {selected.map((code) => (
             <button
               key={code}
               type="button"
               onClick={() => toggle(code)}
-              className="flex items-center gap-[4px] tablet:gap-[4px] desktop:gap-[4px] rounded-[6px] tablet:rounded-[6px] desktop:rounded-[6px] border border-border px-[6px] tablet:px-[6px] desktop:px-[6px] py-[2px] tablet:py-[2px] desktop:py-[2px] text-[12px] tablet:text-[12px] desktop:text-[12px]"
+              className="flex items-center gap-[1.068vw] tablet:gap-[0.5vw] desktop:gap-[0.208vw] rounded-[1.602vw] tablet:rounded-[0.75vw] desktop:rounded-[0.312vw] border border-border px-[1.602vw] tablet:px-[0.75vw] desktop:px-[0.312vw] py-[0.534vw] tablet:py-[0.25vw] desktop:py-[0.104vw] text-[3.204vw] tablet:text-[1.5vw] desktop:text-[0.624vw]"
             >
               {code}
               <X className="opacity-60" />
@@ -115,11 +146,23 @@ export function CountryListControl({ id, value, onChange }: ControlProps<string[
         id={id}
         open={open}
         onOpenChange={setOpen}
-        triggerLabel={selected.length ? fmt(C.selectedCount, { n: selected.length }) : C.addCountries}
+        triggerLabel={
+          selected.length
+            ? fmt(C.selectedCount, { n: selected.length })
+            : C.addCountries
+        }
       >
         {COUNTRIES.map((c) => (
-          <CommandItem key={c.code} value={`${c.label} ${c.code}`} onSelect={() => toggle(c.code)}>
-            <Check className={selected.includes(c.code) ? "opacity-100" : "opacity-0"} />
+          <CommandItem
+            key={c.code}
+            value={`${c.label} ${c.code}`}
+            onSelect={() => toggle(c.code)}
+          >
+            <Check
+              className={
+                selected.includes(c.code) ? "opacity-100" : "opacity-0"
+              }
+            />
             {c.label} <span className="text-muted-foreground">({c.code})</span>
           </CommandItem>
         ))}

@@ -90,24 +90,24 @@ export function FileField({ field }: FieldComponentProps) {
               onClick={() => inputRef.current?.click()}
               className="w-fit"
             >
-              <Upload className="me-[8px] tablet:me-[8px] desktop:me-[8px] size-[16px] tablet:size-[16px] desktop:size-[16px]" />
+              <Upload className="me-[2.136vw] tablet:me-[1vw] desktop:me-[0.416vw] size-[4.272vw] tablet:size-[2vw] desktop:size-[0.832vw]" />
               {config.placeholder ?? config.label}
             </Button>
             {files.length > 0 && (
-              <ul className="flex flex-col gap-[4px] tablet:gap-[4px] desktop:gap-[4px] text-[14px] tablet:text-[14px] desktop:text-[14px]">
+              <ul className="flex flex-col gap-[1.068vw] tablet:gap-[0.5vw] desktop:gap-[0.208vw] text-[3.738vw] tablet:text-[1.75vw] desktop:text-[0.728vw]">
                 {files.map((file, index) => (
-                  <li key={`${file.name}-${index}`} className="flex items-center gap-[8px] tablet:gap-[8px] desktop:gap-[8px]">
+                  <li key={`${file.name}-${index}`} className="flex items-center gap-[2.136vw] tablet:gap-[1vw] desktop:gap-[0.416vw]">
                     <span className="truncate">{file.name}</span>
                     <span className="text-muted-foreground">{formatSize(file.size)}</span>
                     <Button
                       type="button"
                       variant="ghost"
                       size="icon"
-                      className="size-[24px] tablet:size-[24px] desktop:size-[24px]"
+                      className="size-[6.408vw] tablet:size-[3vw] desktop:size-[1.248vw]"
                       aria-label={messages.removeFile(file.name)}
                       onClick={() => removeFile(index)}
                     >
-                      <X className="size-[12px] tablet:size-[12px] desktop:size-[12px]" />
+                      <X className="size-[3.204vw] tablet:size-[1.5vw] desktop:size-[0.624vw]" />
                     </Button>
                   </li>
                 ))}

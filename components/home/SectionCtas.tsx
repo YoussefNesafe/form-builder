@@ -15,7 +15,7 @@ export function SectionCtas({ center = false }: { center?: boolean }) {
   return (
     <div
       className={cn(
-        "flex flex-col tablet:flex-row desktop:flex-row gap-[12px] tablet:gap-[12px] desktop:gap-[12px]",
+        "flex flex-col tablet:flex-row desktop:flex-row gap-[3.204vw] tablet:gap-[1.5vw] desktop:gap-[0.624vw]",
         center && "items-center tablet:justify-center desktop:justify-center",
       )}
     >

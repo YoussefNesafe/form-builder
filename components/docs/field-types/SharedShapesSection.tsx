@@ -14,19 +14,19 @@ function Section() {
   return (
     <DocsSection id={id} title={title}>
       <P>Shapes referenced by name from more than one field type&apos;s props below, explained once here.</P>
-      <dl className="flex flex-col gap-[16px] tablet:gap-[16px] desktop:gap-[16px]">
+      <dl className="flex flex-col gap-[4.272vw] tablet:gap-[2vw] desktop:gap-[0.832vw]">
         {SHARED_SHAPES.map((shape) => (
-          <div key={shape.name} className="flex flex-col gap-[4px] tablet:gap-[4px] desktop:gap-[4px]">
-            <dt className="font-mono text-[14px] tablet:text-[14px] desktop:text-[14px] font-medium text-foreground">
+          <div key={shape.name} className="flex flex-col gap-[1.068vw] tablet:gap-[0.5vw] desktop:gap-[0.208vw]">
+            <dt className="font-mono text-[3.738vw] tablet:text-[1.75vw] desktop:text-[0.728vw] font-medium text-foreground">
               {shape.name}
             </dt>
-            <dd className="font-mono text-[12.5px] tablet:text-[12.5px] desktop:text-[12.5px] text-muted-foreground">
+            <dd className="font-mono text-[3.338vw] tablet:text-[1.563vw] desktop:text-[0.65vw] text-muted-foreground">
               {shape.type}
             </dd>
-            <dd className="text-[14px] tablet:text-[14px] desktop:text-[14px] leading-[22px] tablet:leading-[22px] desktop:leading-[22px] text-muted-foreground">
+            <dd className="text-[3.738vw] tablet:text-[1.75vw] desktop:text-[0.728vw] leading-[5.874vw] tablet:leading-[2.75vw] desktop:leading-[1.144vw] text-muted-foreground">
               {shape.description}
             </dd>
-            <dd className="text-[12px] tablet:text-[12px] desktop:text-[12px] text-muted-foreground">
+            <dd className="text-[3.204vw] tablet:text-[1.5vw] desktop:text-[0.624vw] text-muted-foreground">
               Used by:{" "}
               {shape.usedBy.map((type, i) => (
                 <span key={type}>

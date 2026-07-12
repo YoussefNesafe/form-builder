@@ -66,13 +66,13 @@ export function CommandBlock({ kind, args, label = "Package manager", copyLabel 
     >
       <TabsPrimitive.List
         aria-label={label}
-        className="flex items-center gap-[2px] tablet:gap-[2px] desktop:gap-[2px] border-b border-border px-[6px] tablet:px-[6px] desktop:px-[6px] pt-[6px] tablet:pt-[6px] desktop:pt-[6px]"
+        className="flex items-center gap-[0.534vw] tablet:gap-[0.25vw] desktop:gap-[0.104vw] border-b border-border px-[1.602vw] tablet:px-[0.75vw] desktop:px-[0.312vw] pt-[1.602vw] tablet:pt-[0.75vw] desktop:pt-[0.312vw]"
       >
         {PACKAGE_MANAGERS.map((pm) => (
           <TabsPrimitive.Trigger
             key={pm}
             value={pm}
-            className="rounded-t-[6px] tablet:rounded-t-[6px] desktop:rounded-t-[6px] border border-b-0 border-transparent px-[10px] tablet:px-[10px] desktop:px-[10px] py-[6px] tablet:py-[6px] desktop:py-[6px] text-[13px] tablet:text-[13px] desktop:text-[13px] text-muted-foreground data-[state=active]:border-border data-[state=active]:bg-background data-[state=active]:text-foreground"
+            className="rounded-t-[1.602vw] tablet:rounded-t-[0.75vw] desktop:rounded-t-[0.312vw] border border-b-0 border-transparent px-[2.67vw] tablet:px-[1.25vw] desktop:px-[0.52vw] py-[1.602vw] tablet:py-[0.75vw] desktop:py-[0.312vw] text-[3.471vw] tablet:text-[1.625vw] desktop:text-[0.676vw] text-muted-foreground data-[state=active]:border-border data-[state=active]:bg-background data-[state=active]:text-foreground"
           >
             {pm}
           </TabsPrimitive.Trigger>
@@ -98,7 +98,7 @@ export function CommandBlock({ kind, args, label = "Package manager", copyLabel 
       <CopyButton
         text={variants[packageManager]}
         label={copyLabel}
-        className="absolute top-[6px] right-[6px] tablet:top-[6px] tablet:right-[6px] desktop:top-[6px] desktop:right-[6px]"
+        className="absolute top-[1.602vw] right-[1.602vw] tablet:top-[0.75vw] tablet:right-[0.75vw] desktop:top-[0.312vw] desktop:right-[0.312vw]"
       />
     </TabsPrimitive.Root>
   );

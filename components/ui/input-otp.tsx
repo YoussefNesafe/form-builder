@@ -32,7 +32,7 @@ function InputOTPGroup({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="input-otp-group"
       className={cn(
-        "flex items-center rounded-[10px] tablet:rounded-[10px] desktop:rounded-[10px] has-aria-invalid:border-destructive has-aria-invalid:ring-3 tablet:has-aria-invalid:ring-3 desktop:has-aria-invalid:ring-3 has-aria-invalid:ring-destructive/20 dark:has-aria-invalid:ring-destructive/40",
+        "flex items-center rounded-[2.67vw] tablet:rounded-[1.25vw] desktop:rounded-[0.52vw] has-aria-invalid:border-destructive has-aria-invalid:ring-3 tablet:has-aria-invalid:ring-3 desktop:has-aria-invalid:ring-3 has-aria-invalid:ring-destructive/20 dark:has-aria-invalid:ring-destructive/40",
         className
       )}
       {...props}
@@ -55,7 +55,7 @@ function InputOTPSlot({
       data-slot="input-otp-slot"
       data-active={isActive}
       className={cn(
-        "relative flex size-[32px] tablet:size-[32px] desktop:size-[32px] items-center justify-center border-y border-e border-input text-[14px] tablet:text-[14px] desktop:text-[14px] transition-all outline-none first:rounded-s-[10px] tablet:first:rounded-s-[10px] desktop:first:rounded-s-[10px] first:border-s last:rounded-e-[10px] tablet:last:rounded-e-[10px] desktop:last:rounded-e-[10px] aria-invalid:border-destructive data-[active=true]:z-10 data-[active=true]:border-ring data-[active=true]:ring-3 tablet:data-[active=true]:ring-3 desktop:data-[active=true]:ring-3 data-[active=true]:ring-ring/50 data-[active=true]:aria-invalid:border-destructive data-[active=true]:aria-invalid:ring-destructive/20 dark:bg-input/30 dark:data-[active=true]:aria-invalid:ring-destructive/40",
+        "relative flex size-[8.544vw] tablet:size-[4vw] desktop:size-[1.664vw] items-center justify-center border-y border-e border-input text-[3.738vw] tablet:text-[1.75vw] desktop:text-[0.728vw] transition-all outline-none first:rounded-s-[2.67vw] tablet:first:rounded-s-[1.25vw] desktop:first:rounded-s-[0.52vw] first:border-s last:rounded-e-[2.67vw] tablet:last:rounded-e-[1.25vw] desktop:last:rounded-e-[0.52vw] aria-invalid:border-destructive data-[active=true]:z-10 data-[active=true]:border-ring data-[active=true]:ring-3 tablet:data-[active=true]:ring-3 desktop:data-[active=true]:ring-3 data-[active=true]:ring-ring/50 data-[active=true]:aria-invalid:border-destructive data-[active=true]:aria-invalid:ring-destructive/20 dark:bg-input/30 dark:data-[active=true]:aria-invalid:ring-destructive/40",
         className
       )}
       {...props}
@@ -63,7 +63,7 @@ function InputOTPSlot({
       {char}
       {hasFakeCaret && (
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-          <div className="h-[16px] tablet:h-[16px] desktop:h-[16px] w-px animate-caret-blink bg-foreground duration-1000" />
+          <div className="h-[4.272vw] tablet:h-[2vw] desktop:h-[0.832vw] w-px animate-caret-blink bg-foreground duration-1000" />
         </div>
       )}
     </div>
@@ -74,7 +74,7 @@ function InputOTPSeparator({ ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="input-otp-separator"
-      className="flex items-center [&_svg:not([class*='size-'])]:size-[16px] tablet:[&_svg:not([class*='size-'])]:size-[16px] desktop:[&_svg:not([class*='size-'])]:size-[16px]"
+      className="flex items-center [&_svg:not([class*='size-'])]:size-[4.272vw] tablet:[&_svg:not([class*='size-'])]:size-[2vw] desktop:[&_svg:not([class*='size-'])]:size-[0.832vw]"
       role="separator"
       {...props}
     >

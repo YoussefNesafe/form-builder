@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils"
 // own their own padding/gap/typography via `className` since those vary by
 // context (a two-line title+description card vs. a single-line inline note).
 const alertVariants = cva(
-  "rounded-[12px] tablet:rounded-[12px] desktop:rounded-[12px] border text-[12px] tablet:text-[12px] desktop:text-[12px]",
+  "rounded-[3.204vw] tablet:rounded-[1.5vw] desktop:rounded-[0.624vw] border text-[3.204vw] tablet:text-[1.5vw] desktop:text-[0.624vw]",
   {
     variants: {
       variant: {

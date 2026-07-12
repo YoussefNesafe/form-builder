@@ -20,32 +20,32 @@ export function PropsTable({ rows, label }: { rows: PropRow[]; label: string }) 
       tabIndex={0}
       role="group"
       aria-label={label}
-      className="overflow-x-auto rounded-[12px] tablet:rounded-[12px] desktop:rounded-[12px] border border-border focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
+      className="overflow-x-auto rounded-[3.204vw] tablet:rounded-[1.5vw] desktop:rounded-[0.624vw] border border-border focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
     >
-      <table className="w-full min-w-[560px] tablet:min-w-[560px] desktop:min-w-[560px] border-collapse text-left text-[13px] tablet:text-[13px] desktop:text-[13px]">
+      <table className="w-full min-w-[149.52vw] tablet:min-w-[70vw] desktop:min-w-[29.12vw] border-collapse text-left text-[3.471vw] tablet:text-[1.625vw] desktop:text-[0.676vw]">
         <thead>
           <tr className="border-b border-border bg-card">
             <th
               scope="col"
-              className="w-[110px] tablet:w-[110px] desktop:w-[110px] px-[14px] tablet:px-[14px] desktop:px-[14px] py-[10px] tablet:py-[10px] desktop:py-[10px] font-medium text-card-foreground"
+              className="w-[29.37vw] tablet:w-[13.75vw] desktop:w-[5.72vw] px-[3.738vw] tablet:px-[1.75vw] desktop:px-[0.728vw] py-[2.67vw] tablet:py-[1.25vw] desktop:py-[0.52vw] font-medium text-card-foreground"
             >
               Name
             </th>
             <th
               scope="col"
-              className="w-[160px] tablet:w-[160px] desktop:w-[160px] px-[14px] tablet:px-[14px] desktop:px-[14px] py-[10px] tablet:py-[10px] desktop:py-[10px] font-medium text-card-foreground"
+              className="w-[42.72vw] tablet:w-[20vw] desktop:w-[8.32vw] px-[3.738vw] tablet:px-[1.75vw] desktop:px-[0.728vw] py-[2.67vw] tablet:py-[1.25vw] desktop:py-[0.52vw] font-medium text-card-foreground"
             >
               Type
             </th>
             <th
               scope="col"
-              className="w-[90px] tablet:w-[90px] desktop:w-[90px] px-[14px] tablet:px-[14px] desktop:px-[14px] py-[10px] tablet:py-[10px] desktop:py-[10px] font-medium text-card-foreground"
+              className="w-[24.03vw] tablet:w-[11.25vw] desktop:w-[4.68vw] px-[3.738vw] tablet:px-[1.75vw] desktop:px-[0.728vw] py-[2.67vw] tablet:py-[1.25vw] desktop:py-[0.52vw] font-medium text-card-foreground"
             >
               Required
             </th>
             <th
               scope="col"
-              className="px-[14px] tablet:px-[14px] desktop:px-[14px] py-[10px] tablet:py-[10px] desktop:py-[10px] font-medium text-card-foreground"
+              className="px-[3.738vw] tablet:px-[1.75vw] desktop:px-[0.728vw] py-[2.67vw] tablet:py-[1.25vw] desktop:py-[0.52vw] font-medium text-card-foreground"
             >
               Description
             </th>
@@ -56,20 +56,20 @@ export function PropsTable({ rows, label }: { rows: PropRow[]; label: string }) 
             <tr key={row.name} className="border-b border-border last:border-b-0">
               <th
                 scope="row"
-                className="px-[14px] tablet:px-[14px] desktop:px-[14px] py-[10px] tablet:py-[10px] desktop:py-[10px] align-top font-mono font-normal text-left text-[12.5px] tablet:text-[12.5px] desktop:text-[12.5px]"
+                className="px-[3.738vw] tablet:px-[1.75vw] desktop:px-[0.728vw] py-[2.67vw] tablet:py-[1.25vw] desktop:py-[0.52vw] align-top font-mono font-normal text-left text-[3.338vw] tablet:text-[1.563vw] desktop:text-[0.65vw]"
               >
                 {row.name}
               </th>
-              <td className="px-[14px] tablet:px-[14px] desktop:px-[14px] py-[10px] tablet:py-[10px] desktop:py-[10px] align-top font-mono text-[12.5px] tablet:text-[12.5px] desktop:text-[12.5px] text-muted-foreground">
+              <td className="px-[3.738vw] tablet:px-[1.75vw] desktop:px-[0.728vw] py-[2.67vw] tablet:py-[1.25vw] desktop:py-[0.52vw] align-top font-mono text-[3.338vw] tablet:text-[1.563vw] desktop:text-[0.65vw] text-muted-foreground">
                 {row.type}
               </td>
-              <td className="px-[14px] tablet:px-[14px] desktop:px-[14px] py-[10px] tablet:py-[10px] desktop:py-[10px] align-top text-muted-foreground">
+              <td className="px-[3.738vw] tablet:px-[1.75vw] desktop:px-[0.728vw] py-[2.67vw] tablet:py-[1.25vw] desktop:py-[0.52vw] align-top text-muted-foreground">
                 {row.required ? "Required" : "Optional"}
               </td>
-              <td className="px-[14px] tablet:px-[14px] desktop:px-[14px] py-[10px] tablet:py-[10px] desktop:py-[10px] align-top text-muted-foreground">
+              <td className="px-[3.738vw] tablet:px-[1.75vw] desktop:px-[0.728vw] py-[2.67vw] tablet:py-[1.25vw] desktop:py-[0.52vw] align-top text-muted-foreground">
                 <p>{row.description}</p>
                 {row.exceptions && (
-                  <p className="mt-[4px] tablet:mt-[4px] desktop:mt-[4px] text-[12px] tablet:text-[12px] desktop:text-[12px]">
+                  <p className="mt-[1.068vw] tablet:mt-[0.5vw] desktop:mt-[0.208vw] text-[3.204vw] tablet:text-[1.5vw] desktop:text-[0.624vw]">
                     {row.exceptions}
                   </p>
                 )}

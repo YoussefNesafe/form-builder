@@ -16,7 +16,8 @@ export function OptionsEditor({ id, value, onChange }: ControlProps<Option[]>) {
   const options = value ?? [];
 
   const commit = (next: Option[]) => onChange(next.length ? next : undefined);
-  const patch = (i: number, p: Partial<Option>) => commit(options.map((o, idx) => (idx === i ? { ...o, ...p } : o)));
+  const patch = (i: number, p: Partial<Option>) =>
+    commit(options.map((o, idx) => (idx === i ? { ...o, ...p } : o)));
   const move = (i: number, dir: -1 | 1) => {
     const j = i + dir;
     if (j < 0 || j >= options.length) return;
@@ -26,13 +27,16 @@ export function OptionsEditor({ id, value, onChange }: ControlProps<Option[]>) {
   };
 
   return (
-    <div id={id} className="flex flex-col gap-[8px] tablet:gap-[8px] desktop:gap-[8px]">
+    <div
+      id={id}
+      className="flex flex-col gap-[2.136vw] tablet:gap-[1vw] desktop:gap-[0.416vw]"
+    >
       {options.map((o, i) => (
         <div
           key={i}
-          className="flex flex-col gap-[6px] tablet:gap-[6px] desktop:gap-[6px] rounded-[10px] tablet:rounded-[10px] desktop:rounded-[10px] border border-border p-[8px] tablet:p-[8px] desktop:p-[8px]"
+          className="flex flex-col gap-[1.602vw] tablet:gap-[0.75vw] desktop:gap-[0.312vw] rounded-[2.67vw] tablet:rounded-[1.25vw] desktop:rounded-[0.52vw] border border-border p-[2.136vw] tablet:p-[1vw] desktop:p-[0.416vw]"
         >
-          <div className="flex items-center gap-[6px] tablet:gap-[6px] desktop:gap-[6px]">
+          <div className="flex items-center gap-[1.602vw] tablet:gap-[0.75vw] desktop:gap-[0.312vw]">
             <Input
               aria-label={fmt(C.labelAriaLabel, { n: i + 1 })}
               placeholder={C.labelPlaceholder}
@@ -47,15 +51,28 @@ export function OptionsEditor({ id, value, onChange }: ControlProps<Option[]>) {
             />
           </div>
           <div className="flex items-center justify-between">
-            <label className="flex items-center gap-[6px] tablet:gap-[6px] desktop:gap-[6px] text-[12px] tablet:text-[12px] desktop:text-[12px] text-muted-foreground">
-              <Switch checked={o.disabled === true} onCheckedChange={(c) => patch(i, { disabled: c || undefined })} />
+            <label className="flex items-center gap-[1.602vw] tablet:gap-[0.75vw] desktop:gap-[0.312vw] text-[3.204vw] tablet:text-[1.5vw] desktop:text-[0.624vw] text-muted-foreground">
+              <Switch
+                checked={o.disabled === true}
+                onCheckedChange={(c) => patch(i, { disabled: c || undefined })}
+              />
               {C.disabled}
             </label>
             <div className="flex items-center">
-              <Button variant="ghost" size="icon-xs" aria-label={fmt(C.moveUpAriaLabel, { n: i + 1 })} onClick={() => move(i, -1)}>
+              <Button
+                variant="ghost"
+                size="icon-xs"
+                aria-label={fmt(C.moveUpAriaLabel, { n: i + 1 })}
+                onClick={() => move(i, -1)}
+              >
                 <ChevronUp />
               </Button>
-              <Button variant="ghost" size="icon-xs" aria-label={fmt(C.moveDownAriaLabel, { n: i + 1 })} onClick={() => move(i, 1)}>
+              <Button
+                variant="ghost"
+                size="icon-xs"
+                aria-label={fmt(C.moveDownAriaLabel, { n: i + 1 })}
+                onClick={() => move(i, 1)}
+              >
                 <ChevronDown />
               </Button>
               <Button
@@ -74,7 +91,15 @@ export function OptionsEditor({ id, value, onChange }: ControlProps<Option[]>) {
       <Button
         variant="outline"
         size="sm"
-        onClick={() => commit([...options, { label: `Option ${options.length + 1}`, value: `option-${options.length + 1}` }])}
+        onClick={() =>
+          commit([
+            ...options,
+            {
+              label: `Option ${options.length + 1}`,
+              value: `option-${options.length + 1}`,
+            },
+          ])
+        }
       >
         <Plus />
         {C.addOption}

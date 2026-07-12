@@ -4,14 +4,16 @@ import { ExamplePageShell } from "@/components/examples/ExamplePageShell";
 import { t } from "@/locales";
 import { conditionalProfileConfig } from "./config";
 
-export const metadata: Metadata = { title: t.examples.conditionalProfile.title };
+export const metadata: Metadata = {
+  title: t.examples.conditionalProfile.title,
+};
 
 export default function ConditionalProfilePage() {
   return (
     <ExamplePageShell
       title={t.examples.conditionalProfile.title}
       description={
-        <p className="text-[14px] tablet:text-[14px] desktop:text-[14px] text-muted-foreground">
+        <p className="text-[3.738vw] tablet:text-[1.75vw] desktop:text-[0.728vw] text-muted-foreground">
           {t.examples.conditionalProfile.description}
         </p>
       }

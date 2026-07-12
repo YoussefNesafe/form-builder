@@ -23,16 +23,16 @@ export function DocsSidebar() {
     <>
       <nav
         aria-label="Docs sections"
-        className="desktop:hidden w-full min-w-0 -mx-[16px] tablet:-mx-[24px] overflow-x-auto border-b border-border px-[16px] tablet:px-[24px] py-[10px] tablet:py-[10px]"
+        className="desktop:hidden w-full min-w-0 -mx-[4.272vw] tablet:-mx-[3vw] overflow-x-auto border-b border-border px-[4.272vw] tablet:px-[3vw] py-[2.67vw] tablet:py-[1.25vw]"
       >
-        <ul className="flex w-max items-center gap-[18px] tablet:gap-[18px]">
+        <ul className="flex w-max items-center gap-[4.806vw] tablet:gap-[2.25vw]">
           {DOCS_PAGES.map((item) => (
             <li key={item.href}>
               <Link
                 href={item.href}
                 aria-current={isActive(item.href) ? "page" : undefined}
                 className={cn(
-                  "block whitespace-nowrap border-b-2 tablet:border-b-2 pb-[2px] tablet:pb-[2px] text-[13px] tablet:text-[13px] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground",
+                  "block whitespace-nowrap border-b-2 tablet:border-b-2 pb-[0.534vw] tablet:pb-[0.25vw] text-[3.471vw] tablet:text-[1.625vw] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground",
                   isActive(item.href)
                     ? "border-foreground text-foreground"
                     : "border-transparent text-muted-foreground hover:text-foreground",
@@ -47,22 +47,22 @@ export function DocsSidebar() {
 
       <nav
         aria-label="Docs sections"
-        className="hidden desktop:sticky desktop:top-[80px] desktop:block desktop:w-[240px] desktop:shrink-0 desktop:self-start desktop:py-[48px]"
+        className="hidden desktop:sticky desktop:top-[4.16vw] desktop:block desktop:w-[12.48vw] desktop:shrink-0 desktop:self-start desktop:py-[2.496vw]"
       >
-        <ul className="flex flex-col desktop:gap-[24px]">
+        <ul className="flex flex-col desktop:gap-[1.248vw]">
           {DOCS_NAV_GROUPS.map((group) => (
-            <li key={group.title} className="flex flex-col desktop:gap-[8px]">
-              <span className="desktop:text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+            <li key={group.title} className="flex flex-col desktop:gap-[0.416vw]">
+              <span className="desktop:text-[0.572vw] font-medium uppercase tracking-wide text-muted-foreground">
                 {group.title}
               </span>
-              <ul className="flex flex-col desktop:gap-[2px]">
+              <ul className="flex flex-col desktop:gap-[0.104vw]">
                 {group.items.map((item) => (
                   <li key={item.href}>
                     <Link
                       href={item.href}
                       aria-current={isActive(item.href) ? "page" : undefined}
                       className={cn(
-                        "block desktop:rounded-[6px] border-l-2 desktop:px-[10px] desktop:py-[6px] desktop:text-[13px] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground",
+                        "block desktop:rounded-[0.312vw] border-l-2 desktop:px-[0.52vw] desktop:py-[0.312vw] desktop:text-[0.676vw] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground",
                         isActive(item.href)
                           ? "border-foreground bg-muted font-medium text-foreground"
                           : "border-transparent text-muted-foreground hover:border-border hover:text-foreground",

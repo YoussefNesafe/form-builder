@@ -14,13 +14,13 @@ function ReviewRow({ field, value }: { field: AnyFieldConfig; value: unknown }) 
 
   if (field.type === "signature" && typeof value === "string" && value.startsWith("data:image/")) {
     return (
-      <div className="flex flex-col gap-[4px] tablet:gap-[4px] desktop:gap-[4px]">
-        <span className="text-[12px] tablet:text-[12px] desktop:text-[12px] text-muted-foreground">{label}</span>
+      <div className="flex flex-col gap-[1.068vw] tablet:gap-[0.5vw] desktop:gap-[0.208vw]">
+        <span className="text-[3.204vw] tablet:text-[1.5vw] desktop:text-[0.624vw] text-muted-foreground">{label}</span>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={value}
           alt={label}
-          className="h-[48px] tablet:h-[48px] desktop:h-[48px] w-fit max-w-full rounded-[8px] tablet:rounded-[8px] desktop:rounded-[8px] border border-border bg-background"
+          className="h-[12.816vw] tablet:h-[6vw] desktop:h-[2.496vw] w-fit max-w-full rounded-[2.136vw] tablet:rounded-[1vw] desktop:rounded-[0.416vw] border border-border bg-background"
         />
       </div>
     );
@@ -29,24 +29,24 @@ function ReviewRow({ field, value }: { field: AnyFieldConfig; value: unknown }) 
   if (field.type === "group" && Array.isArray(value)) {
     const inner = (field as { fields: AnyFieldConfig[] }).fields;
     return (
-      <div className="flex flex-col gap-[6px] tablet:gap-[6px] desktop:gap-[6px]">
-        <span className="text-[12px] tablet:text-[12px] desktop:text-[12px] text-muted-foreground">{label}</span>
+      <div className="flex flex-col gap-[1.602vw] tablet:gap-[0.75vw] desktop:gap-[0.312vw]">
+        <span className="text-[3.204vw] tablet:text-[1.5vw] desktop:text-[0.624vw] text-muted-foreground">{label}</span>
         {value.length === 0 && (
-          <span className="text-[14px] tablet:text-[14px] desktop:text-[14px]">{runtime.messages.notAnswered}</span>
+          <span className="text-[3.738vw] tablet:text-[1.75vw] desktop:text-[0.728vw]">{runtime.messages.notAnswered}</span>
         )}
         {value.map((row, index) => (
           <div
             key={index}
-            className="flex flex-col gap-[4px] tablet:gap-[4px] desktop:gap-[4px] rounded-[8px] tablet:rounded-[8px] desktop:rounded-[8px] border border-border p-[8px] tablet:p-[8px] desktop:p-[8px]"
+            className="flex flex-col gap-[1.068vw] tablet:gap-[0.5vw] desktop:gap-[0.208vw] rounded-[2.136vw] tablet:rounded-[1vw] desktop:rounded-[0.416vw] border border-border p-[2.136vw] tablet:p-[1vw] desktop:p-[0.416vw]"
           >
             {inner
               .filter((innerField) => innerField.type !== "static" && innerField.type !== "submit")
               .map((innerField) => (
-                <div key={innerField.name} className="flex items-baseline justify-between gap-[12px] tablet:gap-[12px] desktop:gap-[12px]">
-                  <span className="text-[12px] tablet:text-[12px] desktop:text-[12px] text-muted-foreground">
+                <div key={innerField.name} className="flex items-baseline justify-between gap-[3.204vw] tablet:gap-[1.5vw] desktop:gap-[0.624vw]">
+                  <span className="text-[3.204vw] tablet:text-[1.5vw] desktop:text-[0.624vw] text-muted-foreground">
                     {innerField.label || innerField.name}
                   </span>
-                  <span className="text-[14px] tablet:text-[14px] desktop:text-[14px] text-end break-words">
+                  <span className="text-[3.738vw] tablet:text-[1.75vw] desktop:text-[0.728vw] text-end break-words">
                     {formatReviewValue(
                       // The verified-otp registry keys on runtime row-prefixed
                       // names — the formatter must see the prefixed name.
@@ -64,9 +64,9 @@ function ReviewRow({ field, value }: { field: AnyFieldConfig; value: unknown }) 
   }
 
   return (
-    <div className="flex items-baseline justify-between gap-[12px] tablet:gap-[12px] desktop:gap-[12px]">
-      <span className="text-[12px] tablet:text-[12px] desktop:text-[12px] text-muted-foreground">{label}</span>
-      <span className="text-[14px] tablet:text-[14px] desktop:text-[14px] text-end break-words">
+    <div className="flex items-baseline justify-between gap-[3.204vw] tablet:gap-[1.5vw] desktop:gap-[0.624vw]">
+      <span className="text-[3.204vw] tablet:text-[1.5vw] desktop:text-[0.624vw] text-muted-foreground">{label}</span>
+      <span className="text-[3.738vw] tablet:text-[1.75vw] desktop:text-[0.728vw] text-end break-words">
         {formatReviewValue(field, value, runtime)}
       </span>
     </div>
@@ -116,12 +116,12 @@ export function ReviewStep({
     .filter((section) => section.fields.length > 0);
 
   return (
-    <div className="flex flex-col gap-[16px] tablet:gap-[16px] desktop:gap-[16px]">
+    <div className="flex flex-col gap-[4.272vw] tablet:gap-[2vw] desktop:gap-[0.832vw]">
       {sections.map((section, order) => (
-        <section key={section.index} className="flex flex-col gap-[8px] tablet:gap-[8px] desktop:gap-[8px]">
+        <section key={section.index} className="flex flex-col gap-[2.136vw] tablet:gap-[1vw] desktop:gap-[0.416vw]">
           {order > 0 && <Separator />}
           <div className="flex items-center justify-between">
-            <h3 className="text-[14px] tablet:text-[14px] desktop:text-[14px] font-medium">{section.step.title}</h3>
+            <h3 className="text-[3.738vw] tablet:text-[1.75vw] desktop:text-[0.728vw] font-medium">{section.step.title}</h3>
             <Button
               type="button"
               variant="ghost"

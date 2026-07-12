@@ -43,9 +43,17 @@ function toRecord(pairs: BranchPair[]): Record<string, Option[]> {
  * source seeds one branch per source option value; country sources start
  * empty (193 branches would be noise).
  */
-export function OptionsFromEditor({ id, value, onChange, descriptor, ctx }: ControlProps<OptionsFrom>) {
+export function OptionsFromEditor({
+  id,
+  value,
+  onChange,
+  descriptor,
+  ctx,
+}: ControlProps<OptionsFrom>) {
   const sources = eligibleRefs(ctx.siblings, "optionsSource", ctx.node._id);
-  const [pairs, setPairs] = useState<BranchPair[]>(() => Object.entries(value?.map ?? {}));
+  const [pairs, setPairs] = useState<BranchPair[]>(() =>
+    Object.entries(value?.map ?? {}),
+  );
   // Re-init local pair order only when the editor moves to another node —
   // our own commits must not round-trip through the collapsed record.
   const nodeRef = useRef(ctx.node._id);
@@ -91,8 +99,11 @@ export function OptionsFromEditor({ id, value, onChange, descriptor, ctx }: Cont
   });
 
   return (
-    <div id={id} className="flex flex-col gap-[8px] tablet:gap-[8px] desktop:gap-[8px]">
-      <div className="flex items-center gap-[6px] tablet:gap-[6px] desktop:gap-[6px]">
+    <div
+      id={id}
+      className="flex flex-col gap-[2.136vw] tablet:gap-[1vw] desktop:gap-[0.416vw]"
+    >
+      <div className="flex items-center gap-[1.602vw] tablet:gap-[0.75vw] desktop:gap-[0.312vw]">
         <Select
           value={value.field}
           // Old branch keys belong to the old source's value domain —
@@ -126,20 +137,24 @@ export function OptionsFromEditor({ id, value, onChange, descriptor, ctx }: Cont
       {pairs.map(([key, options], index) => (
         <div
           key={index}
-          className="flex flex-col gap-[6px] tablet:gap-[6px] desktop:gap-[6px] rounded-[10px] tablet:rounded-[10px] desktop:rounded-[10px] border border-border p-[8px] tablet:p-[8px] desktop:p-[8px]"
+          className="flex flex-col gap-[1.602vw] tablet:gap-[0.75vw] desktop:gap-[0.312vw] rounded-[2.67vw] tablet:rounded-[1.25vw] desktop:rounded-[0.52vw] border border-border p-[2.136vw] tablet:p-[1vw] desktop:p-[0.416vw]"
         >
-          <div className="flex items-center gap-[6px] tablet:gap-[6px] desktop:gap-[6px]">
+          <div className="flex items-center gap-[1.602vw] tablet:gap-[0.75vw] desktop:gap-[0.312vw]">
             <Input
               aria-label={fmt(C.branchValueAriaLabel, { n: index + 1 })}
               aria-invalid={duplicate[index] || undefined}
-              aria-describedby={duplicate[index] ? `${id}-branch-${index}-duplicate` : undefined}
+              aria-describedby={
+                duplicate[index] ? `${id}-branch-${index}-duplicate` : undefined
+              }
               placeholder={C.branchValuePlaceholder}
               value={key}
               className={cn(duplicate[index] && "border-destructive")}
               onChange={(e) =>
                 commit(
                   value.field,
-                  pairs.map((pair, i) => (i === index ? [e.target.value, pair[1]] : pair)),
+                  pairs.map((pair, i) =>
+                    i === index ? [e.target.value, pair[1]] : pair,
+                  ),
                 )
               }
             />
@@ -148,7 +163,12 @@ export function OptionsFromEditor({ id, value, onChange, descriptor, ctx }: Cont
               size="icon-xs"
               aria-label={fmt(C.removeBranchAriaLabel, { n: index + 1 })}
               className="text-muted-foreground hover:text-destructive"
-              onClick={() => commit(value.field, pairs.filter((_, i) => i !== index))}
+              onClick={() =>
+                commit(
+                  value.field,
+                  pairs.filter((_, i) => i !== index),
+                )
+              }
             >
               <X />
             </Button>
@@ -156,7 +176,7 @@ export function OptionsFromEditor({ id, value, onChange, descriptor, ctx }: Cont
           {duplicate[index] && (
             <p
               id={`${id}-branch-${index}-duplicate`}
-              className="text-[11px] tablet:text-[11px] desktop:text-[11px] text-destructive"
+              className="text-[2.937vw] tablet:text-[1.375vw] desktop:text-[0.572vw] text-destructive"
             >
               {C.duplicateWarning}
             </p>
@@ -167,7 +187,9 @@ export function OptionsFromEditor({ id, value, onChange, descriptor, ctx }: Cont
             onChange={(opts) =>
               commit(
                 value.field,
-                pairs.map((pair, i) => (i === index ? [pair[0], opts ?? []] : pair)),
+                pairs.map((pair, i) =>
+                  i === index ? [pair[0], opts ?? []] : pair,
+                ),
               )
             }
             descriptor={descriptor}

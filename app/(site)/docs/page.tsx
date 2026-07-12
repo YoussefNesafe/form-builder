@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { DOCS_PAGES } from "@/lib/docsNav";
-import { DocsIntro, DocsFootnote, DocsInlineCode as IC } from "@/components/docs/DocsProse";
+import {
+  DocsIntro,
+  DocsFootnote,
+  DocsInlineCode as IC,
+} from "@/components/docs/DocsProse";
 import { LinkCard } from "@/components/shared/LinkCard";
 import { t } from "@/locales";
 
@@ -17,10 +21,12 @@ const DESCRIPTIONS: Record<string, string> = {
   "/docs/field-types": t.docs.index.descriptions.fieldTypes,
 };
 
-const PAGES = DOCS_PAGES.filter((page) => page.href !== "/docs").map((page) => ({
-  ...page,
-  description: DESCRIPTIONS[page.href] ?? "",
-}));
+const PAGES = DOCS_PAGES.filter((page) => page.href !== "/docs").map(
+  (page) => ({
+    ...page,
+    description: DESCRIPTIONS[page.href] ?? "",
+  }),
+);
 
 /**
  * Docs hub. The engine (form-builder/) is the product; these three pages
@@ -29,27 +35,40 @@ const PAGES = DOCS_PAGES.filter((page) => page.href !== "/docs").map((page) => (
  */
 export default function DocsIndexPage() {
   return (
-    <div className="min-w-0 w-full desktop:max-w-[720px] flex flex-col gap-[24px] tablet:gap-[24px] desktop:gap-[24px]">
+    <div className="min-w-0 w-full desktop:max-w-[37.44vw] flex flex-col gap-[6.408vw] tablet:gap-[3vw] desktop:gap-[1.248vw]">
       <DocsIntro title={t.docs.index.title}>
         {t.docs.index.intro.prefix}
-        <Link href="/docs/installation" className="underline underline-offset-2 hover:text-foreground">
+        <Link
+          href="/docs/installation"
+          className="underline underline-offset-2 hover:text-foreground"
+        >
           {t.docs.index.intro.installationLink}
         </Link>
         {t.docs.index.intro.betweenInstallationAndFirstForm}
-        <Link href="/docs/your-first-form" className="underline underline-offset-2 hover:text-foreground">
+        <Link
+          href="/docs/your-first-form"
+          className="underline underline-offset-2 hover:text-foreground"
+        >
           {t.docs.index.intro.yourFirstFormLink}
         </Link>
         {t.docs.index.intro.betweenFirstFormAndExamples}
-        <Link href="/examples" className="underline underline-offset-2 hover:text-foreground">
+        <Link
+          href="/examples"
+          className="underline underline-offset-2 hover:text-foreground"
+        >
           {t.docs.index.intro.examplesLink}
         </Link>
         {t.docs.index.intro.suffix}
       </DocsIntro>
 
-      <ul className="flex flex-col gap-[12px] tablet:gap-[12px] desktop:gap-[12px]">
+      <ul className="flex flex-col gap-[3.204vw] tablet:gap-[1.5vw] desktop:gap-[0.624vw]">
         {PAGES.map((page) => (
           <li key={page.href}>
-            <LinkCard href={page.href} title={page.title} description={page.description} />
+            <LinkCard
+              href={page.href}
+              title={page.title}
+              description={page.description}
+            />
           </li>
         ))}
       </ul>

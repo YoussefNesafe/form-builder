@@ -4,13 +4,13 @@ import type { ResponsiveFieldWidth } from "../core/types";
 // Error color stays on the message and control border only — labels and
 // input text keep the default foreground.
 export const fieldWrapperVariants = cva(
-  "flex flex-col gap-[6px] tablet:gap-[6px] desktop:gap-[6px]",
+  "flex flex-col gap-[1.602vw] tablet:gap-[0.75vw] desktop:gap-[0.312vw]",
   {
     variants: {
       size: {
-        sm: "text-[14px] tablet:text-[14px] desktop:text-[14px]",
+        sm: "text-[3.738vw] tablet:text-[1.75vw] desktop:text-[0.728vw]",
         md: "",
-        lg: "text-[18px] tablet:text-[18px] desktop:text-[18px]",
+        lg: "text-[4.806vw] tablet:text-[2.25vw] desktop:text-[0.936vw]",
       },
     },
     defaultVariants: { size: "md" },

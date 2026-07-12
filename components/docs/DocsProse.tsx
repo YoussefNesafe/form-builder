@@ -23,7 +23,7 @@ import { cn } from "@/lib/utils";
 /** Page title — 28px/36px line-height, normal tracking (no tracking-tight). */
 export function DocsH1({ children }: { children: ReactNode }) {
   return (
-    <h1 className="text-[28px] tablet:text-[28px] desktop:text-[28px] font-semibold leading-[36px] tablet:leading-[36px] desktop:leading-[36px]">
+    <h1 className="text-[7.476vw] tablet:text-[3.5vw] desktop:text-[1.456vw] font-semibold leading-[9.612vw] tablet:leading-[4.5vw] desktop:leading-[1.872vw]">
       {children}
     </h1>
   );
@@ -34,7 +34,7 @@ export function DocsH2({ id, children }: { id?: string; children: ReactNode }) {
   return (
     <h2
       id={id}
-      className="text-[19px] tablet:text-[19px] desktop:text-[19px] font-semibold leading-[28px] tablet:leading-[28px] desktop:leading-[28px]"
+      className="text-[5.073vw] tablet:text-[2.375vw] desktop:text-[0.988vw] font-semibold leading-[7.476vw] tablet:leading-[3.5vw] desktop:leading-[1.456vw]"
     >
       {children}
     </h2>
@@ -46,7 +46,7 @@ export function DocsBody({ children, className }: { children: ReactNode; classNa
   return (
     <p
       className={cn(
-        "text-[15px] tablet:text-[15px] desktop:text-[15px] leading-[25px] tablet:leading-[25px] desktop:leading-[25px] text-muted-foreground",
+        "text-[4.005vw] tablet:text-[1.875vw] desktop:text-[0.78vw] leading-[6.675vw] tablet:leading-[3.125vw] desktop:leading-[1.3vw] text-muted-foreground",
         className,
       )}
     >
@@ -58,21 +58,21 @@ export function DocsBody({ children, className }: { children: ReactNode; classNa
 /** Inline code span — 13px (unchanged), shared so every docs page matches. */
 export function DocsInlineCode({ children }: { children: ReactNode }) {
   return (
-    <code className="rounded-[4px] tablet:rounded-[4px] desktop:rounded-[4px] bg-muted px-[4px] tablet:px-[4px] desktop:px-[4px] py-[2px] tablet:py-[2px] desktop:py-[2px] text-[13px] tablet:text-[13px] desktop:text-[13px]">
+    <code className="rounded-[1.068vw] tablet:rounded-[0.5vw] desktop:rounded-[0.208vw] bg-muted px-[1.068vw] tablet:px-[0.5vw] desktop:px-[0.208vw] py-[0.534vw] tablet:py-[0.25vw] desktop:py-[0.104vw] text-[3.471vw] tablet:text-[1.625vw] desktop:text-[0.676vw]">
       {children}
     </code>
   );
 }
 
 /**
- * Page-top H1 + intro paragraph block (gap-[8px]) — identical wrapper across
+ * Page-top H1 + intro paragraph block (gap-[2.136vw]) — identical wrapper across
  * every docs content page and the docs index. `children` is the intro
  * paragraph's content (rendered inside DocsBody), which may itself contain
  * inline links/`<IC>` — this only owns the wrapper, not the copy.
  */
 export function DocsIntro({ title, children }: { title: ReactNode; children: ReactNode }) {
   return (
-    <div className="flex flex-col gap-[8px] tablet:gap-[8px] desktop:gap-[8px]">
+    <div className="flex flex-col gap-[2.136vw] tablet:gap-[1vw] desktop:gap-[0.416vw]">
       <DocsH1>{title}</DocsH1>
       <DocsBody>{children}</DocsBody>
     </div>
@@ -80,7 +80,7 @@ export function DocsIntro({ title, children }: { title: ReactNode; children: Rea
 }
 
 /**
- * `<section>` wrapper (gap-[10px]) around a DocsH2 + its body — the ~20x
+ * `<section>` wrapper (gap-[2.67vw]) around a DocsH2 + its body — the ~20x
  * repeated pattern across the five docs content pages. `id` is forwarded to
  * DocsH2 as the TOC anchor target; each docs page's `sections.ts` derives
  * TOC_ITEMS from the same `id` binding a section passes here, and
@@ -88,7 +88,7 @@ export function DocsIntro({ title, children }: { title: ReactNode; children: Rea
  */
 export function DocsSection({ id, title, children }: { id?: string; title: ReactNode; children: ReactNode }) {
   return (
-    <section className="flex flex-col gap-[10px] tablet:gap-[10px] desktop:gap-[10px]">
+    <section className="flex flex-col gap-[2.67vw] tablet:gap-[1.25vw] desktop:gap-[0.52vw]">
       <DocsH2 id={id}>{title}</DocsH2>
       {children}
     </section>
@@ -98,6 +98,6 @@ export function DocsSection({ id, title, children }: { id?: string; title: React
 /** Trailing 13px cross-link paragraph — the "see also" footer repeated at the bottom of every docs page. */
 export function DocsFootnote({ children }: { children: ReactNode }) {
   return (
-    <p className="text-[13px] tablet:text-[13px] desktop:text-[13px] text-muted-foreground">{children}</p>
+    <p className="text-[3.471vw] tablet:text-[1.625vw] desktop:text-[0.676vw] text-muted-foreground">{children}</p>
   );
 }

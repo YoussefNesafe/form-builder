@@ -45,26 +45,32 @@ export function FormBuilder() {
 
   return (
     <div className="dark flex min-h-dvh flex-col bg-background text-foreground">
-      <header className="flex flex-col gap-[12px] tablet:gap-[12px] desktop:gap-[12px] border-b border-border px-[16px] tablet:px-[20px] desktop:px-[24px] py-[14px] tablet:py-[14px] desktop:py-[14px] tablet:flex-row tablet:items-end tablet:justify-between">
-        <div className="flex flex-col gap-[2px] tablet:gap-[2px] desktop:gap-[2px] tablet:flex-1">
+      <header className="flex flex-col gap-[3.204vw] tablet:gap-[1.5vw] desktop:gap-[0.624vw] border-b border-border px-[4.272vw] tablet:px-[2.5vw] desktop:px-[1.248vw] py-[3.738vw] tablet:py-[1.75vw] desktop:py-[0.728vw] tablet:flex-row tablet:items-end tablet:justify-between">
+        <div className="flex flex-col gap-[0.534vw] tablet:gap-[0.25vw] desktop:gap-[0.104vw] tablet:flex-1">
           {/* The route's only h1 (a11y heading outline) — styled as the small kicker on purpose. */}
-          <h1 className="text-[12px] tablet:text-[12px] desktop:text-[12px] font-medium uppercase tracking-wide text-muted-foreground">
+          <h1 className="text-[3.204vw] tablet:text-[1.5vw] desktop:text-[0.624vw] font-medium uppercase tracking-wide text-muted-foreground">
             {builder.header.kicker}
           </h1>
-          <div className="flex flex-col gap-[8px] tablet:flex-row tablet:items-end tablet:gap-[16px] desktop:gap-[16px]">
-            <div className="flex flex-col gap-[4px] tablet:gap-[4px] desktop:gap-[4px]">
-              <Label htmlFor="form-title" className="text-[11px] tablet:text-[11px] desktop:text-[11px] text-muted-foreground">
+          <div className="flex flex-col gap-[2.136vw] tablet:flex-row tablet:items-end tablet:gap-[2vw] desktop:gap-[0.832vw]">
+            <div className="flex flex-col gap-[1.068vw] tablet:gap-[0.5vw] desktop:gap-[0.208vw]">
+              <Label
+                htmlFor="form-title"
+                className="text-[2.937vw] tablet:text-[1.375vw] desktop:text-[0.572vw] text-muted-foreground"
+              >
                 {builder.header.titleLabel}
               </Label>
               <Input
                 id="form-title"
                 value={title}
                 onChange={(e) => setMeta({ title: e.target.value })}
-                className="tablet:w-[260px] desktop:w-[260px]"
+                className="tablet:w-[32.5vw] desktop:w-[13.52vw]"
               />
             </div>
-            <div className="flex flex-col gap-[4px] tablet:gap-[4px] desktop:gap-[4px]">
-              <Label htmlFor="form-desc" className="text-[11px] tablet:text-[11px] desktop:text-[11px] text-muted-foreground">
+            <div className="flex flex-col gap-[1.068vw] tablet:gap-[0.5vw] desktop:gap-[0.208vw]">
+              <Label
+                htmlFor="form-desc"
+                className="text-[2.937vw] tablet:text-[1.375vw] desktop:text-[0.572vw] text-muted-foreground"
+              >
                 {builder.header.descriptionLabel}
               </Label>
               <Input
@@ -72,7 +78,7 @@ export function FormBuilder() {
                 value={description}
                 onChange={(e) => setMeta({ description: e.target.value })}
                 placeholder={builder.header.descriptionPlaceholder}
-                className="tablet:w-[320px] desktop:w-[380px]"
+                className="tablet:w-[40vw] desktop:w-[19.76vw]"
               />
             </div>
           </div>
@@ -81,16 +87,16 @@ export function FormBuilder() {
       </header>
 
       <div className="flex min-h-0 flex-1 flex-col desktop:flex-row">
-        <aside className="flex flex-col gap-[12px] tablet:gap-[12px] desktop:gap-[12px] border-b border-border p-[16px] tablet:p-[16px] desktop:p-[16px] desktop:w-[300px] desktop:border-b-0 desktop:border-r desktop:overflow-y-auto">
+        <aside className="flex flex-col gap-[3.204vw] tablet:gap-[1.5vw] desktop:gap-[0.624vw] border-b border-border p-[4.272vw] tablet:p-[2vw] desktop:p-[0.832vw] desktop:w-[15.6vw] desktop:border-b-0 desktop:border-r desktop:overflow-y-auto">
           <StepsPanel />
           <div className="flex min-h-0 flex-1 flex-col">
             <FieldList />
           </div>
         </aside>
-        <main className="min-w-0 flex-1 p-[16px] tablet:p-[20px] desktop:p-[24px] desktop:overflow-y-auto">
+        <main className="min-w-0 flex-1 p-[4.272vw] tablet:p-[2.5vw] desktop:p-[1.248vw] desktop:overflow-y-auto">
           <PreviewPanel />
         </main>
-        <aside className="border-t border-border p-[16px] tablet:p-[16px] desktop:p-[16px] desktop:w-[340px] desktop:border-t-0 desktop:border-l desktop:overflow-y-auto">
+        <aside className="border-t border-border p-[4.272vw] tablet:p-[2vw] desktop:p-[0.832vw] desktop:w-[17.68vw] desktop:border-t-0 desktop:border-l desktop:overflow-y-auto">
           <PropEditorPanel />
         </aside>
       </div>

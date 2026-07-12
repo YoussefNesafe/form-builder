@@ -19,9 +19,9 @@ type ExamplePageShellProps = {
  */
 export function ExamplePageShell({ title, description, children }: ExamplePageShellProps) {
   return (
-    <div className="flex flex-col gap-[20px] tablet:gap-[20px] desktop:gap-[20px]">
-      <div className="flex flex-col gap-[8px] tablet:gap-[8px] desktop:gap-[8px]">
-        <h1 className="text-[24px] tablet:text-[24px] desktop:text-[24px] font-semibold tracking-tight">{title}</h1>
+    <div className="flex flex-col gap-[5.34vw] tablet:gap-[2.5vw] desktop:gap-[1.04vw]">
+      <div className="flex flex-col gap-[2.136vw] tablet:gap-[1vw] desktop:gap-[0.416vw]">
+        <h1 className="text-[6.408vw] tablet:text-[3vw] desktop:text-[1.248vw] font-semibold tracking-tight">{title}</h1>
         {description}
       </div>
       {children}

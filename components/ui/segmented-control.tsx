@@ -37,7 +37,7 @@ function SegmentedControl<T extends string>({
       onValueChange={(v) => onChange(v as T)}
       aria-label={ariaLabel}
       className={cn(
-        "flex items-center gap-[4px] tablet:gap-[4px] desktop:gap-[4px] rounded-[10px] tablet:rounded-[10px] desktop:rounded-[10px] border border-border p-[2px] tablet:p-[2px] desktop:p-[2px]",
+        "flex items-center gap-[1.068vw] tablet:gap-[0.5vw] desktop:gap-[0.208vw] rounded-[2.67vw] tablet:rounded-[1.25vw] desktop:rounded-[0.52vw] border border-border p-[0.534vw] tablet:p-[0.25vw] desktop:p-[0.104vw]",
         className
       )}
     >
@@ -46,7 +46,7 @@ function SegmentedControl<T extends string>({
           key={option.value}
           value={option.value}
           className={cn(
-            "rounded-[8px] tablet:rounded-[8px] desktop:rounded-[8px] px-[10px] tablet:px-[10px] desktop:px-[10px] py-[4px] tablet:py-[4px] desktop:py-[4px] text-[13px] tablet:text-[13px] desktop:text-[13px]",
+            "rounded-[2.136vw] tablet:rounded-[1vw] desktop:rounded-[0.416vw] px-[2.67vw] tablet:px-[1.25vw] desktop:px-[0.52vw] py-[1.068vw] tablet:py-[0.5vw] desktop:py-[0.208vw] text-[3.471vw] tablet:text-[1.625vw] desktop:text-[0.676vw]",
             value === option.value ? "bg-muted text-foreground" : "text-muted-foreground"
           )}
         >

@@ -30,7 +30,10 @@ import { ConditionEditor } from "./controls/ConditionEditor";
 import { WidthEditor } from "./controls/WidthEditor";
 import { RulesEditor } from "./controls/RulesEditor";
 import { ComplexityEditor } from "./controls/ComplexityEditor";
-import { CountryCodeControl, CountryListControl } from "./controls/CountryControls";
+import {
+  CountryCodeControl,
+  CountryListControl,
+} from "./controls/CountryControls";
 import type { ControlContext, ControlProps } from "./controls/types";
 
 // Heterogeneous controls (each ControlProps<T>) collapse to one dynamic type
@@ -73,9 +76,9 @@ export function PropEditorPanel() {
 
   if (!ctxResult) {
     return (
-      <div className="flex h-full flex-col gap-[12px] tablet:gap-[12px] desktop:gap-[12px]">
+      <div className="flex h-full flex-col gap-[3.204vw] tablet:gap-[1.5vw] desktop:gap-[0.624vw]">
         <PanelHeading>{builder.props.heading}</PanelHeading>
-        <p className="text-[13px] tablet:text-[13px] desktop:text-[13px] text-muted-foreground">
+        <p className="text-[3.471vw] tablet:text-[1.625vw] desktop:text-[0.676vw] text-muted-foreground">
           {builder.props.selectPrompt}
         </p>
       </div>
@@ -88,12 +91,14 @@ export function PropEditorPanel() {
   const descriptors = visibleDescriptors(FIELD_PROPS[type], isNested);
 
   return (
-    <div className="flex h-full flex-col gap-[12px] tablet:gap-[12px] desktop:gap-[12px]">
+    <div className="flex h-full flex-col gap-[3.204vw] tablet:gap-[1.5vw] desktop:gap-[0.624vw]">
       <PanelHeading>{builder.props.heading}</PanelHeading>
-      <div className="flex items-center justify-between rounded-[10px] tablet:rounded-[10px] desktop:rounded-[10px] border border-border px-[10px] tablet:px-[10px] desktop:px-[10px] py-[8px] tablet:py-[8px] desktop:py-[8px]">
-        <div className="flex items-center gap-[8px] tablet:gap-[8px] desktop:gap-[8px]">
+      <div className="flex items-center justify-between rounded-[2.67vw] tablet:rounded-[1.25vw] desktop:rounded-[0.52vw] border border-border px-[2.67vw] tablet:px-[1.25vw] desktop:px-[0.52vw] py-[2.136vw] tablet:py-[1vw] desktop:py-[0.416vw]">
+        <div className="flex items-center gap-[2.136vw] tablet:gap-[1vw] desktop:gap-[0.416vw]">
           <FieldIcon type={type} className="text-muted-foreground" />
-          <span className="text-[13px] tablet:text-[13px] desktop:text-[13px] font-medium">{fieldTypes[type].label}</span>
+          <span className="text-[3.471vw] tablet:text-[1.625vw] desktop:text-[0.676vw] font-medium">
+            {fieldTypes[type].label}
+          </span>
         </div>
         <Button
           variant="ghost"
@@ -106,7 +111,7 @@ export function PropEditorPanel() {
         </Button>
       </div>
 
-      <div className="flex flex-col gap-[14px] tablet:gap-[14px] desktop:gap-[14px]">
+      <div className="flex flex-col gap-[3.738vw] tablet:gap-[1.75vw] desktop:gap-[0.728vw]">
         {descriptors.map((d) => {
           const Control = CONTROLS[d.control];
           const controlId = `prop-${d.key}`;
@@ -120,7 +125,9 @@ export function PropEditorPanel() {
                   // Mutually exclusive props (disabledWhen/enabledWhen) —
                   // setting one clears the other or the engine rejects.
                   ...(v !== undefined && d.clears
-                    ? Object.fromEntries(d.clears.map((key) => [key, undefined]))
+                    ? Object.fromEntries(
+                        d.clears.map((key) => [key, undefined]),
+                      )
                     : {}),
                 })
               }
@@ -131,8 +138,14 @@ export function PropEditorPanel() {
 
           if (INLINE_CONTROLS.has(d.control)) {
             return (
-              <div key={d.key} className="flex items-center justify-between gap-[8px] tablet:gap-[8px] desktop:gap-[8px]">
-                <Label htmlFor={controlId} className="text-[13px] tablet:text-[13px] desktop:text-[13px]">
+              <div
+                key={d.key}
+                className="flex items-center justify-between gap-[2.136vw] tablet:gap-[1vw] desktop:gap-[0.416vw]"
+              >
+                <Label
+                  htmlFor={controlId}
+                  className="text-[3.471vw] tablet:text-[1.625vw] desktop:text-[0.676vw]"
+                >
                   {d.label}
                 </Label>
                 {control}
@@ -141,13 +154,21 @@ export function PropEditorPanel() {
           }
 
           return (
-            <div key={d.key} className="flex flex-col gap-[6px] tablet:gap-[6px] desktop:gap-[6px]">
-              <Label htmlFor={controlId} className="text-[13px] tablet:text-[13px] desktop:text-[13px]">
+            <div
+              key={d.key}
+              className="flex flex-col gap-[1.602vw] tablet:gap-[0.75vw] desktop:gap-[0.312vw]"
+            >
+              <Label
+                htmlFor={controlId}
+                className="text-[3.471vw] tablet:text-[1.625vw] desktop:text-[0.676vw]"
+              >
                 {d.label}
               </Label>
               {control}
               {d.help && (
-                <p className="text-[11px] tablet:text-[11px] desktop:text-[11px] text-muted-foreground">{d.help}</p>
+                <p className="text-[2.937vw] tablet:text-[1.375vw] desktop:text-[0.572vw] text-muted-foreground">
+                  {d.help}
+                </p>
               )}
             </div>
           );

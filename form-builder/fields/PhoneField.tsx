@@ -32,7 +32,7 @@ function BareInput({ className, ...props }: React.ComponentProps<"input">) {
     <input
       {...props}
       className={cn(
-        "h-full w-full min-w-0 bg-transparent pe-[12px] tablet:pe-[12px] desktop:pe-[12px] text-[14px] tablet:text-[14px] desktop:text-[14px] outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed",
+        "h-full w-full min-w-0 bg-transparent pe-[3.204vw] tablet:pe-[1.5vw] desktop:pe-[0.624vw] text-[3.738vw] tablet:text-[1.75vw] desktop:text-[0.728vw] outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed",
         className,
       )}
     />
@@ -44,7 +44,7 @@ function CountryFlag({ country }: { country?: string }) {
   const Flag = country ? flags[country as Country] : undefined;
   if (!Flag) return <span aria-hidden>🌐</span>;
   return (
-    <span aria-hidden className="inline-flex w-[20px] tablet:w-[20px] desktop:w-[20px] overflow-hidden rounded-[2px] tablet:rounded-[2px] desktop:rounded-[2px]">
+    <span aria-hidden className="inline-flex w-[5.34vw] tablet:w-[2.5vw] desktop:w-[1.04vw] overflow-hidden rounded-[0.534vw] tablet:rounded-[0.25vw] desktop:rounded-[0.104vw]">
       <Flag title="" />
     </span>
   );
@@ -82,13 +82,13 @@ function CountrySelect({ value, onChange, options, disabled, className, emptyMes
           aria-expanded={open}
           aria-label={rest["aria-label"]}
           disabled={disabled}
-          className={cn("h-full shrink-0 gap-[4px] tablet:gap-[4px] desktop:gap-[4px] rounded-e-none ps-[12px] tablet:ps-[12px] desktop:ps-[12px] pe-[8px] tablet:pe-[8px] desktop:pe-[8px] font-normal", className)}
+          className={cn("h-full shrink-0 gap-[1.068vw] tablet:gap-[0.5vw] desktop:gap-[0.208vw] rounded-e-none ps-[3.204vw] tablet:ps-[1.5vw] desktop:ps-[0.624vw] pe-[2.136vw] tablet:pe-[1vw] desktop:pe-[0.416vw] font-normal", className)}
         >
           <CountryFlag country={value} />
-          <ChevronDown className="size-[14px] tablet:size-[14px] desktop:size-[14px] shrink-0 opacity-50" />
+          <ChevronDown className="size-[3.738vw] tablet:size-[1.75vw] desktop:size-[0.728vw] shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[288px] tablet:w-[288px] desktop:w-[288px] p-0" align="start">
+      <PopoverContent className="w-[76.896vw] tablet:w-[36vw] desktop:w-[14.976vw] p-0" align="start">
         <Command
           filter={(itemValue, search) => (itemValue.toLowerCase().includes(search.toLowerCase()) ? 1 : 0)}
         >
@@ -108,13 +108,13 @@ function CountrySelect({ value, onChange, options, disabled, className, emptyMes
                     }}
                   >
                     <Check
-                      className={cn("me-[8px] tablet:me-[8px] desktop:me-[8px] size-[16px] tablet:size-[16px] desktop:size-[16px]", option.value === value ? "opacity-100" : "opacity-0")}
+                      className={cn("me-[2.136vw] tablet:me-[1vw] desktop:me-[0.416vw] size-[4.272vw] tablet:size-[2vw] desktop:size-[0.832vw]", option.value === value ? "opacity-100" : "opacity-0")}
                     />
-                    <span className="me-[8px] tablet:me-[8px] desktop:me-[8px]">
+                    <span className="me-[2.136vw] tablet:me-[1vw] desktop:me-[0.416vw]">
                       <CountryFlag country={option.value} />
                     </span>
                     <span className="truncate">{option.label}</span>
-                    <span className="ms-auto ps-[8px] tablet:ps-[8px] desktop:ps-[8px] text-muted-foreground">{code}</span>
+                    <span className="ms-auto ps-[2.136vw] tablet:ps-[1vw] desktop:ps-[0.416vw] text-muted-foreground">{code}</span>
                   </CommandItem>
                 );
               })}
@@ -203,7 +203,7 @@ export function PhoneField({ field }: FieldComponentProps) {
             countrySelectComponent={CountrySelect}
             countrySelectProps={{ "aria-label": messages.country, emptyMessage: messages.noOptions }}
             className={cn(
-              "flex h-[36px] tablet:h-[36px] desktop:h-[36px] w-full items-center gap-[4px] tablet:gap-[4px] desktop:gap-[4px] rounded-[8px] tablet:rounded-[8px] desktop:rounded-[8px] border border-input bg-transparent transition-colors",
+              "flex h-[9.612vw] tablet:h-[4.5vw] desktop:h-[1.872vw] w-full items-center gap-[1.068vw] tablet:gap-[0.5vw] desktop:gap-[0.208vw] rounded-[2.136vw] tablet:rounded-[1vw] desktop:rounded-[0.416vw] border border-input bg-transparent transition-colors",
               "focus-within:border-ring dark:bg-input/30",
               disabled && "opacity-50",
               fieldState.error && "border-destructive focus-within:border-destructive",

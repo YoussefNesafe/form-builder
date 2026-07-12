@@ -109,7 +109,7 @@ export function DateField({ field }: FieldComponentProps) {
                   onBlur={rhf.onBlur}
                   className={cn("w-full justify-start font-normal", !label && "text-muted-foreground")}
                 >
-                  <CalendarIcon className="me-[8px] tablet:me-[8px] desktop:me-[8px] size-[16px] tablet:size-[16px] desktop:size-[16px]" />
+                  <CalendarIcon className="me-[2.136vw] tablet:me-[1vw] desktop:me-[0.416vw] size-[4.272vw] tablet:size-[2vw] desktop:size-[0.832vw]" />
                   {label}
                 </Button>
               </PopoverTrigger>

@@ -72,7 +72,7 @@ export function RatingField({ field }: FieldComponentProps) {
               })}
               onKeyDown={onKeyDown}
               onBlur={rhf.onBlur}
-              className="flex items-center gap-[4px] tablet:gap-[4px] desktop:gap-[4px]"
+              className="flex items-center gap-[1.068vw] tablet:gap-[0.5vw] desktop:gap-[0.208vw]"
             >
               {Array.from({ length: max }, (_, index) => {
                 const starValue = index + 1;
@@ -96,13 +96,13 @@ export function RatingField({ field }: FieldComponentProps) {
                     // Flat mandate: focus state via border color only.
                     className={cn(
                       "border border-transparent focus-visible:outline-none focus-visible:border-primary disabled:opacity-50",
-                      "p-[2px] tablet:p-[2px] desktop:p-[2px]",
+                      "p-[0.534vw] tablet:p-[0.25vw] desktop:p-[0.104vw]",
                     )}
                   >
                     <Star
                       aria-hidden
                       className={cn(
-                        "size-[24px] tablet:size-[24px] desktop:size-[24px]",
+                        "size-[6.408vw] tablet:size-[3vw] desktop:size-[1.248vw]",
                         starValue <= value ? "fill-primary text-primary" : "text-muted-foreground",
                       )}
                     />

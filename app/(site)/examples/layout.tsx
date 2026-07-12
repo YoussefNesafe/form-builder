@@ -1,11 +1,18 @@
 import { EXAMPLES_CONTAINER } from "@/components/shared/containers";
 import { cn } from "@/lib/utils";
 
-export default function ExamplesLayout({ children }: { children: React.ReactNode }) {
+export default function ExamplesLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <main
       id="main-content"
-      className={cn(EXAMPLES_CONTAINER, "flex-1 py-[32px] tablet:py-[40px] desktop:py-[48px]")}
+      className={cn(
+        EXAMPLES_CONTAINER,
+        "flex-1 py-[8.544vw] tablet:py-[5vw] desktop:py-[2.496vw]",
+      )}
     >
       {children}
     </main>

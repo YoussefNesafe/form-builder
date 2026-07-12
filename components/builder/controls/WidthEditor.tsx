@@ -33,11 +33,15 @@ function WidthSelect({
   onChange: (w: FieldWidth | undefined) => void;
 }) {
   return (
-    <div className="flex flex-col gap-[4px] tablet:gap-[4px] desktop:gap-[4px]">
-      <span className="text-[11px] tablet:text-[11px] desktop:text-[11px] text-muted-foreground">{label}</span>
+    <div className="flex flex-col gap-[1.068vw] tablet:gap-[0.5vw] desktop:gap-[0.208vw]">
+      <span className="text-[2.937vw] tablet:text-[1.375vw] desktop:text-[0.572vw] text-muted-foreground">
+        {label}
+      </span>
       <Select
         value={value ?? NONE_VALUE}
-        onValueChange={(v) => onChange(v === NONE_VALUE ? undefined : (v as FieldWidth))}
+        onValueChange={(v) =>
+          onChange(v === NONE_VALUE ? undefined : (v as FieldWidth))
+        }
       >
         <SelectTrigger aria-label={label} className="w-full">
           <SelectValue placeholder={C.selectPlaceholder} />
@@ -59,7 +63,11 @@ function WidthSelect({
  * Edit a `ResponsiveFieldWidth`: a uniform width (string) or one per breakpoint
  * (object). Toggling to per-breakpoint seeds the object from the uniform value.
  */
-export function WidthEditor({ id, value, onChange }: ControlProps<ResponsiveFieldWidth>) {
+export function WidthEditor({
+  id,
+  value,
+  onChange,
+}: ControlProps<ResponsiveFieldWidth>) {
   const isObject = typeof value === "object" && value !== null;
   const uniform = typeof value === "string" ? value : undefined;
   const obj = isObject ? value : {};
@@ -71,14 +79,20 @@ export function WidthEditor({ id, value, onChange }: ControlProps<ResponsiveFiel
     else onChange(isObject ? value.mobile : undefined);
   };
 
-  const patchBreakpoint = (bp: "mobile" | "tablet" | "desktop", w: FieldWidth | undefined) => {
+  const patchBreakpoint = (
+    bp: "mobile" | "tablet" | "desktop",
+    w: FieldWidth | undefined,
+  ) => {
     const next = { ...obj, [bp]: w };
     if (w === undefined) delete next[bp];
     onChange(Object.keys(next).length ? next : undefined);
   };
 
   return (
-    <div id={id} className="flex flex-col gap-[8px] tablet:gap-[8px] desktop:gap-[8px]">
+    <div
+      id={id}
+      className="flex flex-col gap-[2.136vw] tablet:gap-[1vw] desktop:gap-[0.416vw]"
+    >
       <SegmentedControl
         aria-label={C.modeAriaLabel}
         options={MODES}
@@ -87,13 +101,29 @@ export function WidthEditor({ id, value, onChange }: ControlProps<ResponsiveFiel
       />
 
       {isObject ? (
-        <div className="grid grid-cols-3 gap-[6px] tablet:gap-[6px] desktop:gap-[6px]">
-          <WidthSelect label={C.mobile} value={value.mobile} onChange={(w) => patchBreakpoint("mobile", w)} />
-          <WidthSelect label={C.tablet} value={value.tablet} onChange={(w) => patchBreakpoint("tablet", w)} />
-          <WidthSelect label={C.desktop} value={value.desktop} onChange={(w) => patchBreakpoint("desktop", w)} />
+        <div className="grid grid-cols-3 gap-[1.602vw] tablet:gap-[0.75vw] desktop:gap-[0.312vw]">
+          <WidthSelect
+            label={C.mobile}
+            value={value.mobile}
+            onChange={(w) => patchBreakpoint("mobile", w)}
+          />
+          <WidthSelect
+            label={C.tablet}
+            value={value.tablet}
+            onChange={(w) => patchBreakpoint("tablet", w)}
+          />
+          <WidthSelect
+            label={C.desktop}
+            value={value.desktop}
+            onChange={(w) => patchBreakpoint("desktop", w)}
+          />
         </div>
       ) : (
-        <WidthSelect label={C.widthLabel} value={uniform} onChange={(w) => onChange(w)} />
+        <WidthSelect
+          label={C.widthLabel}
+          value={uniform}
+          onChange={(w) => onChange(w)}
+        />
       )}
     </div>
   );
