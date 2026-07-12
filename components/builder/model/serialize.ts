@@ -1,4 +1,5 @@
 import type { AnyFieldConfig, FormConfig, StepConfig } from "@/form-builder";
+import { pruneEmpty } from "../controls/clean";
 import type { BuilderNode, BuilderState } from "./types";
 
 /** URL-safe slug: lowercase, punctuation stripped, spaces → single hyphens. */
@@ -13,18 +14,10 @@ export function slugify(input: string): string {
  * Prune builder noise from a prop bag before it becomes a field config: drop
  * `undefined`/`null`, empty strings, and explicit `false` (all equivalent to
  * "absent" in the engine). `value` is exempt — a hidden field must keep its
- * key even when the value is an empty string.
+ * key even when the value is an empty string or `false`.
  */
 function cleanProps(props: Record<string, unknown>): Record<string, unknown> {
-  const out: Record<string, unknown> = {};
-  for (const [key, value] of Object.entries(props)) {
-    if (value === undefined || value === null) continue;
-    // `value` (hidden field) keeps its key even when "" or false — the engine
-    // requires the key to be present.
-    if (key !== "value" && (value === "" || value === false)) continue;
-    out[key] = value;
-  }
-  return out;
+  return pruneEmpty(props, (key) => key === "value");
 }
 
 function serializeNode(node: BuilderNode): AnyFieldConfig {

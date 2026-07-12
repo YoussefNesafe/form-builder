@@ -5,7 +5,11 @@ import type { Option } from "@/form-builder";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
+import { builder } from "@/locales/en/builder";
+import { fmt } from "@/locales/fmt";
 import type { ControlProps } from "./types";
+
+const C = builder.controls.options;
 
 /** Edit an `Option[]` (label / value / disabled), with add, remove, reorder. */
 export function OptionsEditor({ id, value, onChange }: ControlProps<Option[]>) {
@@ -30,14 +34,14 @@ export function OptionsEditor({ id, value, onChange }: ControlProps<Option[]>) {
         >
           <div className="flex items-center gap-[6px] tablet:gap-[6px] desktop:gap-[6px]">
             <Input
-              aria-label={`Option ${i + 1} label`}
-              placeholder="Label"
+              aria-label={fmt(C.labelAriaLabel, { n: i + 1 })}
+              placeholder={C.labelPlaceholder}
               value={String(o.label ?? "")}
               onChange={(e) => patch(i, { label: e.target.value })}
             />
             <Input
-              aria-label={`Option ${i + 1} value`}
-              placeholder="value"
+              aria-label={fmt(C.valueAriaLabel, { n: i + 1 })}
+              placeholder={C.valuePlaceholder}
               value={String(o.value ?? "")}
               onChange={(e) => patch(i, { value: e.target.value })}
             />
@@ -45,19 +49,19 @@ export function OptionsEditor({ id, value, onChange }: ControlProps<Option[]>) {
           <div className="flex items-center justify-between">
             <label className="flex items-center gap-[6px] tablet:gap-[6px] desktop:gap-[6px] text-[12px] tablet:text-[12px] desktop:text-[12px] text-muted-foreground">
               <Switch checked={o.disabled === true} onCheckedChange={(c) => patch(i, { disabled: c || undefined })} />
-              Disabled
+              {C.disabled}
             </label>
             <div className="flex items-center">
-              <Button variant="ghost" size="icon-xs" aria-label={`Move option ${i + 1} up`} onClick={() => move(i, -1)}>
+              <Button variant="ghost" size="icon-xs" aria-label={fmt(C.moveUpAriaLabel, { n: i + 1 })} onClick={() => move(i, -1)}>
                 <ChevronUp />
               </Button>
-              <Button variant="ghost" size="icon-xs" aria-label={`Move option ${i + 1} down`} onClick={() => move(i, 1)}>
+              <Button variant="ghost" size="icon-xs" aria-label={fmt(C.moveDownAriaLabel, { n: i + 1 })} onClick={() => move(i, 1)}>
                 <ChevronDown />
               </Button>
               <Button
                 variant="ghost"
                 size="icon-xs"
-                aria-label={`Remove option ${i + 1}`}
+                aria-label={fmt(C.removeAriaLabel, { n: i + 1 })}
                 className="text-muted-foreground hover:text-destructive"
                 onClick={() => commit(options.filter((_, idx) => idx !== i))}
               >
@@ -73,7 +77,7 @@ export function OptionsEditor({ id, value, onChange }: ControlProps<Option[]>) {
         onClick={() => commit([...options, { label: `Option ${options.length + 1}`, value: `option-${options.length + 1}` }])}
       >
         <Plus />
-        Add option
+        {C.addOption}
       </Button>
     </div>
   );

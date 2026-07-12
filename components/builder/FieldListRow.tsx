@@ -11,8 +11,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { builder } from "@/locales/en/builder";
+import { fmt } from "@/locales/fmt";
+import { fieldTypes } from "@/locales/en/fieldTypes";
 import { useBuilderStore } from "./model/store";
-import { FIELD_META } from "./model/fieldMeta";
+import { isStepEligible } from "./model/defaults";
 import { FieldIcon } from "./ui/FieldIcon";
 import { AddFieldMenu } from "./AddFieldMenu";
 import type { BuilderNode } from "./model/types";
@@ -33,10 +36,10 @@ export function FieldListRow({ node, topLevel = true }: { node: BuilderNode; top
 
   const selected = selectedId === node._id;
   // hidden/submit render automatically and must not be assigned to a step.
-  const stepEligible = node.type !== "hidden" && node.type !== "submit";
+  const stepEligible = isStepEligible(node.type);
   const assignedStep = steps.findIndex((s) => s.nodeIds.includes(node._id));
   const showStepSelect = multiStep && topLevel && stepEligible && steps.length > 0;
-  const name = (node.props.name as string) || "(unnamed)";
+  const name = (node.props.name as string) || builder.fieldList.unnamed;
   const label = (node.props.label as string) || "";
 
   return (
@@ -65,20 +68,20 @@ export function FieldListRow({ node, topLevel = true }: { node: BuilderNode; top
             {label || name}
           </span>
           <span className="truncate text-[11px] tablet:text-[11px] desktop:text-[11px] text-muted-foreground">
-            {FIELD_META[node.type as FieldType].label} · {name}
+            {fieldTypes[node.type as FieldType].label} · {name}
           </span>
         </div>
         <div className="flex items-center opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
-          <RowAction label="Move up" onClick={() => moveNode(node._id, -1)}>
+          <RowAction label={builder.fieldList.actions.moveUp} onClick={() => moveNode(node._id, -1)}>
             <ChevronUp />
           </RowAction>
-          <RowAction label="Move down" onClick={() => moveNode(node._id, 1)}>
+          <RowAction label={builder.fieldList.actions.moveDown} onClick={() => moveNode(node._id, 1)}>
             <ChevronDown />
           </RowAction>
-          <RowAction label="Duplicate" onClick={() => duplicateNode(node._id)}>
+          <RowAction label={builder.fieldList.actions.duplicate} onClick={() => duplicateNode(node._id)}>
             <Copy />
           </RowAction>
-          <RowAction label="Delete" destructive onClick={() => removeNode(node._id)}>
+          <RowAction label={builder.fieldList.actions.delete} destructive onClick={() => removeNode(node._id)}>
             <Trash2 />
           </RowAction>
         </div>
@@ -90,19 +93,19 @@ export function FieldListRow({ node, topLevel = true }: { node: BuilderNode; top
           onValueChange={(v) => assignNodeToStep(node._id, v === UNASSIGNED ? null : Number(v))}
         >
           <SelectTrigger
-            aria-label={`Step for ${name}`}
+            aria-label={fmt(builder.fieldList.stepAriaLabel, { name })}
             size="sm"
             className={cn("w-full", assignedStep < 0 && "border-destructive/50")}
           >
-            <SelectValue placeholder="Assign to step…" />
+            <SelectValue placeholder={builder.fieldList.assignToStep} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value={UNASSIGNED}>Unassigned</SelectItem>
+            <SelectItem value={UNASSIGNED}>{builder.fieldList.unassigned}</SelectItem>
             {steps.map((s, i) =>
               // Review steps own no fields — not an assignment target.
               s.review ? null : (
                 <SelectItem key={i} value={String(i)}>
-                  {s.title || `Step ${i + 1}`}
+                  {s.title || fmt(builder.fieldList.stepFallback, { n: i + 1 })}
                 </SelectItem>
               ),
             )}
@@ -115,7 +118,7 @@ export function FieldListRow({ node, topLevel = true }: { node: BuilderNode; top
           {(node.children ?? []).map((child) => (
             <FieldListRow key={child._id} node={child} topLevel={false} />
           ))}
-          <AddFieldMenu size="xs" label="Add to group" onPick={(type) => addNode(type, node._id)} />
+          <AddFieldMenu size="xs" label={builder.fieldList.addToGroup} onPick={(type) => addNode(type, node._id)} />
         </div>
       )}
     </div>

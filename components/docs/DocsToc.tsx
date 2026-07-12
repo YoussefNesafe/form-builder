@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { docs } from "@/locales/en/docs";
 
 export type TocItem = { id: string; title: string };
 
@@ -59,7 +60,7 @@ export function DocsToc({ items }: { items: TocItem[] }) {
         id="docs-toc-heading"
         className="desktop:text-[11px] font-medium uppercase tracking-wide text-muted-foreground"
       >
-        On this page
+        {docs.toc.onThisPage}
       </span>
       <ul className="desktop:mt-[12px] flex flex-col">
         {items.map((item) => {

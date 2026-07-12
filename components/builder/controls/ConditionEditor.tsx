@@ -11,9 +11,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { builder } from "@/locales/en/builder";
 import { eligibleRefs } from "../model/context";
 import type { ControlProps } from "./types";
 import { coerceScalar, scalarToText } from "./coerce";
+
+const C = builder.controls.condition;
 
 type Op = "equals" | "notEquals" | "in" | "isValid" | "isInvalid";
 
@@ -66,7 +69,7 @@ export function ConditionEditor({ id, value, onChange, descriptor, ctx }: Contro
         disabled={names.length === 0}
         onClick={() => update([[seed()]])}
       >
-        {names.length === 0 ? "No sibling fields to reference" : "Add condition"}
+        {names.length === 0 ? C.noSiblingFields : C.addCondition}
       </Button>
     );
   }
@@ -84,7 +87,7 @@ export function ConditionEditor({ id, value, onChange, descriptor, ctx }: Contro
         <div key={gi} className="flex flex-col gap-[8px] tablet:gap-[8px] desktop:gap-[8px]">
           {gi > 0 && (
             <span className="text-[11px] tablet:text-[11px] desktop:text-[11px] font-medium uppercase text-muted-foreground">
-              or
+              {C.or}
             </span>
           )}
           <div className="flex flex-col gap-[8px] tablet:gap-[8px] desktop:gap-[8px] rounded-[10px] tablet:rounded-[10px] desktop:rounded-[10px] border border-border p-[8px] tablet:p-[8px] desktop:p-[8px]">
@@ -96,13 +99,13 @@ export function ConditionEditor({ id, value, onChange, descriptor, ctx }: Contro
                 <div key={ri} className="flex flex-col gap-[6px] tablet:gap-[6px] desktop:gap-[6px]">
                   {ri > 0 && (
                     <span className="text-[11px] tablet:text-[11px] desktop:text-[11px] font-medium uppercase text-muted-foreground">
-                      and
+                      {C.and}
                     </span>
                   )}
                   <div className="flex items-center gap-[6px] tablet:gap-[6px] desktop:gap-[6px]">
                     <Select value={cond.field} onValueChange={(f) => setRow(gi, ri, build(f, op, text))}>
-                      <SelectTrigger aria-label="Condition field" className="flex-1">
-                        <SelectValue placeholder="Field" />
+                      <SelectTrigger aria-label={C.fieldAriaLabel} className="flex-1">
+                        <SelectValue placeholder={C.fieldPlaceholder} />
                       </SelectTrigger>
                       <SelectContent>
                         {fieldNames.map((n) => (
@@ -115,7 +118,7 @@ export function ConditionEditor({ id, value, onChange, descriptor, ctx }: Contro
                     <Button
                       variant="ghost"
                       size="icon-xs"
-                      aria-label="Remove condition"
+                      aria-label={C.removeAriaLabel}
                       className="text-muted-foreground hover:text-destructive"
                       onClick={() => removeRow(gi, ri)}
                     >
@@ -136,22 +139,22 @@ export function ConditionEditor({ id, value, onChange, descriptor, ctx }: Contro
                         setRow(gi, ri, build(field, nextOp, text));
                       }}
                     >
-                      <SelectTrigger aria-label="Condition operator" className="w-[130px] tablet:w-[130px] desktop:w-[130px]">
+                      <SelectTrigger aria-label={C.operatorAriaLabel} className="w-[130px] tablet:w-[130px] desktop:w-[130px]">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="equals">equals</SelectItem>
-                        <SelectItem value="notEquals">not equals</SelectItem>
-                        <SelectItem value="in">in (list)</SelectItem>
-                        {validityOps && <SelectItem value="isValid">is valid</SelectItem>}
-                        {validityOps && <SelectItem value="isInvalid">is invalid</SelectItem>}
+                        <SelectItem value="equals">{C.ops.equals}</SelectItem>
+                        <SelectItem value="notEquals">{C.ops.notEquals}</SelectItem>
+                        <SelectItem value="in">{C.ops.in}</SelectItem>
+                        {validityOps && <SelectItem value="isValid">{C.ops.isValid}</SelectItem>}
+                        {validityOps && <SelectItem value="isInvalid">{C.ops.isInvalid}</SelectItem>}
                       </SelectContent>
                     </Select>
                     {!isValidityOp(op) && (
                       <Input
-                        aria-label="Condition value"
+                        aria-label={C.valueAriaLabel}
                         value={text}
-                        placeholder={op === "in" ? "a, b, c" : "value"}
+                        placeholder={op === "in" ? C.inPlaceholder : C.valuePlaceholder}
                         onChange={(e) => setRow(gi, ri, build(cond.field, op, e.target.value))}
                       />
                     )}
@@ -163,10 +166,10 @@ export function ConditionEditor({ id, value, onChange, descriptor, ctx }: Contro
               variant="ghost"
               size="sm"
               className="w-fit text-muted-foreground"
-              aria-label="Add AND condition"
+              aria-label={C.addAndAriaLabel}
               onClick={() => update(groups.map((g, i) => (i === gi ? [...g, seed()] : g)))}
             >
-              <Plus /> And
+              <Plus /> {C.addAndText}
             </Button>
           </div>
         </div>
@@ -175,10 +178,10 @@ export function ConditionEditor({ id, value, onChange, descriptor, ctx }: Contro
         variant="ghost"
         size="sm"
         className="w-fit text-muted-foreground"
-        aria-label="Add OR group"
+        aria-label={C.addOrAriaLabel}
         onClick={() => update([...groups, [seed()]])}
       >
-        <Plus /> Or
+        <Plus /> {C.addOrText}
       </Button>
     </div>
   );

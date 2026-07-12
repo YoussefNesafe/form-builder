@@ -12,47 +12,76 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { builder } from "@/locales/en/builder";
+import { fmt } from "@/locales/fmt";
 import { COUNTRIES, countryLabel } from "./countries";
+import { CLEAR_VALUE } from "./sentinels";
 import type { ControlProps } from "./types";
 
-/** Single ISO alpha-2 country picker (searchable). */
-export function CountryCodeControl({ id, value, onChange }: ControlProps<string>) {
-  const [open, setOpen] = useState(false);
+const C = builder.controls.country;
+
+/** Shared Popover>Command scaffold behind both country pickers below. */
+function CountryPickerShell({
+  id,
+  triggerLabel,
+  open,
+  onOpenChange,
+  children,
+}: {
+  id?: string;
+  triggerLabel: React.ReactNode;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  children: React.ReactNode;
+}) {
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={onOpenChange}>
       <PopoverTrigger asChild>
         <Button id={id} variant="outline" size="sm" role="combobox" className="w-full justify-between">
-          <span className="truncate">{value ? `${countryLabel(value)} (${value})` : "Select country"}</span>
+          <span className="truncate">{triggerLabel}</span>
           <ChevronsUpDown className="opacity-60" />
         </Button>
       </PopoverTrigger>
       <PopoverContent align="start" className="p-0 tablet:p-0 desktop:p-0">
         <Command>
-          <CommandInput placeholder="Search country…" />
+          <CommandInput placeholder={C.searchPlaceholder} />
           <CommandList>
-            <CommandEmpty>No country found.</CommandEmpty>
-            <CommandGroup>
-              {value && (
-                <CommandItem value="__clear__" onSelect={() => { onChange(undefined); setOpen(false); }}>
-                  <X className="opacity-60" />
-                  Clear
-                </CommandItem>
-              )}
-              {COUNTRIES.map((c) => (
-                <CommandItem
-                  key={c.code}
-                  value={`${c.label} ${c.code}`}
-                  onSelect={() => { onChange(c.code); setOpen(false); }}
-                >
-                  <Check className={value === c.code ? "opacity-100" : "opacity-0"} />
-                  {c.label} <span className="text-muted-foreground">({c.code})</span>
-                </CommandItem>
-              ))}
-            </CommandGroup>
+            <CommandEmpty>{C.noResults}</CommandEmpty>
+            <CommandGroup>{children}</CommandGroup>
           </CommandList>
         </Command>
       </PopoverContent>
     </Popover>
+  );
+}
+
+/** Single ISO alpha-2 country picker (searchable). */
+export function CountryCodeControl({ id, value, onChange }: ControlProps<string>) {
+  const [open, setOpen] = useState(false);
+  return (
+    <CountryPickerShell
+      id={id}
+      open={open}
+      onOpenChange={setOpen}
+      triggerLabel={value ? `${countryLabel(value)} (${value})` : C.selectCountry}
+    >
+      {value && (
+        <CommandItem value={CLEAR_VALUE} onSelect={() => { onChange(undefined); setOpen(false); }}>
+          <X className="opacity-60" />
+          {C.clear}
+        </CommandItem>
+      )}
+      {COUNTRIES.map((c) => (
+        <CommandItem
+          key={c.code}
+          value={`${c.label} ${c.code}`}
+          onSelect={() => { onChange(c.code); setOpen(false); }}
+        >
+          <Check className={value === c.code ? "opacity-100" : "opacity-0"} />
+          {c.label} <span className="text-muted-foreground">({c.code})</span>
+        </CommandItem>
+      ))}
+    </CountryPickerShell>
   );
 }
 
@@ -82,30 +111,19 @@ export function CountryListControl({ id, value, onChange }: ControlProps<string[
           ))}
         </div>
       )}
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <Button id={id} variant="outline" size="sm" role="combobox" className="w-full justify-between">
-            <span className="truncate">{selected.length ? `${selected.length} selected` : "Add countries"}</span>
-            <ChevronsUpDown className="opacity-60" />
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent align="start" className="p-0 tablet:p-0 desktop:p-0">
-          <Command>
-            <CommandInput placeholder="Search country…" />
-            <CommandList>
-              <CommandEmpty>No country found.</CommandEmpty>
-              <CommandGroup>
-                {COUNTRIES.map((c) => (
-                  <CommandItem key={c.code} value={`${c.label} ${c.code}`} onSelect={() => toggle(c.code)}>
-                    <Check className={selected.includes(c.code) ? "opacity-100" : "opacity-0"} />
-                    {c.label} <span className="text-muted-foreground">({c.code})</span>
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-            </CommandList>
-          </Command>
-        </PopoverContent>
-      </Popover>
+      <CountryPickerShell
+        id={id}
+        open={open}
+        onOpenChange={setOpen}
+        triggerLabel={selected.length ? fmt(C.selectedCount, { n: selected.length }) : C.addCountries}
+      >
+        {COUNTRIES.map((c) => (
+          <CommandItem key={c.code} value={`${c.label} ${c.code}`} onSelect={() => toggle(c.code)}>
+            <Check className={selected.includes(c.code) ? "opacity-100" : "opacity-0"} />
+            {c.label} <span className="text-muted-foreground">({c.code})</span>
+          </CommandItem>
+        ))}
+      </CountryPickerShell>
     </div>
   );
 }

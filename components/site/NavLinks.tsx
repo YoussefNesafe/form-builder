@@ -3,11 +3,12 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { nav } from "@/locales/en/nav";
 
 const NAV_LINKS = [
-  { href: "/builder", label: "Builder" },
-  { href: "/examples", label: "Examples" },
-  { href: "/docs", label: "Docs" },
+  { href: "/builder", label: nav.links.builder },
+  { href: "/examples", label: nav.links.examples },
+  { href: "/docs", label: nav.links.docs },
 ] as const;
 
 /**

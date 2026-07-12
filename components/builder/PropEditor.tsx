@@ -4,11 +4,13 @@ import { Trash2 } from "lucide-react";
 import type { FieldType } from "@/form-builder";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { builder } from "@/locales/en/builder";
+import { fieldTypes } from "@/locales/en/fieldTypes";
 import { useBuilderStore } from "./model/store";
-import { FIELD_META } from "./model/fieldMeta";
 import { FIELD_PROPS, type PropDescriptor } from "./model/fieldProps";
 import { findContext, visibleDescriptors } from "./model/context";
 import { FieldIcon } from "./ui/FieldIcon";
+import { PanelHeading } from "./ui/PanelHeading";
 import {
   BooleanControl,
   DateControl,
@@ -72,9 +74,9 @@ export function PropEditorPanel() {
   if (!ctxResult) {
     return (
       <div className="flex h-full flex-col gap-[12px] tablet:gap-[12px] desktop:gap-[12px]">
-        <PanelHeading />
+        <PanelHeading>{builder.props.heading}</PanelHeading>
         <p className="text-[13px] tablet:text-[13px] desktop:text-[13px] text-muted-foreground">
-          Select a field to edit its properties.
+          {builder.props.selectPrompt}
         </p>
       </div>
     );
@@ -87,16 +89,16 @@ export function PropEditorPanel() {
 
   return (
     <div className="flex h-full flex-col gap-[12px] tablet:gap-[12px] desktop:gap-[12px]">
-      <PanelHeading />
+      <PanelHeading>{builder.props.heading}</PanelHeading>
       <div className="flex items-center justify-between rounded-[10px] tablet:rounded-[10px] desktop:rounded-[10px] border border-border px-[10px] tablet:px-[10px] desktop:px-[10px] py-[8px] tablet:py-[8px] desktop:py-[8px]">
         <div className="flex items-center gap-[8px] tablet:gap-[8px] desktop:gap-[8px]">
           <FieldIcon type={type} className="text-muted-foreground" />
-          <span className="text-[13px] tablet:text-[13px] desktop:text-[13px] font-medium">{FIELD_META[type].label}</span>
+          <span className="text-[13px] tablet:text-[13px] desktop:text-[13px] font-medium">{fieldTypes[type].label}</span>
         </div>
         <Button
           variant="ghost"
           size="icon-sm"
-          aria-label="Delete field"
+          aria-label={builder.props.deleteFieldAriaLabel}
           className="text-muted-foreground hover:text-destructive"
           onClick={() => removeNode(node._id)}
         >
@@ -152,13 +154,5 @@ export function PropEditorPanel() {
         })}
       </div>
     </div>
-  );
-}
-
-function PanelHeading() {
-  return (
-    <h2 className="text-[13px] tablet:text-[13px] desktop:text-[13px] font-semibold uppercase tracking-wide text-muted-foreground">
-      Properties
-    </h2>
   );
 }

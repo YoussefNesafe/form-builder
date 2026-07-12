@@ -3,7 +3,7 @@ import { createStore } from "zustand/vanilla";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { fromConditionGroups, toConditionGroups, type ConditionSpec, type FieldType } from "@/form-builder";
 import type { BuilderNode, BuilderState, BuilderStep, OutputMode } from "./types";
-import { CONTAINER_TYPES, DEFAULT_PROPS } from "./defaults";
+import { CONTAINER_TYPES, DEFAULT_PROPS, isStepEligible } from "./defaults";
 import { newId, syncCounterFromIds } from "./ids";
 
 export type BuilderActions = {
@@ -119,7 +119,19 @@ function cloneSubtree(node: BuilderNode, taken: Set<string>): BuilderNode {
   return clone;
 }
 
-/** Clear any prop on `node` that references the deleted field `name` (same level only). */
+/**
+ * Clear any prop on `node` that references the deleted field `name` (same level only).
+ *
+ * This key list (plus the optionsFrom/rules/condition handling below it) is a
+ * DIFFERENT concept from `GROUP_FORBIDDEN_KEYS` in `./context.ts`: this one is
+ * "sibling-name-valued props to scrub when the field they point at is
+ * renamed/deleted", that one is "wiring props the engine hard-rejects inside a
+ * group". They mostly overlap but are not the same set — `optionsFrom` is
+ * object-shaped here (checked via `.field`) but a flat key there; the
+ * `rules.matches`/condition-spec scrubbing below has no equivalent entry in
+ * `GROUP_FORBIDDEN_KEYS` at all. When adding a new wiring prop, consider
+ * whether it belongs in EACH list independently.
+ */
 function scrubRefs(node: BuilderNode, name: string): BuilderNode {
   const props = { ...node.props };
   let changed = false;
@@ -288,9 +300,7 @@ const creator: StateCreator<BuilderStore> = (set, get) => ({
       if (!on || state.steps.length > 0) return { multiStep: on };
       // Seed a first step containing every step-eligible top-level field
       // (hidden/submit render automatically and must not be assigned).
-      const nodeIds = state.nodes
-        .filter((n) => n.type !== "hidden" && n.type !== "submit")
-        .map((n) => n._id);
+      const nodeIds = state.nodes.filter((n) => isStepEligible(n.type)).map((n) => n._id);
       return { multiStep: on, steps: [{ title: "Step 1", nodeIds }] };
     }),
 

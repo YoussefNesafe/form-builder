@@ -3,13 +3,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { DOCS_NAV_GROUPS, DOCS_PAGES } from "@/lib/docsNav";
+import { docs } from "@/locales/en/docs";
 
 /**
  * "Docs / Group / Page" trail above the H1 (spec §5.3), driven by
  * DOCS_NAV_GROUPS so it can't drift from the sidebar/pagination — same
  * single-source-of-truth property as the rest of lib/docsNav.ts. Client leaf
  * for usePathname, same pattern as DocsSidebar/DocsPagination. Rendered once
- * in app/docs/layout.tsx above {children}. Not rendered on the docs index
+ * in app/(site)/docs/layout.tsx above {children}. Not rendered on the docs index
  * itself — "Docs / Overview" pointing at the page you're already on is not
  * useful orientation.
  */
@@ -23,13 +24,13 @@ export function DocsBreadcrumb() {
 
   return (
     <nav
-      aria-label="Breadcrumb"
+      aria-label={docs.breadcrumb.label}
       className="mb-[12px] tablet:mb-[12px] desktop:mb-[12px] text-[12px] tablet:text-[12px] desktop:text-[12px] text-muted-foreground"
     >
       <ol className="flex items-center gap-[6px] tablet:gap-[6px] desktop:gap-[6px]">
         <li>
           <Link href="/docs" className="hover:text-foreground">
-            Docs
+            {docs.breadcrumb.docs}
           </Link>
         </li>
         <li aria-hidden="true">/</li>

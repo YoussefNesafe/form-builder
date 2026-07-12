@@ -23,8 +23,12 @@ Config-driven form engine (Next.js 16 / React 19 / RHF 7 / Zod 4 / Tailwind 4). 
 - `form-builder/ui/` — `FieldWrapper`, cva `variants`, `layout` (`FLAT_GRID_CLASS` 12-col grid)
 - `form-builder/store/` — zustand stepper store
 - `components/ui/` — shadcn primitives (customized — see styling rules)
-- `components/builder/` — visual builder (authoring UI over `FormConfig`; exports TS/JSON via header "Export code")
-- `app/page.tsx` — home page, renders the visual builder (`FormBuilder` from `components/builder/`)
+- `components/builder/` — visual builder (authoring UI over `FormConfig`; exports TS/JSON via header "Export code"; panes: `PreviewPanel`, `CodeOutputPanel`, boundary `BuilderPreviewBoundary`)
+- `components/home/` — flat landing-page section components (`HeroSection`, `ShowcaseSection`, `DemoSection`, ...) composed by `app/(site)/page.tsx`; `content.ts` holds structural (non-copy) data, `demoConfig.ts` the hero demo's `FormConfig`
+- `components/shared/` — cross-feature primitives used by 3+ surfaces (`LinkCard`, `containers.ts` page-width constants); single-surface components stay in their feature folder (`components/docs/`, `components/examples/` — e.g. `DocsProse`, `ExamplePageShell`, `StaticExampleBoundary`)
+- `app/(site)/` — route group with the shared site shell (`SiteNav` rendered once in its layout); contains the marketing landing (`app/(site)/page.tsx`, route `/`), docs, and examples
+- `app/builder/page.tsx` — visual builder route (`FormBuilder` from `components/builder/`), deliberately outside `(site)` (no SiteNav, full-height workspace)
+- `locales/` — typed TS dictionary (single locale `en`, per-domain modules); `t` direct access, `getDictionary(locale)` future seam — see "i18n dictionary" below
 
 ## Responsive system (MUST follow when touching any UI)
 
@@ -53,6 +57,14 @@ Config-driven form engine (Next.js 16 / React 19 / RHF 7 / Zod 4 / Tailwind 4). 
 - Phone configs may set `countryFrom: "<sibling country field or single-select>"` (select option values must be ISO alpha-2; country fields are ISO by construction); the phone re-syncs its country on every source change — source always wins, manual override stays possible until the next change. Validator enforces the wiring, rejects group nesting, dev-warns cross-step.
 - `useCountryFromSync` treats the first render after (re)mount as baseline (drafts not clobbered; cross-step changes deliberately skipped) and the seed sets no dirty/touched flags on purpose.
 - `ref={rhf.ref}` goes on `<PhoneInput>` itself, never `numberInputProps.ref` — the latter clobbers the lib's internal input ref, crashing focus-on-country-select and silently aborting manual country changes.
+
+## i18n dictionary
+
+- Copy lives in `locales/en/*.ts` domain modules (`common`, `nav`, `home`, `docs`, `examples`, `builder`, `fieldTypes`), composed into `en` and re-exported as `t` (server components) from `locales/index.ts`; `getDictionary(locale)` is a future-locale seam, unwired today.
+- Client components import their domain slice directly (`@/locales/en/builder`, not `@/locales`) so unrelated domains don't ride along into that bundle; `fmt` (`{name}` interpolation) is a standalone import for the same reason.
+- `locales/` has a one-way dependency on the engine (may import `@/form-builder` types, never `components/builder/**`); the builder is a one-way consumer of `fieldTypes.ts`, not a source for it (one test-only exception, commented at its import site).
+- `fieldTypes.ts` is the sole source for built-in field-type `label`/`description`/`note` (docs table + builder add-menu/rows/prop-editor); `FIELD_META` in `components/builder/model/fieldMeta.ts` is structure-only (`group`/`icon`) — `locales/fieldTypes.test.ts` pins both halves.
+- Long-form docs prose stays in JSX, not the dictionary (staff-engineer ruling); not translated: demo/example configs, code snippets, field names, builder seed data. See ADR-0001 for the full rationale and rejected alternatives.
 
 ## Intentional decisions — do NOT "fix"
 

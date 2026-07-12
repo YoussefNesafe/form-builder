@@ -13,9 +13,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { builder } from "@/locales/en/builder";
+import { fmt } from "@/locales/fmt";
 import { eligibleRefs } from "../model/context";
 import type { ControlProps } from "./types";
 import { OptionsEditor } from "./OptionsEditor";
+
+const C = builder.controls.optionsFrom;
 
 type OptionsFrom = { field: string; map: Record<string, Option[]> };
 type BranchPair = [string, Option[]];
@@ -74,7 +78,7 @@ export function OptionsFromEditor({ id, value, onChange, descriptor, ctx }: Cont
         disabled={sources.length === 0}
         onClick={() => commit(sources[0] ?? "", seedPairs(sources[0] ?? ""))}
       >
-        {sources.length === 0 ? "No eligible source fields" : "Add options mapping"}
+        {sources.length === 0 ? C.noEligibleSources : C.addMapping}
       </Button>
     );
   }
@@ -95,8 +99,8 @@ export function OptionsFromEditor({ id, value, onChange, descriptor, ctx }: Cont
           // wholesale reseed is more predictable than stale keys.
           onValueChange={(source) => commit(source, seedPairs(source))}
         >
-          <SelectTrigger aria-label="Options source field" className="flex-1">
-            <SelectValue placeholder="Source field" />
+          <SelectTrigger aria-label={C.sourceFieldAriaLabel} className="flex-1">
+            <SelectValue placeholder={C.sourceFieldPlaceholder} />
           </SelectTrigger>
           <SelectContent>
             {sources.map((name) => (
@@ -109,7 +113,7 @@ export function OptionsFromEditor({ id, value, onChange, descriptor, ctx }: Cont
         <Button
           variant="ghost"
           size="icon-xs"
-          aria-label="Remove options mapping"
+          aria-label={C.removeMappingAriaLabel}
           className="text-muted-foreground hover:text-destructive"
           onClick={() => {
             setPairs([]);
@@ -126,9 +130,10 @@ export function OptionsFromEditor({ id, value, onChange, descriptor, ctx }: Cont
         >
           <div className="flex items-center gap-[6px] tablet:gap-[6px] desktop:gap-[6px]">
             <Input
-              aria-label={`Branch ${index + 1} source value`}
+              aria-label={fmt(C.branchValueAriaLabel, { n: index + 1 })}
               aria-invalid={duplicate[index] || undefined}
-              placeholder="source value"
+              aria-describedby={duplicate[index] ? `${id}-branch-${index}-duplicate` : undefined}
+              placeholder={C.branchValuePlaceholder}
               value={key}
               className={cn(duplicate[index] && "border-destructive")}
               onChange={(e) =>
@@ -141,7 +146,7 @@ export function OptionsFromEditor({ id, value, onChange, descriptor, ctx }: Cont
             <Button
               variant="ghost"
               size="icon-xs"
-              aria-label={`Remove branch ${index + 1}`}
+              aria-label={fmt(C.removeBranchAriaLabel, { n: index + 1 })}
               className="text-muted-foreground hover:text-destructive"
               onClick={() => commit(value.field, pairs.filter((_, i) => i !== index))}
             >
@@ -149,8 +154,11 @@ export function OptionsFromEditor({ id, value, onChange, descriptor, ctx }: Cont
             </Button>
           </div>
           {duplicate[index] && (
-            <p className="text-[11px] tablet:text-[11px] desktop:text-[11px] text-destructive">
-              Duplicate source value — this branch is ignored until renamed.
+            <p
+              id={`${id}-branch-${index}-duplicate`}
+              className="text-[11px] tablet:text-[11px] desktop:text-[11px] text-destructive"
+            >
+              {C.duplicateWarning}
             </p>
           )}
           <OptionsEditor
@@ -171,10 +179,10 @@ export function OptionsFromEditor({ id, value, onChange, descriptor, ctx }: Cont
         variant="ghost"
         size="sm"
         className="w-fit text-muted-foreground"
-        aria-label="Add value branch"
+        aria-label={C.addBranchAriaLabel}
         onClick={() => commit(value.field, [...pairs, ["", []]])}
       >
-        <Plus /> Value branch
+        <Plus /> {C.addBranchText}
       </Button>
     </div>
   );

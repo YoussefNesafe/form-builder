@@ -4,10 +4,11 @@ import { useEffect, useSyncExternalStore } from "react";
 import { registerBuiltInFields } from "@/form-builder";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { builder } from "@/locales/en/builder";
 import { useBuilderStore } from "./model/store";
 import { FieldList } from "./FieldList";
 import { StepsPanel } from "./StepsPanel";
-import { PreviewPanel } from "./Preview";
+import { PreviewPanel } from "./PreviewPanel";
 import { PropEditorPanel } from "./PropEditor";
 import { BuilderHeaderActions } from "./BuilderHeaderActions";
 
@@ -46,13 +47,14 @@ export function FormBuilder() {
     <div className="dark flex min-h-dvh flex-col bg-background text-foreground">
       <header className="flex flex-col gap-[12px] tablet:gap-[12px] desktop:gap-[12px] border-b border-border px-[16px] tablet:px-[20px] desktop:px-[24px] py-[14px] tablet:py-[14px] desktop:py-[14px] tablet:flex-row tablet:items-end tablet:justify-between">
         <div className="flex flex-col gap-[2px] tablet:gap-[2px] desktop:gap-[2px] tablet:flex-1">
-          <span className="text-[12px] tablet:text-[12px] desktop:text-[12px] font-medium uppercase tracking-wide text-muted-foreground">
-            Form Builder
-          </span>
+          {/* The route's only h1 (a11y heading outline) — styled as the small kicker on purpose. */}
+          <h1 className="text-[12px] tablet:text-[12px] desktop:text-[12px] font-medium uppercase tracking-wide text-muted-foreground">
+            {builder.header.kicker}
+          </h1>
           <div className="flex flex-col gap-[8px] tablet:flex-row tablet:items-end tablet:gap-[16px] desktop:gap-[16px]">
             <div className="flex flex-col gap-[4px] tablet:gap-[4px] desktop:gap-[4px]">
               <Label htmlFor="form-title" className="text-[11px] tablet:text-[11px] desktop:text-[11px] text-muted-foreground">
-                Title
+                {builder.header.titleLabel}
               </Label>
               <Input
                 id="form-title"
@@ -63,13 +65,13 @@ export function FormBuilder() {
             </div>
             <div className="flex flex-col gap-[4px] tablet:gap-[4px] desktop:gap-[4px]">
               <Label htmlFor="form-desc" className="text-[11px] tablet:text-[11px] desktop:text-[11px] text-muted-foreground">
-                Description
+                {builder.header.descriptionLabel}
               </Label>
               <Input
                 id="form-desc"
                 value={description}
                 onChange={(e) => setMeta({ description: e.target.value })}
-                placeholder="Optional"
+                placeholder={builder.header.descriptionPlaceholder}
                 className="tablet:w-[320px] desktop:w-[380px]"
               />
             </div>

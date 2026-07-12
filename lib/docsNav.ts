@@ -1,3 +1,5 @@
+import { docs } from "@/locales/en/docs";
+
 export type DocsNavItem = {
   href: string;
   title: string;
@@ -11,30 +13,34 @@ export type DocsNavGroup = {
 /**
  * Single source of truth for the docs sidebar AND prev/next pagination —
  * grouped for the sidebar, flattened (below) for pagination order, so the
- * two views can never drift apart.
+ * two views can never drift apart. This module stays the single STRUCTURAL
+ * source (grouping/href/order); the words themselves live in
+ * locales/en/docs.ts (`docs.nav`) — imported here (domain slice, not the aggregate `t` — this module is
+ * consumed by client components, so the aggregate would leak every locale
+ * domain into the docs client chunks), not duplicated.
  */
 export const DOCS_NAV_GROUPS: DocsNavGroup[] = [
   {
-    title: "Overview",
-    items: [{ href: "/docs", title: "Overview" }],
+    title: docs.nav.groups.overview,
+    items: [{ href: "/docs", title: docs.nav.pages.overview }],
   },
   {
-    title: "Getting started",
+    title: docs.nav.groups.gettingStarted,
     items: [
-      { href: "/docs/installation", title: "Installation" },
-      { href: "/docs/your-first-form", title: "Your first form" },
+      { href: "/docs/installation", title: docs.nav.pages.installation },
+      { href: "/docs/your-first-form", title: docs.nav.pages.yourFirstForm },
     ],
   },
   {
-    title: "Concepts",
+    title: docs.nav.groups.concepts,
     items: [
-      { href: "/docs/conditions", title: "Conditions" },
-      { href: "/docs/wizards", title: "Multi-step wizards" },
+      { href: "/docs/conditions", title: docs.nav.pages.conditions },
+      { href: "/docs/wizards", title: docs.nav.pages.wizards },
     ],
   },
   {
-    title: "Reference",
-    items: [{ href: "/docs/field-types", title: "Field types" }],
+    title: docs.nav.groups.reference,
+    items: [{ href: "/docs/field-types", title: docs.nav.pages.fieldTypes }],
   },
 ];
 

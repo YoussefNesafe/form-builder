@@ -8,10 +8,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { SegmentedControl } from "@/components/ui/segmented-control";
+import { builder } from "@/locales/en/builder";
+import { NONE_VALUE } from "./sentinels";
 import type { ControlProps } from "./types";
 
+const C = builder.controls.width;
+
 const WIDTHS: FieldWidth[] = ["full", "half", "third", "quarter"];
-const NONE = "__none__";
+
+type WidthMode = "uniform" | "perBreakpoint";
+const MODES: { value: WidthMode; label: string }[] = [
+  { value: "uniform", label: C.uniform },
+  { value: "perBreakpoint", label: C.perBreakpoint },
+];
 
 function WidthSelect({
   label,
@@ -26,14 +36,14 @@ function WidthSelect({
     <div className="flex flex-col gap-[4px] tablet:gap-[4px] desktop:gap-[4px]">
       <span className="text-[11px] tablet:text-[11px] desktop:text-[11px] text-muted-foreground">{label}</span>
       <Select
-        value={value ?? NONE}
-        onValueChange={(v) => onChange(v === NONE ? undefined : (v as FieldWidth))}
+        value={value ?? NONE_VALUE}
+        onValueChange={(v) => onChange(v === NONE_VALUE ? undefined : (v as FieldWidth))}
       >
         <SelectTrigger aria-label={label} className="w-full">
-          <SelectValue placeholder="full" />
+          <SelectValue placeholder={C.selectPlaceholder} />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value={NONE}>full (default)</SelectItem>
+          <SelectItem value={NONE_VALUE}>{C.fullDefault}</SelectItem>
           {WIDTHS.map((w) => (
             <SelectItem key={w} value={w}>
               {w}
@@ -69,31 +79,21 @@ export function WidthEditor({ id, value, onChange }: ControlProps<ResponsiveFiel
 
   return (
     <div id={id} className="flex flex-col gap-[8px] tablet:gap-[8px] desktop:gap-[8px]">
-      <div className="flex items-center gap-[6px] tablet:gap-[6px] desktop:gap-[6px] text-[12px] tablet:text-[12px] desktop:text-[12px]">
-        <button
-          type="button"
-          onClick={() => setMode(false)}
-          className={`rounded-[8px] tablet:rounded-[8px] desktop:rounded-[8px] border px-[8px] tablet:px-[8px] desktop:px-[8px] py-[3px] tablet:py-[3px] desktop:py-[3px] ${!isObject ? "border-primary bg-muted" : "border-border"}`}
-        >
-          Uniform
-        </button>
-        <button
-          type="button"
-          onClick={() => setMode(true)}
-          className={`rounded-[8px] tablet:rounded-[8px] desktop:rounded-[8px] border px-[8px] tablet:px-[8px] desktop:px-[8px] py-[3px] tablet:py-[3px] desktop:py-[3px] ${isObject ? "border-primary bg-muted" : "border-border"}`}
-        >
-          Per breakpoint
-        </button>
-      </div>
+      <SegmentedControl
+        aria-label={C.modeAriaLabel}
+        options={MODES}
+        value={isObject ? "perBreakpoint" : "uniform"}
+        onChange={(mode) => setMode(mode === "perBreakpoint")}
+      />
 
       {isObject ? (
         <div className="grid grid-cols-3 gap-[6px] tablet:gap-[6px] desktop:gap-[6px]">
-          <WidthSelect label="Mobile" value={value.mobile} onChange={(w) => patchBreakpoint("mobile", w)} />
-          <WidthSelect label="Tablet" value={value.tablet} onChange={(w) => patchBreakpoint("tablet", w)} />
-          <WidthSelect label="Desktop" value={value.desktop} onChange={(w) => patchBreakpoint("desktop", w)} />
+          <WidthSelect label={C.mobile} value={value.mobile} onChange={(w) => patchBreakpoint("mobile", w)} />
+          <WidthSelect label={C.tablet} value={value.tablet} onChange={(w) => patchBreakpoint("tablet", w)} />
+          <WidthSelect label={C.desktop} value={value.desktop} onChange={(w) => patchBreakpoint("desktop", w)} />
         </div>
       ) : (
-        <WidthSelect label="Width" value={uniform} onChange={(w) => onChange(w)} />
+        <WidthSelect label={C.widthLabel} value={uniform} onChange={(w) => onChange(w)} />
       )}
     </div>
   );

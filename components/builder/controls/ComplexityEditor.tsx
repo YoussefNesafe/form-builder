@@ -3,28 +3,23 @@
 import type { PasswordComplexity } from "@/form-builder";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
+import { builder } from "@/locales/en/builder";
+import { pruneEmptyOrUndefined } from "./clean";
 import type { ControlProps } from "./types";
 
-const FLAGS: { key: keyof PasswordComplexity; label: string }[] = [
-  { key: "uppercase", label: "Uppercase" },
-  { key: "lowercase", label: "Lowercase" },
-  { key: "number", label: "Number" },
-  { key: "special", label: "Special char" },
-];
+const C = builder.controls.complexity;
 
-function clean(c: PasswordComplexity): PasswordComplexity | undefined {
-  const out: PasswordComplexity = {};
-  for (const [k, v] of Object.entries(c)) {
-    if (v === undefined || v === false) continue;
-    (out as Record<string, unknown>)[k] = v;
-  }
-  return Object.keys(out).length ? out : undefined;
-}
+const FLAGS: { key: keyof PasswordComplexity; label: string }[] = [
+  { key: "uppercase", label: C.uppercase },
+  { key: "lowercase", label: C.lowercase },
+  { key: "number", label: C.number },
+  { key: "special", label: C.specialChar },
+];
 
 /** Edit `PasswordComplexity` (character-class flags + min length). */
 export function ComplexityEditor({ id, value, onChange }: ControlProps<PasswordComplexity>) {
   const c = value ?? {};
-  const patch = (p: Partial<PasswordComplexity>) => onChange(clean({ ...c, ...p }));
+  const patch = (p: Partial<PasswordComplexity>) => onChange(pruneEmptyOrUndefined({ ...c, ...p }));
 
   return (
     <div id={id} className="flex flex-col gap-[8px] tablet:gap-[8px] desktop:gap-[8px] rounded-[10px] tablet:rounded-[10px] desktop:rounded-[10px] border border-border p-[8px] tablet:p-[8px] desktop:p-[8px]">
@@ -40,7 +35,7 @@ export function ComplexityEditor({ id, value, onChange }: ControlProps<PasswordC
         ))}
       </div>
       <label className="flex flex-col gap-[4px] tablet:gap-[4px] desktop:gap-[4px] text-[11px] tablet:text-[11px] desktop:text-[11px] text-muted-foreground">
-        Min length
+        {C.minLength}
         <Input
           type="number"
           value={c.minLength ?? ""}

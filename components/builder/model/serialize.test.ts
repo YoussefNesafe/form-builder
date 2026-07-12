@@ -124,4 +124,24 @@ describe("serialize", () => {
     );
     expect(() => validateFormConfig(config)).not.toThrow();
   });
+
+  it("keeps numeric 0 (not pruned as a falsy prop, like false/empty-string are)", () => {
+    const config = serialize(
+      baseState({ nodes: [{ _id: "n1", type: "number", props: { name: "n", min: 0 } }] }),
+    );
+    expect(config.fields[0]).toEqual({ type: "number", name: "n", min: 0 });
+  });
+
+  // Pins the current, observed behavior at the `value`-exemption boundary: the
+  // exemption only protects a hidden field's `value` from the ""/false prune
+  // (see the earlier "keeps hidden value of false" case above) — it does NOT
+  // extend to `null`, which is dropped unconditionally by pruneEmpty before
+  // the exempt check ever runs. So a hidden field seeded with `value: null`
+  // loses its `value` key entirely, unlike `value: ""` or `value: false`.
+  it("drops a hidden field's value when it is null (the exemption does not cover null)", () => {
+    const config = serialize(
+      baseState({ nodes: [{ _id: "n1", type: "hidden", props: { name: "h", value: null } }] }),
+    );
+    expect(config.fields[0]).toEqual({ type: "hidden", name: "h" });
+  });
 });

@@ -34,3 +34,11 @@ export const DEFAULT_PROPS: Record<FieldType, Record<string, unknown>> = {
 
 /** Types that nest child fields. */
 export const CONTAINER_TYPES: FieldType[] = ["group"];
+
+/**
+ * Step-eligible field types: hidden/submit render automatically outside the
+ * stepper and must never be assignable to (or auto-seeded into) a step.
+ */
+export function isStepEligible(type: FieldType): boolean {
+  return type !== "hidden" && type !== "submit";
+}

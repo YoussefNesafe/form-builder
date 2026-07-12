@@ -1,19 +1,24 @@
 "use client";
 
 import { ChevronDown, ChevronUp, Plus, X } from "lucide-react";
+import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { builder } from "@/locales/en/builder";
+import { fmt } from "@/locales/fmt";
 import { useBuilderStore } from "./model/store";
 import { ConditionEditor } from "./controls/ConditionEditor";
 import type { PropDescriptor } from "./model/fieldProps";
 import type { BuilderNode } from "./model/types";
 
 // Step conditions are value-only (the engine rejects isValid on steps).
+// Reuses the shared "Visible when" copy from the props descriptor table —
+// it's the same field-level concept applied to a step instead of a field.
 const STEP_CONDITION_DESCRIPTOR: PropDescriptor = {
   key: "stepVisibleWhen",
-  label: "Visible when",
+  label: builder.props.fields.visibleWhen.label,
   control: "condition",
 };
 
@@ -37,17 +42,18 @@ export function StepsPanel() {
     <div className="flex flex-col gap-[10px] tablet:gap-[10px] desktop:gap-[10px] rounded-[10px] tablet:rounded-[10px] desktop:rounded-[10px] border border-border p-[10px] tablet:p-[10px] desktop:p-[10px]">
       <div className="flex items-center justify-between">
         <Label htmlFor="multi-step" className="text-[13px] tablet:text-[13px] desktop:text-[13px]">
-          Multi-step form
+          {builder.steps.multiStepLabel}
         </Label>
         <Switch id="multi-step" checked={multiStep} onCheckedChange={toggleMultiStep} />
       </div>
 
       {multiStep && (steps.length === 0 || !steps.some((s) => s.nodeIds.length > 0)) && (
-        <p className="rounded-[8px] tablet:rounded-[8px] desktop:rounded-[8px] border border-destructive/40 bg-destructive/10 px-[8px] tablet:px-[8px] desktop:px-[8px] py-[6px] tablet:py-[6px] desktop:py-[6px] text-[11px] tablet:text-[11px] desktop:text-[11px] text-destructive">
-          {steps.length === 0
-            ? "Add a step and assign your fields, or the export drops the steps."
-            : "No fields assigned — assign each field to a step below, or the export drops the steps."}
-        </p>
+        <Alert
+          role="status"
+          className="px-[8px] tablet:px-[8px] desktop:px-[8px] py-[6px] tablet:py-[6px] desktop:py-[6px] text-[11px] tablet:text-[11px] desktop:text-[11px]"
+        >
+          {steps.length === 0 ? builder.steps.emptyStepsWarning : builder.steps.noFieldsAssignedWarning}
+        </Alert>
       )}
 
       {multiStep && (
@@ -59,20 +65,30 @@ export function StepsPanel() {
                   {i + 1}
                 </span>
                 <Input
-                  aria-label={`Step ${i + 1} title`}
+                  aria-label={fmt(builder.steps.titleAriaLabel, { n: i + 1 })}
                   value={step.title}
                   onChange={(e) => renameStep(i, e.target.value)}
                 />
-                <Button variant="ghost" size="icon-xs" aria-label={`Move step ${i + 1} up`} onClick={() => moveStep(i, -1)}>
+                <Button
+                  variant="ghost"
+                  size="icon-xs"
+                  aria-label={fmt(builder.steps.moveUpAriaLabel, { n: i + 1 })}
+                  onClick={() => moveStep(i, -1)}
+                >
                   <ChevronUp />
                 </Button>
-                <Button variant="ghost" size="icon-xs" aria-label={`Move step ${i + 1} down`} onClick={() => moveStep(i, 1)}>
+                <Button
+                  variant="ghost"
+                  size="icon-xs"
+                  aria-label={fmt(builder.steps.moveDownAriaLabel, { n: i + 1 })}
+                  onClick={() => moveStep(i, 1)}
+                >
                   <ChevronDown />
                 </Button>
                 <Button
                   variant="ghost"
                   size="icon-xs"
-                  aria-label={`Remove step ${i + 1}`}
+                  aria-label={fmt(builder.steps.removeAriaLabel, { n: i + 1 })}
                   className="text-muted-foreground hover:text-destructive"
                   onClick={() => removeStep(i)}
                 >
@@ -82,11 +98,11 @@ export function StepsPanel() {
               <div className="flex flex-col gap-[6px] tablet:gap-[6px] desktop:gap-[6px] ps-[20px] tablet:ps-[20px] desktop:ps-[20px]">
                 <label className="flex items-center gap-[6px] tablet:gap-[6px] desktop:gap-[6px] text-[12px] tablet:text-[12px] desktop:text-[12px] text-muted-foreground">
                   <Switch
-                    aria-label={`Step ${i + 1} review step`}
+                    aria-label={fmt(builder.steps.reviewAriaLabel, { n: i + 1 })}
                     checked={step.review === true}
                     onCheckedChange={(on) => setStepReview(i, on)}
                   />
-                  Review step (summary of earlier steps; owns no fields)
+                  {builder.steps.reviewLabel}
                 </label>
                 <ConditionEditor
                   id={`step-${i}-visible-when`}
@@ -100,7 +116,7 @@ export function StepsPanel() {
           ))}
           <Button variant="outline" size="sm" onClick={addStep}>
             <Plus />
-            Add step
+            {builder.steps.addStep}
           </Button>
         </div>
       )}

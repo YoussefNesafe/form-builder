@@ -12,7 +12,7 @@ const GAP_CLASS = {
 /**
  * Shared 3-column docs page plumbing: [prose column (720px cap) | TOC rail].
  * Extracted from the five docs content pages (rule of three — same argument
- * as Prose.tsx). Pages own their TOC_ITEMS; this owns the layout.
+ * as DocsProse.tsx). Pages own their TOC_ITEMS; this owns the layout.
  */
 export function DocsPageShell({
   toc,

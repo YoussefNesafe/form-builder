@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { FormRenderer, registerBuiltInFields, type FormConfig, type FormValues } from "@/form-builder";
-import { FormBoundary } from "./FormBoundary";
+import { examples } from "@/locales/en/examples";
+import { StaticExampleBoundary } from "./StaticExampleBoundary";
 
 // Field runtime must be registered before any FormRenderer mounts. Safe to
 // call more than once (registerField just overwrites the same map entry) —
@@ -26,14 +27,14 @@ export function ExampleForm({ config, onSendOtp, onVerifyOtp }: ExampleFormProps
   return (
     <div className="flex flex-col gap-[20px] tablet:gap-[20px] desktop:gap-[20px]">
       <div className="rounded-[12px] tablet:rounded-[12px] desktop:rounded-[12px] border border-border bg-card p-[20px] tablet:p-[24px] desktop:p-[28px]">
-        <FormBoundary>
+        <StaticExampleBoundary>
           <FormRenderer
             config={config}
             onSubmit={(values) => setSubmitted(values)}
             onSendOtp={onSendOtp}
             onVerifyOtp={onVerifyOtp}
           />
-        </FormBoundary>
+        </StaticExampleBoundary>
       </div>
 
       {submitted && (
@@ -42,12 +43,12 @@ export function ExampleForm({ config, onSendOtp, onVerifyOtp }: ExampleFormProps
             role="status"
             className="text-[12px] tablet:text-[12px] desktop:text-[12px] font-medium text-muted-foreground"
           >
-            Submitted values
+            {examples.form.submittedValuesLabel}
           </span>
           <pre
             dir="ltr"
             tabIndex={0}
-            aria-label="Submitted values"
+            aria-label={examples.form.submittedValuesLabel}
             className="overflow-x-auto rounded-[10px] tablet:rounded-[10px] desktop:rounded-[10px] border border-border bg-muted p-[12px] tablet:p-[12px] desktop:p-[12px] text-[12px] tablet:text-[12px] desktop:text-[12px]"
           >
             {JSON.stringify(submitted, null, 2)}
@@ -57,12 +58,12 @@ export function ExampleForm({ config, onSendOtp, onVerifyOtp }: ExampleFormProps
 
       <details className="rounded-[12px] tablet:rounded-[12px] desktop:rounded-[12px] border border-border">
         <summary className="cursor-pointer select-none px-[16px] tablet:px-[16px] desktop:px-[16px] py-[10px] tablet:py-[10px] desktop:py-[10px] text-[13px] tablet:text-[13px] desktop:text-[13px] font-medium">
-          View config
+          {examples.form.viewConfig}
         </summary>
         <pre
           dir="ltr"
           tabIndex={0}
-          aria-label="Config JSON"
+          aria-label={examples.form.configJsonLabel}
           className="overflow-x-auto rounded-b-[12px] tablet:rounded-b-[12px] desktop:rounded-b-[12px] border-t border-border bg-muted p-[12px] tablet:p-[12px] desktop:p-[12px] text-[12px] tablet:text-[12px] desktop:text-[12px]"
         >
           {JSON.stringify(config, null, 2)}

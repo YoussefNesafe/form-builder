@@ -90,6 +90,19 @@ export function eligibleRefs(
 // Wiring props the engine hard-rejects inside groups — the editor hides these
 // when the selected node is nested (validateFormConfig would otherwise throw).
 // (rules.matches is handled inside RulesEditor via ctx.isNested.)
+//
+// This key list is a DIFFERENT concept from `scrubRefs`' key list in
+// `./store.ts`: this one is "wiring props forbidden inside a group" (checked
+// against a flat `PropDescriptor["key"]`), that one is "sibling-name-valued
+// props to scrub on rename/delete" (checked against the live prop value).
+// They mostly overlap but are not the same set — `optionsFrom` appears here
+// as a flat descriptor key, while scrubRefs reaches into it (`optionsFrom.field`)
+// since it's object-shaped; `rules.matches`/`matchesMessage` and the
+// `visibleWhen`/`disabledWhen`/`enabledWhen` condition specs are scrubbed by
+// scrubRefs but have NO entry here — condition specs aren't forbidden inside
+// groups at all, and rules.matches is suppressed via ctx.isNested directly in
+// RulesEditor instead. When adding a new wiring prop, consider whether it
+// belongs in EACH list independently.
 const GROUP_FORBIDDEN_KEYS = new Set([
   "enabledWhenVerified",
   "dependsOn",

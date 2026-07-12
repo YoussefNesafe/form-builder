@@ -10,8 +10,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { builder } from "@/locales/en/builder";
 import { eligibleRefs } from "../model/context";
+import { NONE_VALUE } from "./sentinels";
 import type { ControlProps } from "./types";
+
+const C = builder.controls.primitives;
 
 /** Empty string clears the prop. */
 export function TextControl({ id, value, onChange }: ControlProps<string>) {
@@ -84,7 +88,7 @@ export function PenColorControl({ id, value, onChange }: ControlProps<string>) {
   return (
     <div className="flex items-center gap-[8px] tablet:gap-[8px] desktop:gap-[8px]">
       <Input
-        aria-label="Pen color"
+        aria-label={C.penColorAriaLabel}
         type="color"
         value={value ?? "#000000"}
         onChange={(e) => onChange(e.target.value)}
@@ -93,23 +97,23 @@ export function PenColorControl({ id, value, onChange }: ControlProps<string>) {
       <Input
         id={id}
         value={value ?? ""}
-        placeholder="#000000"
+        placeholder={C.penColorPlaceholder}
         onChange={(e) => onChange(e.target.value === "" ? undefined : e.target.value)}
       />
     </div>
   );
 }
 
-/** Optional single-choice from descriptor.options. `__none__` clears. */
+/** Optional single-choice from descriptor.options. `NONE_VALUE` clears. */
 export function SelectControl({ id, value, onChange, descriptor }: ControlProps<string>) {
   const options = descriptor.options ?? [];
   return (
-    <Select value={value ?? "__none__"} onValueChange={(v) => onChange(v === "__none__" ? undefined : v)}>
+    <Select value={value ?? NONE_VALUE} onValueChange={(v) => onChange(v === NONE_VALUE ? undefined : v)}>
       <SelectTrigger id={id} className="w-full">
-        <SelectValue placeholder="Default" />
+        <SelectValue placeholder={C.selectDefault} />
       </SelectTrigger>
       <SelectContent>
-        <SelectItem value="__none__">Default</SelectItem>
+        <SelectItem value={NONE_VALUE}>{C.selectDefault}</SelectItem>
         {options.map((o) => (
           <SelectItem key={o.value} value={o.value}>
             {o.label}
@@ -124,12 +128,12 @@ export function SelectControl({ id, value, onChange, descriptor }: ControlProps<
 export function FieldRefControl({ id, value, onChange, descriptor, ctx }: ControlProps<string>) {
   const names = eligibleRefs(ctx.siblings, descriptor.refKind ?? "any", ctx.node._id);
   return (
-    <Select value={value ?? "__none__"} onValueChange={(v) => onChange(v === "__none__" ? undefined : v)}>
+    <Select value={value ?? NONE_VALUE} onValueChange={(v) => onChange(v === NONE_VALUE ? undefined : v)}>
       <SelectTrigger id={id} className="w-full">
-        <SelectValue placeholder="None" />
+        <SelectValue placeholder={C.fieldRefNone} />
       </SelectTrigger>
       <SelectContent>
-        <SelectItem value="__none__">None</SelectItem>
+        <SelectItem value={NONE_VALUE}>{C.fieldRefNone}</SelectItem>
         {names.map((name) => (
           <SelectItem key={name} value={name}>
             {name}
@@ -152,7 +156,7 @@ export function JsonControl({ id, value, onChange }: ControlProps<unknown>) {
     <Textarea
       id={id}
       value={text}
-      placeholder='"text", 42, true, or {"a":1}'
+      placeholder={C.jsonPlaceholder}
       onChange={(e) => {
         const raw = e.target.value;
         // Empty → "" (not undefined): a hidden field must keep its `value` key.
