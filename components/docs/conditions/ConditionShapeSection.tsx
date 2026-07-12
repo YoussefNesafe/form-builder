@@ -1,0 +1,54 @@
+import { CodeBlock } from "@/components/docs/CodeBlock";
+import { DocsSection, DocsBody as P, DocsInlineCode as IC } from "@/components/docs/DocsProse";
+
+const id = "condition-shape";
+const title = "Condition shape";
+
+const AND_ARRAY_CODE = `// Condition[] — every entry must match (AND)
+visibleWhen: [
+  { field: "country", equals: "US" },
+  { field: "accountType", notEquals: "individual" },
+]`;
+
+const ANY_OF_CODE = `// { anyOf: Condition[][] } — OR of AND-groups (DNF)
+visibleWhen: {
+  anyOf: [
+    [{ field: "plan", equals: "pro" }],
+    [{ field: "plan", equals: "enterprise" }, { field: "seats", in: [10, 25, 50] }],
+  ],
+}`;
+
+function Section() {
+  return (
+    <DocsSection id={id} title="Condition shape">
+      <P>
+        A single condition is <IC>{"{ field, equals?, notEquals?, in?, isValid? }"}</IC> — those four are the
+        complete operator list (the validator rejects a condition with none of them set). A{" "}
+        <IC>ConditionSpec</IC> is one of three shapes, all evaluating to the same normalized form internally:
+      </P>
+      <ul className="flex flex-col gap-[6px] tablet:gap-[6px] desktop:gap-[6px] text-[14px] tablet:text-[14px] desktop:text-[14px] text-muted-foreground">
+        <li>
+          <strong className="text-foreground">A single condition</strong> — the object above, on its own.
+        </li>
+        <li>
+          <strong className="text-foreground">Condition[]</strong> — an AND-list; every entry must match.
+        </li>
+        <li>
+          <strong className="text-foreground">{"{ anyOf: Condition[][] }"}</strong> — OR of AND-groups (DNF:
+          disjunctive normal form). Any group matching is enough.
+        </li>
+      </ul>
+      <CodeBlock code={AND_ARRAY_CODE} label="AND array example" />
+      <CodeBlock code={ANY_OF_CODE} label="anyOf DNF example" />
+      <P>
+        The flat two-level shape (groups OR together, conditions AND within a group) is deliberate — any boolean
+        combination is expressible this way without a recursive tree, which keeps evaluation a one-liner (
+        <IC>groups.some(g =&gt; g.every(match))</IC>) and keeps a future builder UI flat instead of recursive. An
+        empty spec (<IC>[]</IC> or <IC>{"{ anyOf: [] }"}</IC>) is rejected by the validator rather than silently
+        treated as always-matching, since for <IC>disabledWhen</IC> that would mean permanently disabled.
+      </P>
+    </DocsSection>
+  );
+}
+
+export const ConditionShapeSection = { id, title, Section };

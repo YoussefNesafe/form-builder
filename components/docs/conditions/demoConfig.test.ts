@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { validateFormConfig } from "@/form-builder/core/schema";
-import { conditionsDemoConfig } from "./config";
+import { conditionsDemoConfig } from "./demoConfig";
 
 describe("conditions docs demo config", () => {
   it("passes validateFormConfig with zero errors", () => {

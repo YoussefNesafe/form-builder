@@ -62,22 +62,42 @@ first — this file is about where things live, not what they mean.
 
 ## Add a docs page
 
-1. Create `app/(site)/docs/<slug>/page.tsx`. Use `DocsIntro`,
-   `DocsSection`, `DocsFootnote`, and the `DocsBody`/`DocsInlineCode`
-   primitives from `@/components/docs/DocsProse` for the prose shell —
-   don't hand-roll heading/paragraph markup.
-2. Register the page in `lib/docsNav.ts` (`DOCS_NAV_GROUPS`) — this is the
+1. `app/(site)/docs/<slug>/page.tsx` stays a thin composer — same pattern
+   as `app/(site)/page.tsx` composing `components/home/*` (see "Add a
+   landing section" above). Content lives in `components/docs/<slug>/`,
+   one file per section: `Intro.tsx`, `Footnote.tsx`, one
+   `<Name>Section.tsx` per `<DocsSection>`, and a `sections.ts` registry
+   ordering them. Use `DocsIntro`, `DocsSection`, `DocsFootnote`, and the
+   `DocsBody`/`DocsInlineCode` primitives from `@/components/docs/DocsProse`
+   for the prose shell — don't hand-roll heading/paragraph markup.
+2. Each section file exports `{ id, title, Section }`: `id`/`title` are
+   plain consts the file also passes to its own `<DocsSection id={id}>` —
+   the *same* binding, not a re-typed literal, so the section's heading id
+   can't drift from what `sections.ts` puts in the TOC. `title` here is the
+   TOC label; the on-page `<DocsSection title="...">` heading text is a
+   separate (often longer/numbered) string local to that file — the two
+   are allowed to differ, verbatim-preserve whichever wording already
+   exists on the page you're touching.
+3. `sections.ts` re-exports the ordered `SECTIONS` array and derives
+   `TOC_ITEMS` from it (`SECTIONS.map(({id,title}) => ({id,title}))`) — it
+   is the *only* place a page's section order is declared. `page.tsx` maps
+   over `SECTIONS` to render, and passes `TOC_ITEMS` to `DocsPageShell`;
+   neither list is hand-maintained separately, so they cannot drift (see
+   `components/docs/sections.test.tsx`, which also render-checks each
+   section's real DOM heading id against its registry `id`). A page with no
+   H2s (e.g. field-types) has an empty `SECTIONS`/`TOC_ITEMS` and composes
+   its one content block directly instead of looping.
+4. Any page-local demo `FormConfig` (and its test) lives beside the
+   sections that use it — `components/docs/<slug>/demoConfig.ts` — not in
+   the route folder, so components never import upward from `components/`
+   into `app/`.
+5. Register the page in `lib/docsNav.ts` (`DOCS_NAV_GROUPS`) — this is the
    single structural source for both the sidebar and prev/next
    pagination, so adding it there updates both. The group/page *titles*
    come from `locales/en/docs.ts` (`docs.nav`); `docsNav.ts` only owns
    href/order/grouping.
-3. If the page has a table of contents, each `TOC_ITEMS` entry's `id`
-   must match a `<DocsSection id="...">` in the same file exactly —
-   `app/(site)/docs/toc.test.ts` scans page source and fails the build on
-   any mismatch in either direction (a TOC id with no matching heading, or
-   a heading missing from the TOC).
-4. Long-form section prose is written directly in the page's JSX (inside
-   each `<DocsSection>`), not extracted to `locales/` — see "Add a
+6. Long-form section prose is written directly in the section's JSX
+   (inside its `<DocsSection>`), not extracted to `locales/` — see "Add a
    translation string" above.
 
 ## Add a builder field type's copy

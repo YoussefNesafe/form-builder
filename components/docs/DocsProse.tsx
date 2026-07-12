@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
  *
  * DocsIntro/DocsSection/DocsFootnote (added in the docs-prose-primitives
  * slice) extract the three markup patterns repeated across the same five
- * pages (~5/~20/~5 copies respectively — see toc.test.ts for the id
+ * pages (~5/~20/~5 copies respectively — see components/docs/sections.test.tsx for the id
  * contract DocsSection preserves): the H1+intro block, the per-section
  * wrapper, and the trailing cross-link paragraph. Pure structural
  * extraction — the copy itself stays wherever it already lived (long-form
@@ -82,9 +82,9 @@ export function DocsIntro({ title, children }: { title: ReactNode; children: Rea
 /**
  * `<section>` wrapper (gap-[10px]) around a DocsH2 + its body — the ~20x
  * repeated pattern across the five docs content pages. `id` is forwarded to
- * DocsH2 as the TOC anchor target; toc.test.ts scans page source for
- * `<DocsSection id="...">` to keep TOC_ITEMS and heading ids in sync (same
- * contract it previously enforced against raw `<H2 id="...">`).
+ * DocsH2 as the TOC anchor target; each docs page's `sections.ts` derives
+ * TOC_ITEMS from the same `id` binding a section passes here, and
+ * components/docs/sections.test.tsx render-checks the two stay in sync.
  */
 export function DocsSection({ id, title, children }: { id?: string; title: ReactNode; children: ReactNode }) {
   return (
