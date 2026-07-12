@@ -1,65 +1,72 @@
 /**
  * Landing page chrome copy (app/(site)/page.tsx and its components/home/*
- * sections). Structural data (hrefs, icon refs, the demo FormConfig, the
- * exported-code snippet) stays in components/home/content.ts — this file is
- * strings only.
+ * sections). Structural data (hrefs, icon refs, the demo FormConfig, real
+ * config objects the showcase/flagship/final-CTA code peeks are generated
+ * from) stays in components/home/content.ts — this file is strings only.
+ *
+ * Section rhythm: hero (split) -> showcase (grid) -> flagship (split) ->
+ * capabilities (panel) -> comparison (table). Every section closes with the
+ * shared CTA pair (`ctas`, rendered by components/home/SectionCtas.tsx).
  */
 export const home = {
+  /** Shared CTA pair — hero renders it large, SectionCtas repeats it at the end of every other section. */
+  ctas: {
+    openBuilder: "Open the builder",
+    readDocs: "Read the docs",
+  },
   hero: {
     /**
      * "{accent}" marks where the accent-colored word is spliced in by
      * HeroSection via String.split — fmt() does NOT process this marker
      * (fmt's {name} interpolation is a separate mechanism).
      */
-    title: "Build the form visually. Ship the {accent}.",
-    titleAccent: "code",
+    title: "Ship forms your team actually {accent}.",
+    titleAccent: "owns",
     subtitle:
-      "A visual builder that exports real Zod- and React Hook Form–validated React — you own the code, not a hosted widget.",
-    ctaBuilder: "Open the builder",
-    ctaDocs: "Read the docs",
+      "A visual builder that exports real, Zod- and React Hook Form–validated React — you own the code, not a hosted widget.",
+    /** sr-only heading over the live demo panel — the mono tab carries the visual label. */
+    panelHeading: "Live demo",
+    submittedMessage: "Submitted.",
+    tryAgain: "Try again",
   },
   showcase: {
-    title: "See it in action",
+    title: "See it running",
     cards: {
-      multiStepSignup: {
-        kicker: "Wizard",
-        title: "Multi-step signup",
-        description:
-          "A three-step wizard: account details with confirm-password, email OTP verification, and a read-only review step.",
-      },
       conditionalProfile: {
         kicker: "Conditions",
         title: "Conditional profile",
-        description:
-          "visibleWhen-conditional fields, an optionsFrom-derived select, and a phone field synced to a country field.",
+        description: "Three fields wired to each other: visibleWhen, optionsFrom, countryFrom.",
       },
       advancedFields: {
-        kicker: "Advanced fields",
+        kicker: "Field types",
         title: "Advanced fields",
-        description: "Masked input, date/time fields with sibling bounds, rating, segmented, slider, signature, and file.",
+        description: "Masked input, sibling-bound dates, signature capture — still just field configs.",
       },
       builder: {
         kicker: "Builder",
         title: "Visual builder",
-        description:
-          "A visual builder that exports real Zod- and React Hook Form–validated React — you own the code, not a hosted widget.",
+        description: "Drag fields, wire conditions, hit export. Same FormConfig shape as everything else here.",
       },
     },
   },
-  demo: {
-    title: "Try it right here",
-    subtitle: 'Pick "Company" to see a conditional field appear — this is the real engine, not a screenshot.',
-    footnote: "Live — this is the actual FormRenderer, not a mock.",
-    submittedMessage: "Submitted — this is a live demo, nothing was sent anywhere.",
+  flagship: {
+    /** Visible, left-aligned section heading — the mono tabs below name the two panes, this names the section. */
+    title: "One config. Two views.",
+    intro: "This form. That code. No translation layer.",
+    codeTabLabel: "signup.config.ts",
+    previewTabLabel: "preview",
+    codeAriaLabel: "Multi-step signup config source",
+    /** sr-only h3 over the code pane, parallel to previewHeading — lets heading-nav reach both panes under the section h2. */
+    codeHeading: "Config source",
+    /** sr-only h3 over the live preview pane — the mono tab carries the visual label. */
+    previewHeading: "Live preview",
+    /** next/dynamic loading fallback for the preview pane — only visible on a client-side chunk fetch, since it SSRs by default. */
+    previewLoading: "Loading the live form…",
+    submittedMessage: "Submitted.",
     tryAgain: "Try again",
   },
-  split: {
-    builderCanvasLabel: "Builder canvas",
-    exportedCodeLabel: "Exported code",
-    codeBlockLabel: "Exported form code",
-  },
-  features: {
-    title: "Everything a real form needs",
+  capabilities: {
+    title: "What's already handled.",
     items: {
       fieldTypes: {
         title: "24 built-in field types",
@@ -88,7 +95,7 @@ export const home = {
     },
   },
   comparison: {
-    title: "How it compares",
+    title: "Pick your tradeoff.",
     columns: {
       capability: "Capability",
       hosted: "Hosted builders",
@@ -114,12 +121,24 @@ export const home = {
         handRolled: "Yes — you build the state machine",
         engine: "Yes — visibleWhen + step config",
       },
+      customFieldTypes: {
+        capability: "Custom field types",
+        hosted: "Not supported",
+        handRolled: "Yes — you write the component",
+        engine: "Yes — registerField(), same registry as built-ins",
+      },
+      offlineNoLockIn: {
+        capability: "Works without a vendor's servers",
+        hosted: "No — renders and validates through their API",
+        handRolled: "Yes",
+        engine: "Yes — no runtime dependency on us",
+      },
+      pricing: {
+        capability: "Pricing",
+        hosted: "Per-response or per-seat",
+        handRolled: "Free — but you built it",
+        engine: "Free — MIT license, no seats",
+      },
     },
   },
-  finalCta: {
-    title: "Stop hand-wiring the same form again.",
-    cta: "Open the builder",
-  },
-  /** Shared decorative chip labels — used by both the showcase "builder" preview and the builder-canvas mock. */
-  builderChips: ["Email", "Password", "Country", "Submit"] as const,
 } as const;

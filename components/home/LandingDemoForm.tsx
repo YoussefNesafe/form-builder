@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { FormRenderer, registerField } from "@/form-builder";
+import { registerField } from "@/form-builder/core/registry";
+import { FormRenderer } from "@/form-builder/components/FormRenderer";
 import { SelectField } from "@/form-builder/fields/SelectField";
 import { SubmitField } from "@/form-builder/fields/SubmitField";
 import { TextField } from "@/form-builder/fields/TextField";
@@ -16,19 +17,37 @@ import { landingDemoConfig } from "./demoConfig";
 // (~288 KB gzip incl. phone/signature libs) into the landing bundle, while
 // demoConfig only uses select/text/email/submit. Adding a field type to the
 // demo config? Register it here too, or the boundary shows a render error.
-registerField("select", SelectField);
-registerField("text", TextField);
-registerField("email", TextField);
-registerField("submit", SubmitField);
+// FormRenderer/registerField are imported from their concrete source files,
+// NOT the `@/form-builder` barrel (form-builder/index.ts) — that barrel also
+// re-exports `registerBuiltInFields`, and with no `sideEffects: false` in
+// package.json, Turbopack keeps the unused re-export's whole dependency
+// chain (all 24 field files) in this bundle even though it's never called.
+// Importing the concrete files sidesteps the barrel entirely. Verified via
+// `.next/server/app/(site)/page_client-reference-manifest.js` after a real
+// `next build` — see FlagshipSignupForm.tsx for the same fix.
+const LANDING_DEMO_RENDERERS = {
+  select: SelectField,
+  text: TextField,
+  email: TextField,
+  submit: SubmitField,
+} as const;
+for (const [type, renderer] of Object.entries(LANDING_DEMO_RENDERERS)) {
+  registerField(type, renderer);
+}
+// Pinned by scopedRegistration.test.ts: must cover every field type
+// landingDemoConfig uses, or the boundary shows a render error at runtime.
+export const LANDING_DEMO_REGISTERED_TYPES = Object.keys(LANDING_DEMO_RENDERERS);
 
 /**
- * Hero-panel demo: the real FormRenderer, not a mock. Deliberately minimal
- * next to components/examples/ExampleForm.tsx (no submitted-payload readout,
- * no raw-config <details>) — those are docs/examples chrome, not a marketing
- * moment. This is the only 'use client' leaf on the landing page; the rest
- * of app/(site)/page.tsx and components/home/* stay Server Components.
- * Imports the `home` dictionary slice directly (not the aggregated `t`) to
- * keep this client bundle from pulling in every other locale domain.
+ * Hero-panel demo: the real FormRenderer, deliberately minimal next to
+ * components/examples/ExampleForm.tsx (no submitted-payload readout, no
+ * raw-config <details>) — those are docs/examples chrome, not a marketing
+ * moment. Rendered inside HeroSection's panel frame. One of exactly two
+ * 'use client' leaves on the landing page (the other is FlagshipSignupForm);
+ * the rest of app/(site)/page.tsx and
+ * components/home/* stay Server Components. Imports the `home` dictionary
+ * slice directly (not the aggregated `t`) to keep this client bundle from
+ * pulling in every other locale domain.
  */
 export function LandingDemoForm() {
   const [submitted, setSubmitted] = useState(false);
@@ -50,7 +69,7 @@ export function LandingDemoForm() {
             : "sr-only"
         }
       >
-        {submitted ? home.demo.submittedMessage : null}
+        {submitted ? home.hero.submittedMessage : null}
       </p>
       {submitted && (
         <Button
@@ -60,7 +79,7 @@ export function LandingDemoForm() {
           className="self-start"
           onClick={() => setSubmitted(false)}
         >
-          {home.demo.tryAgain}
+          {home.hero.tryAgain}
         </Button>
       )}
     </div>

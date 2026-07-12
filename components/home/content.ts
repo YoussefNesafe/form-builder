@@ -1,56 +1,64 @@
 import { GitBranch, KeyRound, Layers, ListChecks, Save, ShieldCheck, type LucideIcon } from "lucide-react";
+import { advancedFieldsConfig } from "@/app/(site)/examples/advanced-fields/config";
+import { conditionalProfileConfig } from "@/app/(site)/examples/conditional-profile/config";
+import type { FormConfig } from "@/form-builder";
+import { landingDemoConfig } from "./demoConfig";
 
-// Structural data only — icon refs, hrefs, decorative widths, and the code
-// snippet. All user-visible copy lives in locales/en/home.ts; these arrays
-// carry the slugs used to look that copy up.
+// Structural data only — icon refs, hrefs, mono spec-sheet keys, and which
+// real config the showcase card code peeks are generated from. All
+// user-visible copy lives in locales/en/home.ts; these arrays carry the
+// slugs used to look that copy up.
 
-export const FEATURE_SLUGS = [
-  { slug: "fieldTypes", icon: ListChecks },
-  { slug: "conditionalLogic", icon: GitBranch },
-  { slug: "wizards", icon: Layers },
-  { slug: "crossFieldValidation", icon: ShieldCheck },
-  { slug: "otp", icon: KeyRound },
-  { slug: "autosave", icon: Save },
-] as const satisfies ReadonlyArray<{ slug: string; icon: LucideIcon }>;
+export const CAPABILITY_ROWS = [
+  { slug: "fieldTypes", icon: ListChecks, monoKey: "fields:" },
+  { slug: "conditionalLogic", icon: GitBranch, monoKey: "visibleWhen:" },
+  { slug: "wizards", icon: Layers, monoKey: "steps:" },
+  // Cross-field rules live in the form-level superRefine, never a field's own
+  // schema (see AGENTS.md) — the mono key names that real mechanism.
+  { slug: "crossFieldValidation", icon: ShieldCheck, monoKey: "superRefine:" },
+  { slug: "otp", icon: KeyRound, monoKey: "otp:" },
+  { slug: "autosave", icon: Save, monoKey: "autosave:" },
+] as const satisfies ReadonlyArray<{ slug: string; icon: LucideIcon; monoKey: string }>;
 
-export const COMPARISON_ROW_SLUGS = ["ownCode", "typeSafeValidation", "conditionalLogic"] as const;
-
-// Showcase-style card grid (§4 of the visual spec) — our answer to
-// nextjs.org/showcase's site grid, mapped onto real routes. Card copy in
-// locales/en/home.ts's showcase.cards duplicates examples-page descriptions
-// verbatim for multiStepSignup/conditionalProfile/advancedFields (and the
-// hero's own copy for "builder") — intentional, not new marketing copy.
-// Slice 3 owns the examples-page side; the two aren't cross-referenced yet.
-export const SHOWCASE_CARDS = [
-  { slug: "multiStepSignup", href: "/examples/multi-step-signup", preview: "fields" },
-  { slug: "conditionalProfile", href: "/examples/conditional-profile", preview: "fields" },
-  { slug: "advancedFields", href: "/examples/advanced-fields", preview: "fields" },
-  { slug: "builder", href: "/builder", preview: "chips" },
-] as const satisfies ReadonlyArray<{ slug: string; href: string; preview: "fields" | "chips" }>;
-
-// Fixed set of skeleton "field row" widths for the example cards' preview
-// placeholder — purely decorative (aria-hidden), so any 3 widths do.
-export const FIELD_ROW_WIDTHS = [
-  "w-[85%] tablet:w-[85%] desktop:w-[85%]",
-  "w-[60%] tablet:w-[60%] desktop:w-[60%]",
-  "w-[72%] tablet:w-[72%] desktop:w-[72%]",
+export const COMPARISON_ROW_SLUGS = [
+  "ownCode",
+  "typeSafeValidation",
+  "conditionalLogic",
+  "customFieldTypes",
+  "offlineNoLockIn",
+  "pricing",
 ] as const;
 
-export const CODE_SNIPPET = `import { FormRenderer, registerBuiltInFields } from "@/form-builder";
-import type { FormConfig } from "@/form-builder";
-
-registerBuiltInFields();
-
-const config: FormConfig = {
-  id: "signup",
-  fields: [
-    { type: "email", name: "email", label: "Email", required: true },
-    { type: "password", name: "password", label: "Password", required: true },
-    { type: "country", name: "country", label: "Country" },
-    { type: "submit", name: "submit", text: "Create account" },
-  ],
-};
-
-export function SignupForm() {
-  return <FormRenderer config={config} onSubmit={(values) => console.log(values)} />;
-}`;
+// Showcase card grid (§2 of the redesign) — the multi-step-signup card moved
+// to the flagship split (§3); these three keep linking to their real routes.
+// Each card's code peek is generated from the field named in
+// `peekFieldNames`, pulled off the actual imported config (see
+// components/home/fieldPeek.ts) — never a hand-typed snippet.
+export const SHOWCASE_CARDS = [
+  {
+    slug: "conditionalProfile",
+    href: "/examples/conditional-profile",
+    config: conditionalProfileConfig,
+    peekFieldNames: ["companyName", "billingCycle", "phone"],
+  },
+  {
+    slug: "advancedFields",
+    href: "/examples/advanced-fields",
+    config: advancedFieldsConfig,
+    peekFieldNames: ["cardNumber", "endDate", "signature"],
+  },
+  {
+    slug: "builder",
+    href: "/builder",
+    // No single config backs the /builder route itself (the canvas starts
+    // empty) — this reuses the hero's own live config, which is a real,
+    // currently-rendered FormConfig, not a fabricated one.
+    config: landingDemoConfig,
+    peekFieldNames: ["accountType", "companyName", "email"],
+  },
+] as const satisfies ReadonlyArray<{
+  slug: string;
+  href: string;
+  config: FormConfig;
+  peekFieldNames: readonly string[];
+}>;

@@ -1,17 +1,23 @@
-import { BuilderCodeSplit } from "@/components/home/BuilderCodeSplit";
+import { CapabilitiesSection } from "@/components/home/CapabilitiesSection";
 import { ComparisonStrip } from "@/components/home/ComparisonStrip";
-import { DemoSection } from "@/components/home/DemoSection";
-import { FeatureGrid } from "@/components/home/FeatureGrid";
 import { FinalCta } from "@/components/home/FinalCta";
+import { FlagshipSplit } from "@/components/home/FlagshipSplit";
 import { HeroSection } from "@/components/home/HeroSection";
 import { ShowcaseSection } from "@/components/home/ShowcaseSection";
 import { LANDING_CONTAINER } from "@/components/shared/containers";
 import { cn } from "@/lib/utils";
 
 /**
- * Marketing landing page. Server Component throughout except the hero demo
- * panel (components/home/LandingDemoForm, isolated to its own client leaf
- * inside DemoSection) — everything else here is static markup, no
+ * Marketing landing page. Six sections, rhythm split -> grid -> split ->
+ * panel -> table -> band: HeroSection (live demo merged in), ShowcaseSection,
+ * FlagshipSplit (the multi-step-signup example's real config + live form,
+ * reused from app/(site)/examples/multi-step-signup — not duplicated),
+ * CapabilitiesSection, ComparisonStrip, FinalCta. Server Component throughout
+ * except the two live-form leaves (components/home/LandingDemoForm inside
+ * HeroSection, and components/home/FlagshipSignupForm inside FlagshipSplit —
+ * only the config + OTP stubs are borrowed from the examples route; the leaf
+ * itself is lean, scoped-registration) — everything else here is static
+ * markup, no
  * interactivity to justify a client boundary. Accent color is budgeted
  * deliberately (see each section's own comments); default to grayscale
  * unless a section is explicitly called out.
@@ -22,9 +28,8 @@ export default function Home() {
       <div className={cn(LANDING_CONTAINER, "flex flex-col")}>
         <HeroSection />
         <ShowcaseSection />
-        <DemoSection />
-        <BuilderCodeSplit />
-        <FeatureGrid />
+        <FlagshipSplit />
+        <CapabilitiesSection />
         <ComparisonStrip />
         <FinalCta />
       </div>

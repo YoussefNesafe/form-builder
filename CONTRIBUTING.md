@@ -29,7 +29,7 @@ first — this file is about where things live, not what they mean.
    name; structural/non-copy data (icon refs, hrefs, decorative widths,
    code snippets) goes in `components/home/content.ts` instead. If the
    section needs interactivity, isolate the client boundary to the
-   smallest possible leaf (see `LandingDemoForm` inside `DemoSection`) —
+   smallest possible leaf (see `LandingDemoForm` inside `HeroSection`) —
    don't make the whole section a client component for one interactive
    part.
 
@@ -39,8 +39,8 @@ first — this file is about where things live, not what they mean.
    chrome), `nav`, `home`, `docs`, `examples`, `builder` (visual builder
    chrome only — not field-type copy, see below), `fieldTypes` (built-in
    field type label/description/note).
-2. Keep the key path to 3 segments or fewer (e.g. `home.demo.title`, not
-   `home.sections.demo.heading.title`) — deep nesting fights the point of
+2. Keep the key path to 3 segments or fewer (e.g. `home.hero.title`, not
+   `home.sections.hero.heading.title`) — deep nesting fights the point of
    a typed dictionary.
 3. Any collection (cards, nav items, step lists) is keyed by a stable
    slug, never by array index — index keys break the moment entries are

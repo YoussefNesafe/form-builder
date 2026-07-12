@@ -11,6 +11,16 @@ type LinkCardProps = {
   /** Decorative preview slot rendered above the kicker/title (showcase cards only). */
   children?: ReactNode;
   className?: string;
+  /**
+   * Explicit accessible name for the link, e.g. `${title} — ${description}`.
+   * Set this whenever `children` renders content that shouldn't concatenate
+   * into the link's name (e.g. an `aria-hidden` code peek — `aria-hidden`
+   * descendants are already excluded from accname computation, but an
+   * explicit label makes that not depend on every future `children` staying
+   * `aria-hidden`). Omit to let the name derive from rendered content, as
+   * every non-showcase call site already does.
+   */
+  ariaLabel?: string;
 };
 
 /**
@@ -22,10 +32,11 @@ type LinkCardProps = {
  * states, title/description type — is identical across all three call
  * sites and stays fixed here.
  */
-export function LinkCard({ href, title, description, kicker, children, className }: LinkCardProps) {
+export function LinkCard({ href, title, description, kicker, children, className, ariaLabel }: LinkCardProps) {
   return (
     <Link
       href={href}
+      aria-label={ariaLabel}
       className={cn(
         "flex flex-col gap-[4px] tablet:gap-[4px] desktop:gap-[4px] rounded-[12px] tablet:rounded-[12px] desktop:rounded-[12px] border border-border-interactive bg-card p-[16px] tablet:p-[16px] desktop:p-[16px] transition-colors hover:border-border-interactive-hover focus-visible:border-foreground focus-visible:outline-none",
         className,
