@@ -113,7 +113,7 @@ function Section() {
         step 2 (this repo&apos;s copy lives in <IC>app/globals.css</IC>) — it&apos;s a trimmed copy of this
         repo&apos;s actual tokens, not a generic palette:
       </P>
-      <CodeBlock code={GLOBALS_CSS_TOKENS} label="Required app/globals.css tokens" />
+      <CodeBlock code={GLOBALS_CSS_TOKENS} label="Required app/globals.css tokens" copy copyLabel="CSS" />
       <P>
         The trailing <IC>@layer base</IC> block matters even though nothing in <IC>form-builder/</IC> or the
         shadcn add-list uses a bare <IC>border</IC>/<IC>outline</IC> utility today — without it Tailwind&apos;s

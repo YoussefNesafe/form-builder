@@ -37,6 +37,12 @@ export const docs = {
       fieldTypes: "Field types",
     },
   },
+  /** CopyButton (components/docs/CopyButton.tsx) — icon button on copy-enabled CodeBlocks. `copyAriaLabel`'s `{label}` is the noun each call site passes (e.g. "command", "CSS"). */
+  codeBlock: {
+    defaultLabel: "code",
+    copyAriaLabel: "Copy {label}",
+    copied: "Copied",
+  },
   index: {
     title: "Docs",
     /**

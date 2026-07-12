@@ -17,7 +17,7 @@ function Section() {
         registered. Call this once, before the first <IC>FormRenderer</IC> mounts (a root layout or app entry
         point works; it&apos;s safe to call more than once):
       </P>
-      <CodeBlock code={REGISTER_FIELDS} />
+      <CodeBlock code={REGISTER_FIELDS} copy />
     </DocsSection>
   );
 }

@@ -19,7 +19,7 @@ function Section() {
         there). Reaching into <IC>form-builder/core</IC> or <IC>form-builder/fields</IC> directly is unsupported —
         those modules can be restructured without notice.
       </P>
-      <CodeBlock code={IMPORT_RULE} />
+      <CodeBlock code={IMPORT_RULE} copy />
     </DocsSection>
   );
 }
