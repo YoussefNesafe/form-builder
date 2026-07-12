@@ -2,6 +2,7 @@ import dynamic from "next/dynamic";
 import { CodeBlock } from "@/components/docs/CodeBlock";
 import { t } from "@/locales";
 import { FLAGSHIP_CODE } from "./generatedCode";
+import { SectionCtas } from "./SectionCtas";
 import { SectionHeading } from "./SectionHeading";
 
 // Below-the-fold, so its client chunk splits off the hero's critical path
@@ -73,6 +74,7 @@ export function FlagshipSplit() {
           </div>
         </div>
       </div>
+      <SectionCtas />
     </section>
   );
 }

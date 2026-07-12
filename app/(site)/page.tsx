@@ -1,6 +1,5 @@
 import { CapabilitiesSection } from "@/components/home/CapabilitiesSection";
 import { ComparisonStrip } from "@/components/home/ComparisonStrip";
-import { FinalCta } from "@/components/home/FinalCta";
 import { FlagshipSplit } from "@/components/home/FlagshipSplit";
 import { HeroSection } from "@/components/home/HeroSection";
 import { ShowcaseSection } from "@/components/home/ShowcaseSection";
@@ -8,11 +7,12 @@ import { LANDING_CONTAINER } from "@/components/shared/containers";
 import { cn } from "@/lib/utils";
 
 /**
- * Marketing landing page. Six sections, rhythm split -> grid -> split ->
- * panel -> table -> band: HeroSection (live demo merged in), ShowcaseSection,
+ * Marketing landing page. Five sections, rhythm split -> grid -> split ->
+ * panel -> table: HeroSection (live demo merged in), ShowcaseSection,
  * FlagshipSplit (the multi-step-signup example's real config + live form,
  * reused from app/(site)/examples/multi-step-signup — not duplicated),
- * CapabilitiesSection, ComparisonStrip, FinalCta. Server Component throughout
+ * CapabilitiesSection, ComparisonStrip. Every section closes with the shared
+ * SectionCtas pair (no separate closing band). Server Component throughout
  * except the two live-form leaves (components/home/LandingDemoForm inside
  * HeroSection, and components/home/FlagshipSignupForm inside FlagshipSplit —
  * only the config + OTP stubs are borrowed from the examples route; the leaf
@@ -31,7 +31,6 @@ export default function Home() {
         <FlagshipSplit />
         <CapabilitiesSection />
         <ComparisonStrip />
-        <FinalCta />
       </div>
     </main>
   );

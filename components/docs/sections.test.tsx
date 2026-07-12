@@ -22,9 +22,7 @@ import { SECTIONS as installationSections, TOC_ITEMS as installationToc } from "
 import { SECTIONS as yourFirstFormSections, TOC_ITEMS as yourFirstFormToc } from "./your-first-form/sections";
 import { SECTIONS as conditionsSections, TOC_ITEMS as conditionsToc } from "./conditions/sections";
 import { SECTIONS as wizardsSections, TOC_ITEMS as wizardsToc } from "./wizards/sections";
-import { TOC_ITEMS as fieldTypesToc } from "./field-types/sections";
-import { BUILT_IN_FIELD_TYPES } from "@/form-builder";
-import { FieldTypesTableSection } from "./field-types/FieldTypesTableSection";
+import { SECTIONS as fieldTypesSections, TOC_ITEMS as fieldTypesToc } from "./field-types/sections";
 
 registerBuiltInFields();
 afterEach(cleanup);
@@ -44,9 +42,7 @@ const PAGES: { name: string; SECTIONS: SectionEntry[]; TOC_ITEMS: { id: string; 
   { name: "your-first-form", SECTIONS: yourFirstFormSections, TOC_ITEMS: yourFirstFormToc },
   { name: "conditions", SECTIONS: conditionsSections, TOC_ITEMS: conditionsToc },
   { name: "wizards", SECTIONS: wizardsSections, TOC_ITEMS: wizardsToc },
-  // field-types has no SECTIONS registry — one tableless section composed
-  // directly by its page.tsx (see components/docs/field-types/sections.ts).
-  { name: "field-types", SECTIONS: [], TOC_ITEMS: fieldTypesToc },
+  { name: "field-types", SECTIONS: fieldTypesSections, TOC_ITEMS: fieldTypesToc },
 ];
 
 describe("docs section registries", () => {
@@ -76,12 +72,8 @@ describe("docs section registries", () => {
   }
 });
 
-// field-types' one section holds the only runtime mapping logic in the docs
-// (BUILT_IN_FIELD_TYPES × t.fieldTypes) — smoke it so a newly-registered type
-// missing its locale entry fails here, not silently in the rendered table.
-describe("field-types table section", () => {
-  it("renders one row per built-in field type", () => {
-    const { container } = render(<FieldTypesTableSection />);
-    expect(container.querySelectorAll("tbody tr").length).toBe(BUILT_IN_FIELD_TYPES.length);
-  });
-});
+// field-types' per-type sections (FieldTypeSection.tsx, one per
+// FIELD_TYPE_ORDER entry) are the runtime mapping logic in the docs
+// (BUILT_IN_FIELD_TYPES × t.fieldTypes) — the "renders a heading with
+// matching id" loop above already renders and asserts on every one of them,
+// so a newly-registered type missing its locale entry still fails here.

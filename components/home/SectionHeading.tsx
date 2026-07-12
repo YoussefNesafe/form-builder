@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 
 type SectionHeadingProps = {
   children: ReactNode;
-  /** Showcase/capabilities/comparison/finalCta center this; flagship's sits left-aligned in its split layout. Default true. */
+  /** Showcase/comparison center this; flagship's and capabilities' sit left-aligned. Default true. */
   center?: boolean;
   className?: string;
   /** Set so the section wrapper can point `aria-labelledby` at this heading — every landing section does. */
@@ -11,7 +11,7 @@ type SectionHeadingProps = {
 };
 
 /**
- * The h2 class cluster shared by 5 of the landing page's sections. Feature-
+ * The h2 class cluster shared by 4 of the landing page's sections. Feature-
  * local on purpose (not components/shared/) — nothing outside components/home
  * uses this exact size/tracking ramp.
  */

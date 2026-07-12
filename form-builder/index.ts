@@ -1,6 +1,7 @@
 export type {
   FormConfig,
   FieldConfig,
+  BaseField,
   CustomFieldConfig,
   AnyFieldConfig,
   FieldType,

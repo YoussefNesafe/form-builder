@@ -6,7 +6,10 @@ export function Footnote() {
     <DocsFootnote>
       For the exact per-type config shape (which properties each type accepts), see the <IC>FieldConfig</IC>{" "}
       union in <IC>form-builder/core/types.ts</IC>, or a working config for several of these under{" "}
-      <Link href="/examples" className="underline underline-offset-2 hover:text-foreground">
+      <Link
+        href="/examples"
+        className="underline underline-offset-2 hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
+      >
         Examples
       </Link>
       .

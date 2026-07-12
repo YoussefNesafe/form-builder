@@ -3,6 +3,7 @@ import { LinkCard } from "@/components/shared/LinkCard";
 import { t } from "@/locales";
 import { SHOWCASE_CARDS } from "./content";
 import { peekFields } from "./fieldPeek";
+import { SectionCtas } from "./SectionCtas";
 import { SectionHeading } from "./SectionHeading";
 
 /**

@@ -1,8 +1,8 @@
 /**
  * Landing page chrome copy (app/(site)/page.tsx and its components/home/*
  * sections). Structural data (hrefs, icon refs, the demo FormConfig, real
- * config objects the showcase/flagship/final-CTA code peeks are generated
- * from) stays in components/home/content.ts — this file is strings only.
+ * config objects the showcase/flagship code peeks are generated from) stays
+ * in components/home/content.ts — this file is strings only.
  *
  * Section rhythm: hero (split) -> showcase (grid) -> flagship (split) ->
  * capabilities (panel) -> comparison (table). Every section closes with the

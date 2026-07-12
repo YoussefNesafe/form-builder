@@ -1,5 +1,6 @@
 import { t } from "@/locales";
 import { CAPABILITY_ROWS } from "./content";
+import { SectionCtas } from "./SectionCtas";
 import { SectionHeading } from "./SectionHeading";
 
 /**
@@ -51,6 +52,7 @@ export function CapabilitiesSection() {
           })}
         </div>
       </div>
+      <SectionCtas />
     </section>
   );
 }

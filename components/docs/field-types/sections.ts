@@ -1,8 +1,19 @@
 import type { TocItem } from "@/components/docs/DocsToc";
+import { BasePropsSection } from "./BasePropsSection";
+import { SharedShapesSection } from "./SharedShapesSection";
+import { makeFieldTypeSection } from "./FieldTypeSection";
+import { FIELD_TYPE_ORDER } from "./fieldProps";
 
-// No H2 sections on this page (it's one reference table, rendered directly
-// by page.tsx as <FieldTypesTableSection/> — see that file) — empty
-// TOC_ITEMS so DocsToc renders null, same null-guard pattern as
-// DocsPagination. Kept as its own module (rather than inlining `[]` in
-// page.tsx) so every docs page imports TOC_ITEMS from the same place.
-export const TOC_ITEMS: TocItem[] = [];
+// Ordered registry — single source for both page composition and the TOC,
+// same contract as components/docs/conditions/sections.ts and .../wizards/
+// sections.ts. Base props and Shared shapes come first (shapes before the
+// per-type sections that name them — see SharedShapesSection's comment),
+// then one entry per built-in FieldType, generated from FIELD_TYPE_ORDER via
+// makeFieldTypeSection rather than 24 hand-written section files.
+export const SECTIONS: { id: string; title: string; Section: React.ComponentType }[] = [
+  BasePropsSection,
+  SharedShapesSection,
+  ...FIELD_TYPE_ORDER.map(makeFieldTypeSection),
+];
+
+export const TOC_ITEMS: TocItem[] = SECTIONS.map(({ id, title }) => ({ id, title }));

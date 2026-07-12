@@ -1,6 +1,7 @@
 import { Check } from "lucide-react";
 import { t } from "@/locales";
 import { COMPARISON_ROW_SLUGS } from "./content";
+import { SectionCtas } from "./SectionCtas";
 import { SectionHeading } from "./SectionHeading";
 
 /**
@@ -60,6 +61,7 @@ export function ComparisonStrip() {
           );
         })}
       </div>
+      <SectionCtas center />
     </section>
   );
 }

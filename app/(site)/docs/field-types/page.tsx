@@ -1,24 +1,28 @@
 import type { Metadata } from "next";
 import { DocsPageShell } from "@/components/docs/DocsPageShell";
 import { Intro } from "@/components/docs/field-types/Intro";
-import { FieldTypesTableSection } from "@/components/docs/field-types/FieldTypesTableSection";
 import { Footnote } from "@/components/docs/field-types/Footnote";
-import { TOC_ITEMS } from "@/components/docs/field-types/sections";
+import { SECTIONS, TOC_ITEMS } from "@/components/docs/field-types/sections";
 import { t } from "@/locales";
 
 export const metadata: Metadata = { title: t.docs.nav.pages.fieldTypes };
 
 /**
- * Reference table of every built-in field type — a single section (no H2s,
- * no TOC), so it composes directly rather than looping a SECTIONS registry.
+ * Base props + shared shapes + one H2 per built-in field type (props table,
+ * runtime value shape, example config) — content and data live in
+ * components/docs/field-types/* (fieldProps.ts is the data module; sections
+ * come from ./sections.ts, the TOC's single source, same contract as
+ * conditions/wizards).
  *
- * Thin composer only — content lives in components/docs/field-types/*.
+ * Thin composer only.
  */
 export default function FieldTypesPage() {
   return (
-    <DocsPageShell toc={TOC_ITEMS} gap="20">
+    <DocsPageShell toc={TOC_ITEMS}>
       <Intro />
-      <FieldTypesTableSection />
+      {SECTIONS.map(({ id, Section }) => (
+        <Section key={id} />
+      ))}
       <Footnote />
     </DocsPageShell>
   );
