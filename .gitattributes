@@ -1,0 +1,4 @@
+# The theme token stylesheet is byte-compared against the generator output in
+# themeCss.test.ts; pin it to LF so a Windows checkout (autocrlf=true) doesn't
+# introduce CRLF and break the parity test.
+form-builder/theme/tokens.css text eol=lf
