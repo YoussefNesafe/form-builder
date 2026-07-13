@@ -1,5 +1,5 @@
 import { CodeBlock } from "@/components/docs/CodeBlock";
-import { DocsSection, DocsBody as P, DocsInlineCode as IC } from "@/components/docs/DocsProse";
+import { DocsSection, DocsInlineCode as IC, DocsNote } from "@/components/docs/DocsProse";
 
 const id = "group-limitation";
 const title = "Known limitation: groups";
@@ -24,19 +24,17 @@ const GROUP_LIMITATION_CODE = `{
 function Section() {
   return (
     <DocsSection id={id} title="Known limitation: conditions inside groups">
-      <P>
-        <IC>visibleWhen</IC> on a field nested inside a <IC>group</IC> field is{" "}
-        <strong className="text-foreground">not skipped by validation</strong> in v1 — this is a known
-        limitation, pinned by a test (not a bug waiting to be fixed silently under you). A required inner field
-        hidden by its own <IC>visibleWhen</IC> still blocks submit.
-      </P>
+      <DocsNote variant="warning" label="Known limitation">
+        <IC>visibleWhen</IC> on a field nested inside a <IC>group</IC> field is <strong>not skipped by validation</strong>{" "}
+        in v1 — pinned by a test (not a bug waiting to be fixed silently under you). A required inner field hidden by
+        its own <IC>visibleWhen</IC> still blocks submit.
+      </DocsNote>
       <CodeBlock code={GROUP_LIMITATION_CODE} label="Group-nested visibleWhen limitation" />
-      <P>
-        Separately, an <IC>isValid</IC> condition <em>targeting</em> a group-nested field is rejected outright by
-        the config validator (a hard error, not a silent limitation) — the per-field schema map the oracle uses
-        only holds top-level fields, the same reason group-nested <IC>otp</IC> <IC>dependsOn</IC> wiring is
-        rejected.
-      </P>
+      <DocsNote variant="danger" label="Hard error">
+        An <IC>isValid</IC> condition <em>targeting</em> a group-nested field is rejected outright by the config
+        validator (not a silent limitation) — the per-field schema map the oracle uses only holds top-level fields,
+        the same reason group-nested <IC>otp</IC> <IC>dependsOn</IC> wiring is rejected.
+      </DocsNote>
     </DocsSection>
   );
 }

@@ -101,3 +101,65 @@ export function DocsFootnote({ children }: { children: ReactNode }) {
     <p className="text-[3.471vw] tablet:text-[1.625vw] desktop:text-[0.676vw] text-muted-foreground">{children}</p>
   );
 }
+
+// Left-border accent per variant — the whole visual weight of the callout, in
+// keeping with the flat style (border colour only, no fill/shadow/ring). Colour
+// is never the sole signal: every call site carries a text `label` word (WCAG
+// 1.4.1). All three border colours already pass a ≥3:1 non-text contrast check
+// on the dark-only background (see globals.css token notes: border-interactive
+// 3.66:1, accent-brand and destructive higher).
+const NOTE_BORDER = {
+  note: "border-border-interactive",
+  warning: "border-accent-brand",
+  danger: "border-destructive",
+} as const;
+
+const NOTE_LABEL_COLOR = {
+  note: "text-muted-foreground",
+  warning: "text-accent-brand",
+  danger: "text-destructive",
+} as const;
+
+/**
+ * Callout for content that reads as "stop and note this" rather than flowing
+ * prose — a gotcha, a validator hard-error, or a why-aside — so it's visually
+ * distinct from the `<P>` body around it. `variant` picks the accent (`note`
+ * neutral / `warning` gotcha / `danger` hard-error); `label` is the short
+ * caption word that carries the meaning textually (not just by border colour) —
+ * REQUIRED, so colour is never the only signal distinguishing variants (WCAG
+ * 1.4.1). A plain `<div>`, not `<aside>`: these are inline callouts within prose,
+ * not page-level complementary content, so they must not add `complementary`
+ * landmarks — the visible uppercase `label` is the region's textual heading.
+ * Body copy matches DocsBody's type scale. Children are inline content (may hold
+ * `<IC>`/links/`<em>`) — DocsNote owns the paragraph, callers don't wrap in `<P>`.
+ */
+export function DocsNote({
+  variant = "note",
+  label,
+  children,
+}: {
+  variant?: keyof typeof NOTE_BORDER;
+  label: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <div
+      className={cn(
+        "flex flex-col gap-[1.068vw] tablet:gap-[0.5vw] desktop:gap-[0.208vw] border-s-[0.534vw] tablet:border-s-[0.25vw] desktop:border-s-[0.104vw] ps-[3.204vw] tablet:ps-[1.5vw] desktop:ps-[0.624vw]",
+        NOTE_BORDER[variant],
+      )}
+    >
+      <span
+        className={cn(
+          "text-[3.204vw] tablet:text-[1.5vw] desktop:text-[0.624vw] font-semibold uppercase tracking-[0.267vw] tablet:tracking-[0.125vw] desktop:tracking-[0.052vw]",
+          NOTE_LABEL_COLOR[variant],
+        )}
+      >
+        {label}
+      </span>
+      <p className="text-[4.005vw] tablet:text-[1.875vw] desktop:text-[0.78vw] leading-[6.675vw] tablet:leading-[3.125vw] desktop:leading-[1.3vw] text-muted-foreground">
+        {children}
+      </p>
+    </div>
+  );
+}

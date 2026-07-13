@@ -104,8 +104,10 @@ export function CommandBlock({
             "block",
           )}
         >
-          {/* Long commands wrap onto the next line instead of scrolling. */}
-          <pre className="whitespace-pre-wrap [overflow-wrap:anywhere]">
+          {/* Long commands wrap onto the next line instead of scrolling.
+              `break-word` (not `anywhere`) so a package spec like `shadcn@latest`
+              wraps at the space, not mid-token — matches CodeBlock. */}
+          <pre className="whitespace-pre-wrap [overflow-wrap:break-word]">
             <code>{variants[pm]}</code>
           </pre>
         </TabsPrimitive.Content>

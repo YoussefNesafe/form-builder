@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import { CopyButton } from "./CopyButton";
+import { renderCodeWithDimmedComments } from "./codeHighlight";
 import {
   CODE_BLOCK_CONTAINER_CLASS,
   CODE_BLOCK_COPY_PADDING_CLASS,
@@ -52,17 +53,25 @@ export function CodeBlock({
   decorative = false,
 }: CodeBlockProps) {
   return (
-    <div className="relative">
+    // min-w-0: as a flex child (e.g. the <dd> in ConditionShapeSection), let the
+    // block shrink below its longest line's width so break-word can wrap instead
+    // of the token pushing the column wider.
+    <div className="relative min-w-0">
       <pre
         dir="ltr"
         aria-label={decorative ? undefined : label}
         aria-hidden={decorative ? "true" : undefined}
         className={cn(
           // Long lines wrap onto the next line rather than scroll horizontally.
-          // Decorative peeks clip instead (they're aria-hidden/unfocusable, and
-          // inside a LinkCard a scroll/overflow region would fight the link).
-          // No horizontal scroll region => the block isn't a focusable group.
-          decorative ? "overflow-hidden" : "whitespace-pre-wrap [overflow-wrap:anywhere]",
+          // `break-word` wraps at existing whitespace/punctuation first and only
+          // breaks a run when a single unbroken token would overflow — unlike
+          // `anywhere`, which split identifiers mid-token (e.g. `in: [10, 25,
+          // 50]` breaking between digits). Decorative peeks clip instead
+          // (they're aria-hidden/unfocusable, and inside a LinkCard a
+          // scroll/overflow region would fight the link). No horizontal scroll
+          // region (the wrapper's min-w-0 lets break-word do its job in a flex
+          // column) => the block isn't a focusable group.
+          decorative ? "overflow-hidden" : "whitespace-pre-wrap [overflow-wrap:break-word]",
           CODE_BLOCK_CONTAINER_CLASS,
           CODE_BLOCK_PADDING_CLASS,
           CODE_BLOCK_TEXT_CLASS,
@@ -70,7 +79,7 @@ export function CodeBlock({
           className,
         )}
       >
-        <code>{code}</code>
+        <code>{renderCodeWithDimmedComments(code)}</code>
       </pre>
       {copy && !decorative && (
         <CopyButton

@@ -1,5 +1,5 @@
 import { CodeBlock } from "@/components/docs/CodeBlock";
-import { DocsSection, DocsBody as P, DocsInlineCode as IC } from "@/components/docs/DocsProse";
+import { DocsSection, DocsBody as P, DocsInlineCode as IC, DocsNote } from "@/components/docs/DocsProse";
 
 const id = "is-valid-operator";
 const title = "The isValid operator";
@@ -25,13 +25,13 @@ function Section() {
         validation has run and depend on validation mode/timing).
       </P>
       <CodeBlock code={IS_VALID_CODE} label="isValid in enabledWhen example" />
-      <P>
-        <IC>isValid</IC> is only allowed in <IC>disabledWhen</IC> and <IC>enabledWhen</IC> — the config
-        validator rejects it in <IC>visibleWhen</IC>. The reason is structural: visibility drives which fields
-        are in the validation schema, so a field whose visibility depended on another field&apos;s validity could
-        create a feedback loop (or make payload stripping depend on validity that itself depends on visibility).
-        Disabled fields stay in the schema either way, so validity-driven disabling has no such loop.
-      </P>
+      <DocsNote variant="note" label="Why visibleWhen is excluded">
+        <IC>isValid</IC> is only allowed in <IC>disabledWhen</IC> and <IC>enabledWhen</IC> — the config validator
+        rejects it in <IC>visibleWhen</IC>. The reason is structural: visibility drives which fields are in the
+        validation schema, so a field whose visibility depended on another field&apos;s validity could create a
+        feedback loop (or make payload stripping depend on validity that itself depends on visibility). Disabled
+        fields stay in the schema either way, so validity-driven disabling has no such loop.
+      </DocsNote>
       <P>
         The oracle parses each field&apos;s schema <em>in isolation</em>. Cross-field rules — <IC>rules.matches</IC>
         , date/time sibling bounds (<IC>minDateField</IC>/<IC>maxDateField</IC>), <IC>optionsFrom</IC> branch
