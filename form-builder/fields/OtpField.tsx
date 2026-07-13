@@ -63,9 +63,9 @@ function OtpControl({
     >
       {/* Reference layout: send button leads (fills the start half), detached
           rounded code boxes follow. Mobile stacks button above the boxes. */}
-      <div className="flex flex-col gap-[2.136vw] tablet:gap-[1vw] desktop:gap-[0.416vw] tablet:flex-row desktop:flex-row tablet:items-start desktop:items-start">
+      <div className="flex flex-col gap-[var(--fb-space-4,2.136vw)] tablet:gap-[var(--fb-space-4-tablet,1vw)] desktop:gap-[var(--fb-space-4-desktop,0.416vw)] tablet:flex-row desktop:flex-row tablet:items-start desktop:items-start">
         {flow.showSend && (
-          <div className="flex w-full flex-col items-stretch gap-[1.068vw] tablet:gap-[0.5vw] desktop:gap-[0.208vw] tablet:flex-1 desktop:flex-1">
+          <div className="flex w-full flex-col items-stretch gap-[var(--fb-space-2,1.068vw)] tablet:gap-[var(--fb-space-2-tablet,0.5vw)] desktop:gap-[var(--fb-space-2-desktop,0.208vw)] tablet:flex-1 desktop:flex-1">
             <Button
               type="button"
               variant="outline"
@@ -76,11 +76,11 @@ function OtpControl({
                 verified && "border-green-600 text-green-600 dark:border-green-500 dark:text-green-500",
               )}
             >
-              {verified && <Check className="size-[4.272vw] tablet:size-[2vw] desktop:size-[0.832vw]" />}
+              {verified && <Check className="size-[var(--fb-space-8,4.272vw)] tablet:size-[var(--fb-space-8-tablet,2vw)] desktop:size-[var(--fb-space-8-desktop,0.832vw)]" />}
               {sendLabel}
             </Button>
             {flow.showResend && (
-              <p className="text-center text-[3.204vw] tablet:text-[1.5vw] desktop:text-[0.624vw] text-muted-foreground">
+              <p className="text-center text-[var(--fb-space-6,3.204vw)] tablet:text-[var(--fb-space-6-tablet,1.5vw)] desktop:text-[var(--fb-space-6-desktop,0.624vw)] text-muted-foreground">
                 {messages.otpDidntReceive}{" "}
                 {flow.seconds > 0 ? (
                   <>
@@ -120,14 +120,14 @@ function OtpControl({
             error,
           })}
         >
-          <InputOTPGroup className="w-full justify-between gap-[2.136vw] tablet:gap-[1vw] desktop:gap-[0.416vw] tablet:w-auto desktop:w-auto tablet:justify-start desktop:justify-start">
+          <InputOTPGroup className="w-full justify-between gap-[var(--fb-space-4,2.136vw)] tablet:gap-[var(--fb-space-4-tablet,1vw)] desktop:gap-[var(--fb-space-4-desktop,0.416vw)] tablet:w-auto desktop:w-auto tablet:justify-start desktop:justify-start">
             {Array.from({ length: config.length }, (_, index) => (
               <InputOTPSlot
                 key={index}
                 index={index}
                 aria-invalid={!!error}
                 className={cn(
-                  "rounded-[2.136vw] tablet:rounded-[1vw] desktop:rounded-[0.416vw] border dark:bg-input/30",
+                  "rounded-[var(--fb-space-4,2.136vw)] tablet:rounded-[var(--fb-space-4-tablet,1vw)] desktop:rounded-[var(--fb-space-4-desktop,0.416vw)] border dark:bg-input/30",
                   verified && "border-green-600 dark:border-green-500",
                 )}
               />

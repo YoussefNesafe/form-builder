@@ -161,25 +161,25 @@ export function FormStepper({
   };
 
   return (
-    <div className="flex flex-col gap-[6.408vw] tablet:gap-[3vw] desktop:gap-[1.248vw]">
+    <div className="flex flex-col gap-[var(--fb-space-12,6.408vw)] tablet:gap-[var(--fb-space-12-tablet,3vw)] desktop:gap-[var(--fb-space-12-desktop,1.248vw)]">
       <ol
         ref={stepListRef}
         tabIndex={-1}
         aria-label={messages.steps}
-        className="flex items-center gap-[4.272vw] tablet:gap-[2vw] desktop:gap-[0.832vw] outline-none"
+        className="flex items-center gap-[var(--fb-space-8,4.272vw)] tablet:gap-[var(--fb-space-8-tablet,2vw)] desktop:gap-[var(--fb-space-8-desktop,0.832vw)] outline-none"
       >
         {visibleIndices.map((index, displayIndex) => (
           <li
             key={index}
             aria-current={index === effectiveStep ? "step" : undefined}
             className={cn(
-              "flex items-center gap-[2.136vw] tablet:gap-[1vw] desktop:gap-[0.416vw] text-[3.738vw] tablet:text-[1.75vw] desktop:text-[0.728vw]",
+              "flex items-center gap-[var(--fb-space-4,2.136vw)] tablet:gap-[var(--fb-space-4-tablet,1vw)] desktop:gap-[var(--fb-space-4-desktop,0.416vw)] text-[var(--fb-space-7,3.738vw)] tablet:text-[var(--fb-space-7-tablet,1.75vw)] desktop:text-[var(--fb-space-7-desktop,0.728vw)]",
               index === effectiveStep ? "font-medium text-foreground" : "text-muted-foreground",
             )}
           >
             <span
               className={cn(
-                "flex size-[6.408vw] tablet:size-[3vw] desktop:size-[1.248vw] items-center justify-center rounded-full border text-[3.204vw] tablet:text-[1.5vw] desktop:text-[0.624vw]",
+                "flex size-[var(--fb-space-12,6.408vw)] tablet:size-[var(--fb-space-12-tablet,3vw)] desktop:size-[var(--fb-space-12-desktop,1.248vw)] items-center justify-center rounded-full border text-[var(--fb-space-6,3.204vw)] tablet:text-[var(--fb-space-6-tablet,1.5vw)] desktop:text-[var(--fb-space-6-desktop,0.624vw)]",
                 index === effectiveStep && "border-primary bg-primary text-primary-foreground",
                 displayIndex < position && "border-primary text-primary",
               )}

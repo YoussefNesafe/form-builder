@@ -124,7 +124,7 @@ export function SelectField({ field }: FieldComponentProps) {
                       config.placeholder ??
                       "")}
                 </span>
-                <ChevronsUpDown className="ms-[2.136vw] tablet:ms-[1vw] desktop:ms-[0.416vw] size-[4.272vw] tablet:size-[2vw] desktop:size-[0.832vw] shrink-0 opacity-50" />
+                <ChevronsUpDown className="ms-[var(--fb-space-4,2.136vw)] tablet:ms-[var(--fb-space-4-tablet,1vw)] desktop:ms-[var(--fb-space-4-desktop,0.416vw)] size-[var(--fb-space-8,4.272vw)] tablet:size-[var(--fb-space-8-tablet,2vw)] desktop:size-[var(--fb-space-8-desktop,0.832vw)] shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-(--radix-popover-trigger-width) p-0" align="start">
@@ -156,7 +156,7 @@ export function SelectField({ field }: FieldComponentProps) {
                             }
                           }}
                         >
-                          <Check className={cn("me-[2.136vw] tablet:me-[1vw] desktop:me-[0.416vw] size-[4.272vw] tablet:size-[2vw] desktop:size-[0.832vw]", selected ? "opacity-100" : "opacity-0")} />
+                          <Check className={cn("me-[var(--fb-space-4,2.136vw)] tablet:me-[var(--fb-space-4-tablet,1vw)] desktop:me-[var(--fb-space-4-desktop,0.416vw)] size-[var(--fb-space-8,4.272vw)] tablet:size-[var(--fb-space-8-tablet,2vw)] desktop:size-[var(--fb-space-8-desktop,0.832vw)]", selected ? "opacity-100" : "opacity-0")} />
                           {option.label}
                         </CommandItem>
                       );

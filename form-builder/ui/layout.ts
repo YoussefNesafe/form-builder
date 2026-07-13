@@ -3,4 +3,4 @@
 // utilities. Shared so the mandated flat style cannot drift between the
 // renderer and the stepper.
 export const FLAT_GRID_CLASS =
-  "grid grid-cols-12 gap-[4.272vw] tablet:gap-[2vw] desktop:gap-[0.832vw] [&_*]:shadow-none [&_*]:[--tw-ring-shadow:0_0_#0000]!";
+  "grid grid-cols-12 gap-[var(--fb-space-8,4.272vw)] tablet:gap-[var(--fb-space-8-tablet,2vw)] desktop:gap-[var(--fb-space-8-desktop,0.832vw)] [&_*]:shadow-none [&_*]:[--tw-ring-shadow:0_0_#0000]!";

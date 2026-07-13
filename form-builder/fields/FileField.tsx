@@ -90,24 +90,24 @@ export function FileField({ field }: FieldComponentProps) {
               onClick={() => inputRef.current?.click()}
               className="w-fit"
             >
-              <Upload className="me-[2.136vw] tablet:me-[1vw] desktop:me-[0.416vw] size-[4.272vw] tablet:size-[2vw] desktop:size-[0.832vw]" />
+              <Upload className="me-[var(--fb-space-4,2.136vw)] tablet:me-[var(--fb-space-4-tablet,1vw)] desktop:me-[var(--fb-space-4-desktop,0.416vw)] size-[var(--fb-space-8,4.272vw)] tablet:size-[var(--fb-space-8-tablet,2vw)] desktop:size-[var(--fb-space-8-desktop,0.832vw)]" />
               {config.placeholder ?? config.label}
             </Button>
             {files.length > 0 && (
-              <ul className="flex flex-col gap-[1.068vw] tablet:gap-[0.5vw] desktop:gap-[0.208vw] text-[3.738vw] tablet:text-[1.75vw] desktop:text-[0.728vw]">
+              <ul className="flex flex-col gap-[var(--fb-space-2,1.068vw)] tablet:gap-[var(--fb-space-2-tablet,0.5vw)] desktop:gap-[var(--fb-space-2-desktop,0.208vw)] text-[var(--fb-space-7,3.738vw)] tablet:text-[var(--fb-space-7-tablet,1.75vw)] desktop:text-[var(--fb-space-7-desktop,0.728vw)]">
                 {files.map((file, index) => (
-                  <li key={`${file.name}-${index}`} className="flex items-center gap-[2.136vw] tablet:gap-[1vw] desktop:gap-[0.416vw]">
+                  <li key={`${file.name}-${index}`} className="flex items-center gap-[var(--fb-space-4,2.136vw)] tablet:gap-[var(--fb-space-4-tablet,1vw)] desktop:gap-[var(--fb-space-4-desktop,0.416vw)]">
                     <span className="truncate">{file.name}</span>
                     <span className="text-muted-foreground">{formatSize(file.size)}</span>
                     <Button
                       type="button"
                       variant="ghost"
                       size="icon"
-                      className="size-[6.408vw] tablet:size-[3vw] desktop:size-[1.248vw]"
+                      className="size-[var(--fb-space-12,6.408vw)] tablet:size-[var(--fb-space-12-tablet,3vw)] desktop:size-[var(--fb-space-12-desktop,1.248vw)]"
                       aria-label={messages.removeFile(file.name)}
                       onClick={() => removeFile(index)}
                     >
-                      <X className="size-[3.204vw] tablet:size-[1.5vw] desktop:size-[0.624vw]" />
+                      <X className="size-[var(--fb-space-6,3.204vw)] tablet:size-[var(--fb-space-6-tablet,1.5vw)] desktop:size-[var(--fb-space-6-desktop,0.624vw)]" />
                     </Button>
                   </li>
                 ))}

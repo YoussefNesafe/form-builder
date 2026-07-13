@@ -62,6 +62,24 @@ Field configs take `width?: ResponsiveFieldWidth` — `"full" | "half" | "third"
 - Unset breakpoints fall back to **full** — they do NOT cascade up from mobile. By design.
 - cva variants use one key per breakpoint (`width`, `widthTablet`, `widthDesktop`) because cva has no responsive-variant support.
 
+## Portable-package sizing tokens (`form-builder/**` ONLY)
+
+Files under `form-builder/**` wrap every vw size literal as a CSS-var reference with the literal as its fallback — this is the consumer override seam (approach #1) so a host copying the package can retheme sizing in any unit. **App-owned UI outside the package** (`components/ui`, `components/builder`, `components/home`, `app/**`) stays on bare triplicated literals — do NOT wrap those.
+
+```tsx
+// ✅ inside form-builder/** — var(--fb-space-N[-tier], <literal>), triplicated
+"gap-[var(--fb-space-3,1.602vw)] tablet:gap-[var(--fb-space-3-tablet,0.75vw)] desktop:gap-[var(--fb-space-3-desktop,0.312vw)]"
+
+// ❌ bare literal inside form-builder/** — drops the override seam
+"gap-[1.602vw] tablet:gap-[0.75vw] desktop:gap-[0.312vw]"
+```
+
+Rules when adding/editing size classes in `form-builder/**`:
+- **Fallback = the exact literal.** Parity is by construction; never change the fallback to alter a size — override the token (or pick a different step) instead.
+- **Triplication preserved.** One `var()` per breakpoint; tiers are independent tokens: `--fb-space-N` (mobile/base), `--fb-space-N-tablet`, `--fb-space-N-desktop`. Never collapse to a single class.
+- **Numeric length scale, reuse steps.** step = `tablet-vw / 0.25` (so mobile = step×0.534vw, desktop = step×0.104vw). Match an existing step; don't invent semantic names. Defaults + the full step list live in `form-builder/theme/tokens.css`.
+- **Class stays a static literal.** Only the CSS-var *value* is dynamic (resolved at paint) — the class name itself is still fully static, so no `` `[var(--x-${n})]` ``.
+
 ## cva / Tailwind Constraints
 
 - Class strings must be **static literals**. Tailwind cannot see built strings — no `` `tablet:h-[${h}px]` ``, no `"tablet:" + cls`.
@@ -73,6 +91,7 @@ Field configs take `width?: ResponsiveFieldWidth` — `"full" | "half" | "third"
 2. Grep for rem-scale sizes (`text-sm`, `p-4`, `gap-2`, `rounded-md`, `size-4`, `h-9`...) → convert to px arbitrary values.
 3. Every size utility appears 3×: base, `tablet:`, `desktop:`.
 4. Field spans go through `fieldWidthClass`, not raw `col-span-*`.
+5. Editing a file under `form-builder/**`? Every vw size is `var(--fb-space-N[-tier], <literal>)`, not a bare `[Nvw]`. (App UI outside the package stays bare.)
 
 ## Common Mistakes
 

@@ -1,0 +1,66 @@
+/*
+ * form-builder sizing tokens (OPTIONAL override surface)
+ * ---------------------------------------------------------------------------
+ * The engine sizes every field through `var(--fb-space-N[-tier], <default>)`
+ * references, so this file is NOT required — skip it and the built-in fallbacks
+ * render the defaults unchanged. Import it (or copy any line into your own
+ * :root) only to RETHEME the scale: three independent breakpoint tiers per step
+ * (mobile = base / no suffix, -tablet >= 481px, -desktop >= 1025px).
+ *
+ * Unit: vw (fluid — sizes scale within each breakpoint band, matching the
+ * engine defaults). Override a token in any unit you like (px/rem/em/%/clamp).
+ * ---------------------------------------------------------------------------
+ */
+:root {
+  --fb-space-1: 0.534vw;
+  --fb-space-1-tablet: 0.25vw;
+  --fb-space-1-desktop: 0.104vw;
+  --fb-space-2: 1.068vw;
+  --fb-space-2-tablet: 0.5vw;
+  --fb-space-2-desktop: 0.208vw;
+  --fb-space-3: 1.602vw;
+  --fb-space-3-tablet: 0.75vw;
+  --fb-space-3-desktop: 0.312vw;
+  --fb-space-4: 2.136vw;
+  --fb-space-4-tablet: 1vw;
+  --fb-space-4-desktop: 0.416vw;
+  --fb-space-5: 2.67vw;
+  --fb-space-5-tablet: 1.25vw;
+  --fb-space-5-desktop: 0.52vw;
+  --fb-space-6: 3.204vw;
+  --fb-space-6-tablet: 1.5vw;
+  --fb-space-6-desktop: 0.624vw;
+  --fb-space-7: 3.738vw;
+  --fb-space-7-tablet: 1.75vw;
+  --fb-space-7-desktop: 0.728vw;
+  --fb-space-8: 4.272vw;
+  --fb-space-8-tablet: 2vw;
+  --fb-space-8-desktop: 0.832vw;
+  --fb-space-9: 4.806vw;
+  --fb-space-9-tablet: 2.25vw;
+  --fb-space-9-desktop: 0.936vw;
+  --fb-space-10: 5.34vw;
+  --fb-space-10-tablet: 2.5vw;
+  --fb-space-10-desktop: 1.04vw;
+  --fb-space-12: 6.408vw;
+  --fb-space-12-tablet: 3vw;
+  --fb-space-12-desktop: 1.248vw;
+  --fb-space-15: 8.01vw;
+  --fb-space-15-tablet: 3.75vw;
+  --fb-space-15-desktop: 1.56vw;
+  --fb-space-16: 8.544vw;
+  --fb-space-16-tablet: 4vw;
+  --fb-space-16-desktop: 1.664vw;
+  --fb-space-18: 9.612vw;
+  --fb-space-18-tablet: 4.5vw;
+  --fb-space-18-desktop: 1.872vw;
+  --fb-space-20: 10.68vw;
+  --fb-space-20-tablet: 5vw;
+  --fb-space-20-desktop: 2.08vw;
+  --fb-space-24: 12.816vw;
+  --fb-space-24-tablet: 6vw;
+  --fb-space-24-desktop: 2.496vw;
+  --fb-space-144: 76.896vw;
+  --fb-space-144-tablet: 36vw;
+  --fb-space-144-desktop: 14.976vw;
+}

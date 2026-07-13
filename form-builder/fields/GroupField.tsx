@@ -59,12 +59,12 @@ export function GroupField({ field }: FieldComponentProps) {
       disabled={disabled}
       error={groupError}
     >
-      <div className="flex flex-col gap-[4.272vw] tablet:gap-[2vw] desktop:gap-[0.832vw]">
+      <div className="flex flex-col gap-[var(--fb-space-8,4.272vw)] tablet:gap-[var(--fb-space-8-tablet,2vw)] desktop:gap-[var(--fb-space-8-desktop,0.832vw)]">
         {rows.map((row, index) => (
-          <div key={row.id} className="flex flex-col gap-[4.272vw] tablet:gap-[2vw] desktop:gap-[0.832vw]">
+          <div key={row.id} className="flex flex-col gap-[var(--fb-space-8,4.272vw)] tablet:gap-[var(--fb-space-8-tablet,2vw)] desktop:gap-[var(--fb-space-8-desktop,0.832vw)]">
             {index > 0 && <Separator />}
-            <div className="grid grid-cols-4 items-start gap-[4.272vw] tablet:gap-[2vw] desktop:gap-[0.832vw]">
-              <div className="col-span-3 grid grid-cols-12 gap-[4.272vw] tablet:gap-[2vw] desktop:gap-[0.832vw]">
+            <div className="grid grid-cols-4 items-start gap-[var(--fb-space-8,4.272vw)] tablet:gap-[var(--fb-space-8-tablet,2vw)] desktop:gap-[var(--fb-space-8-desktop,0.832vw)]">
+              <div className="col-span-3 grid grid-cols-12 gap-[var(--fb-space-8,4.272vw)] tablet:gap-[var(--fb-space-8-tablet,2vw)] desktop:gap-[var(--fb-space-8-desktop,0.832vw)]">
                 {config.fields.map((inner) => renderField(withNamePrefix(inner, `${config.name}.${index}`)))}
               </div>
               <Button
@@ -75,7 +75,7 @@ export function GroupField({ field }: FieldComponentProps) {
                 aria-label={messages.removeRow(index + 1)}
                 onClick={() => remove(index)}
               >
-                <Trash2 className="size-[4.272vw] tablet:size-[2vw] desktop:size-[0.832vw]" />
+                <Trash2 className="size-[var(--fb-space-8,4.272vw)] tablet:size-[var(--fb-space-8-tablet,2vw)] desktop:size-[var(--fb-space-8-desktop,0.832vw)]" />
               </Button>
             </div>
           </div>
@@ -87,7 +87,7 @@ export function GroupField({ field }: FieldComponentProps) {
           onClick={() => append(buildDefaultValues(config.fields))}
           className="w-fit"
         >
-          <Plus className="me-[2.136vw] tablet:me-[1vw] desktop:me-[0.416vw] size-[4.272vw] tablet:size-[2vw] desktop:size-[0.832vw]" />
+          <Plus className="me-[var(--fb-space-4,2.136vw)] tablet:me-[var(--fb-space-4-tablet,1vw)] desktop:me-[var(--fb-space-4-desktop,0.416vw)] size-[var(--fb-space-8,4.272vw)] tablet:size-[var(--fb-space-8-tablet,2vw)] desktop:size-[var(--fb-space-8-desktop,0.832vw)]" />
           {config.placeholder ?? messages.addRow}
         </Button>
       </div>

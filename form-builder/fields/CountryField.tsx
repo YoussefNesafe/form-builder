@@ -30,7 +30,7 @@ function Flag({ code, label }: { code: string; label: string }) {
   const Component = flags[code as keyof typeof flags];
   if (!Component) return null;
   return (
-    <span aria-hidden className="inline-flex w-[5.34vw] tablet:w-[2.5vw] desktop:w-[1.04vw] shrink-0 overflow-hidden">
+    <span aria-hidden className="inline-flex w-[var(--fb-space-10,5.34vw)] tablet:w-[var(--fb-space-10-tablet,2.5vw)] desktop:w-[var(--fb-space-10-desktop,1.04vw)] shrink-0 overflow-hidden">
       <Component title={label} />
     </span>
   );
@@ -84,12 +84,12 @@ export function CountryField({ field }: FieldComponentProps) {
     >
       <Check
         className={cn(
-          "me-[2.136vw] tablet:me-[1vw] desktop:me-[0.416vw] size-[4.272vw] tablet:size-[2vw] desktop:size-[0.832vw]",
+          "me-[var(--fb-space-4,2.136vw)] tablet:me-[var(--fb-space-4-tablet,1vw)] desktop:me-[var(--fb-space-4-desktop,0.416vw)] size-[var(--fb-space-8,4.272vw)] tablet:size-[var(--fb-space-8-tablet,2vw)] desktop:size-[var(--fb-space-8-desktop,0.832vw)]",
           selected === option.code ? "opacity-100" : "opacity-0",
         )}
       />
       <Flag code={option.code} label={option.label} />
-      <span className="ms-[2.136vw] tablet:ms-[1vw] desktop:ms-[0.416vw] truncate">{option.label}</span>
+      <span className="ms-[var(--fb-space-4,2.136vw)] tablet:ms-[var(--fb-space-4-tablet,1vw)] desktop:ms-[var(--fb-space-4-desktop,0.416vw)] truncate">{option.label}</span>
     </CommandItem>
   );
 
@@ -139,7 +139,7 @@ export function CountryField({ field }: FieldComponentProps) {
                     {selectedOption ? (
                       <>
                         <Flag code={selectedOption.code} label={selectedOption.label} />
-                        <span className="ms-[2.136vw] tablet:ms-[1vw] desktop:ms-[0.416vw] truncate">
+                        <span className="ms-[var(--fb-space-4,2.136vw)] tablet:ms-[var(--fb-space-4-tablet,1vw)] desktop:ms-[var(--fb-space-4-desktop,0.416vw)] truncate">
                           {selectedOption.label}
                         </span>
                       </>
@@ -147,7 +147,7 @@ export function CountryField({ field }: FieldComponentProps) {
                       <span className="truncate">{config.placeholder ?? ""}</span>
                     )}
                   </span>
-                  <ChevronsUpDown className="ms-[2.136vw] tablet:ms-[1vw] desktop:ms-[0.416vw] size-[4.272vw] tablet:size-[2vw] desktop:size-[0.832vw] shrink-0 opacity-50" />
+                  <ChevronsUpDown className="ms-[var(--fb-space-4,2.136vw)] tablet:ms-[var(--fb-space-4-tablet,1vw)] desktop:ms-[var(--fb-space-4-desktop,0.416vw)] size-[var(--fb-space-8,4.272vw)] tablet:size-[var(--fb-space-8-tablet,2vw)] desktop:size-[var(--fb-space-8-desktop,0.832vw)] shrink-0 opacity-50" />
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-(--radix-popover-trigger-width) p-0" align="start">

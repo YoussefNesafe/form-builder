@@ -46,7 +46,7 @@ export function RadioField({ field }: FieldComponentProps) {
             {config.options.map((option, index) => {
               const optionId = `${id}-${option.value}`;
               return (
-                <div key={option.value} className="flex items-center gap-[2.136vw] tablet:gap-[1vw] desktop:gap-[0.416vw]">
+                <div key={option.value} className="flex items-center gap-[var(--fb-space-4,2.136vw)] tablet:gap-[var(--fb-space-4-tablet,1vw)] desktop:gap-[var(--fb-space-4-desktop,0.416vw)]">
                   <RadioGroupItem
                     ref={index === 0 ? rhf.ref : undefined}
                     id={optionId}

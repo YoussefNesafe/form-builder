@@ -154,7 +154,7 @@ export function FormRenderer({
           {formError && (
             <p
               role="alert"
-              className="mt-[4.272vw] tablet:mt-[2vw] desktop:mt-[0.832vw] text-[3.738vw] tablet:text-[1.75vw] desktop:text-[0.728vw] font-normal text-destructive"
+              className="mt-[var(--fb-space-8,4.272vw)] tablet:mt-[var(--fb-space-8-tablet,2vw)] desktop:mt-[var(--fb-space-8-desktop,0.832vw)] text-[var(--fb-space-7,3.738vw)] tablet:text-[var(--fb-space-7-tablet,1.75vw)] desktop:text-[var(--fb-space-7-desktop,0.728vw)] font-normal text-destructive"
             >
               {formError}
             </p>
