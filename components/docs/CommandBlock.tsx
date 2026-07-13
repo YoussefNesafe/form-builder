@@ -11,7 +11,11 @@ import {
   CODE_BLOCK_TEXT_CLASS,
 } from "./codeBlockStyles";
 import { PACKAGE_MANAGERS, deriveCommand, type CommandKind } from "./command";
-import { hydratePackageManagerFromStorage, isPackageManager, usePackageManager } from "./packageManagerStore";
+import {
+  hydratePackageManagerFromStorage,
+  isPackageManager,
+  usePackageManager,
+} from "./packageManagerStore";
 
 type CommandBlockProps = {
   /** "execute" for a CLI runner command (npx/dlx/bunx-style, e.g. the shadcn CLI); "install" for a plain dependency install. */
@@ -41,7 +45,13 @@ type CommandBlockProps = {
  * Client leaf: the surrounding docs section (DocsSection) stays a Server
  * Component; only this component ships JS.
  */
-export function CommandBlock({ kind, args, label = "Package manager", copyLabel = "command", className }: CommandBlockProps) {
+export function CommandBlock({
+  kind,
+  args,
+  label = "Package manager",
+  copyLabel = "command",
+  className,
+}: CommandBlockProps) {
   const [packageManager, setPackageManagerSelection] = usePackageManager();
 
   // Adopt any previously stored choice after mount — first paint stays the
@@ -62,7 +72,11 @@ export function CommandBlock({ kind, args, label = "Package manager", copyLabel 
         // of casting past it — an invalid value is silently ignored.
         if (isPackageManager(value)) setPackageManagerSelection(value);
       }}
-      className={cn(CODE_BLOCK_CONTAINER_CLASS, "relative overflow-hidden", className)}
+      className={cn(
+        CODE_BLOCK_CONTAINER_CLASS,
+        "relative overflow-hidden",
+        className,
+      )}
     >
       <TabsPrimitive.List
         aria-label={label}
@@ -87,10 +101,11 @@ export function CommandBlock({ kind, args, label = "Package manager", copyLabel 
             CODE_BLOCK_TEXT_CLASS,
             CODE_BLOCK_PADDING_CLASS,
             CODE_BLOCK_COPY_PADDING_CLASS,
-            "block overflow-x-auto",
+            "block",
           )}
         >
-          <pre>
+          {/* Long commands wrap onto the next line instead of scrolling. */}
+          <pre className="whitespace-pre-wrap [overflow-wrap:anywhere]">
             <code>{variants[pm]}</code>
           </pre>
         </TabsPrimitive.Content>

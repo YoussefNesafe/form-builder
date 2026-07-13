@@ -41,7 +41,7 @@ export function CodeOutputPanel() {
   };
 
   return (
-    <div className="flex min-h-0 flex-col gap-[3.204vw] tablet:gap-[1.5vw] desktop:gap-[0.624vw]">
+    <div className="flex min-h-0 min-w-0 flex-col gap-[3.204vw] tablet:gap-[1.5vw] desktop:gap-[0.624vw]">
       <div className="flex items-center justify-between gap-[2.136vw] tablet:gap-[1vw] desktop:gap-[0.416vw]">
         <SegmentedControl
           aria-label={builder.output.formatAriaLabel}
@@ -72,7 +72,7 @@ export function CodeOutputPanel() {
 
       <pre
         dir="ltr"
-        className="max-h-[112.14vw] tablet:max-h-[52.5vw] desktop:max-h-[21.84vw] overflow-auto rounded-[2.67vw] tablet:rounded-[1.25vw] desktop:rounded-[0.52vw] border border-border bg-muted p-[3.204vw] tablet:p-[1.5vw] desktop:p-[0.624vw] text-[3.204vw] tablet:text-[1.5vw] desktop:text-[0.624vw]"
+        className="w-full min-w-0 max-h-[112.14vw] tablet:max-h-[52.5vw] desktop:max-h-[21.84vw] overflow-y-auto whitespace-pre-wrap [overflow-wrap:anywhere] rounded-[2.67vw] tablet:rounded-[1.25vw] desktop:rounded-[0.52vw] border border-border bg-muted p-[3.204vw] tablet:p-[1.5vw] desktop:p-[0.624vw] text-[3.204vw] tablet:text-[1.5vw] desktop:text-[0.624vw]"
       >
         {code}
       </pre>

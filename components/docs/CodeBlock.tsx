@@ -39,9 +39,9 @@ type CodeBlockProps = {
  * Phase 1 docs are plain TSX pages with no new deps (no MDX/highlighter
  * tooling). `dir="ltr"` matches the /examples config/output blocks: code
  * must stay left-to-right even when the site renders RTL (components.json
- * sets `rtl: true`). `tabIndex={0}` + `aria-label` make the horizontally
- * scrollable region keyboard-reachable (WCAG 2.1.1) instead of mouse-only —
- * skipped when `decorative` is set (see that prop's doc).
+ * sets `rtl: true`). Long lines wrap (`whitespace-pre-wrap`) rather than
+ * scroll horizontally, so there's no scroll region to make keyboard-reachable
+ * — the block is plain non-focusable text (`decorative` clips instead).
  */
 export function CodeBlock({
   code,
@@ -55,16 +55,14 @@ export function CodeBlock({
     <div className="relative">
       <pre
         dir="ltr"
-        tabIndex={decorative ? undefined : 0}
-        role={decorative ? undefined : "group"}
         aria-label={decorative ? undefined : label}
         aria-hidden={decorative ? "true" : undefined}
         className={cn(
-          // Decorative peeks clip instead of scrolling: they're aria-hidden and
-          // unfocusable, so a horizontal scroll region there would be
-          // mouse-only (and inside a LinkCard the drag would fight the link).
-          decorative ? "overflow-hidden" : "overflow-x-auto",
-          "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground",
+          // Long lines wrap onto the next line rather than scroll horizontally.
+          // Decorative peeks clip instead (they're aria-hidden/unfocusable, and
+          // inside a LinkCard a scroll/overflow region would fight the link).
+          // No horizontal scroll region => the block isn't a focusable group.
+          decorative ? "overflow-hidden" : "whitespace-pre-wrap [overflow-wrap:anywhere]",
           CODE_BLOCK_CONTAINER_CLASS,
           CODE_BLOCK_PADDING_CLASS,
           CODE_BLOCK_TEXT_CLASS,
