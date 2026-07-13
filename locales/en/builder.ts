@@ -85,6 +85,26 @@ export const builder = {
     formatAriaLabel: "Output format",
   },
 
+  theme: {
+    triggerButton: "Sizing CSS",
+    dialogTitle: "Sizing tokens",
+    dialogDescription:
+      "Generate the engine's sizing stylesheet in your unit. Drop it into your copied form-builder/theme/, or skip it and keep the fluid vw defaults.",
+    unitAriaLabel: "Unit",
+    /** Label for the rem/em base input, e.g. "px per 1rem". */
+    baseSuffix: "px per 1{unit}",
+    refMobile: "Mobile (px)",
+    refTablet: "Tablet (px)",
+    refDesktop: "Desktop (px)",
+    /** Shown under the controls to explain the unit's behavior. */
+    fluidNote: "Fluid — sizes scale within each breakpoint band (engine default).",
+    fixedNote:
+      "Fixed — sizes stay constant within a band and jump at the breakpoint; the vw scale is resolved at the reference widths above.",
+    download: "Download tokens.css",
+    copy: "Copy",
+    copied: "Copied",
+  },
+
   steps: {
     multiStepLabel: "Multi-step form",
     emptyStepsWarning: "Add a step and assign your fields, or the export drops the steps.",

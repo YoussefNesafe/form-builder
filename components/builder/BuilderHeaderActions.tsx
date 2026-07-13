@@ -17,6 +17,7 @@ import {
 import { builder } from "@/locales/en/builder";
 import { useBuilderStore } from "./model/store";
 import { CodeOutputPanel } from "./CodeOutputPanel";
+import { SizingCssDialog } from "./SizingCssDialog";
 
 /** Header cluster: export the config code, and reset the builder (with confirm). */
 export function BuilderHeaderActions() {
@@ -50,6 +51,8 @@ export function BuilderHeaderActions() {
           <CodeOutputPanel />
         </DialogContent>
       </Dialog>
+
+      <SizingCssDialog />
 
       <Dialog open={resetOpen} onOpenChange={setResetOpen}>
         <DialogTrigger asChild>
