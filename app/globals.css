@@ -205,4 +205,12 @@
        below it instead of scrolled underneath. */
     scroll-padding-top: 80px;
   }
+  /* Modern UA/Tailwind reset leaves <button> at cursor:default — restore the
+     pointer cursor for every enabled clickable (native buttons and Radix
+     triggers rendered as <button>, plus role="button" elements). Disabled
+     controls keep the default arrow. */
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]) {
+    cursor: pointer;
+  }
 }
