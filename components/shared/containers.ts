@@ -19,7 +19,7 @@ export const NAV_CONTAINER =
 
 /** Docs shell (sidebar + content + TOC rail) — widest surface. */
 export const DOCS_CONTAINER =
-  "mx-auto w-full max-w-[315.06vw] tablet:max-w-[147.5vw] desktop:max-w-[68.64vw] px-[4.272vw] tablet:px-[3vw] desktop:px-[1.664vw]";
+  "mx-auto w-full max-w-[315.06vw] tablet:max-w-[147.5vw] desktop:max-w-[83.2vw] px-[4.272vw] tablet:px-[3vw] desktop:px-[1.664vw]";
 
 /** Landing marketing column. */
 export const LANDING_CONTAINER =

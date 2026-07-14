@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { NavLinks } from "./NavLinks";
+import { SearchTrigger } from "./SearchTrigger";
+import { docsSearchIndex } from "./search/buildDocsIndex";
 import { NAV_CONTAINER } from "@/components/shared/containers";
 import { cn } from "@/lib/utils";
 import { t } from "@/locales";
@@ -33,6 +35,7 @@ export function SiteNav() {
           {t.nav.brand}
         </Link>
         <div className="flex items-center gap-[5.34vw] tablet:gap-[2.5vw] desktop:gap-[1.04vw]">
+          <SearchTrigger index={docsSearchIndex} />
           <NavLinks />
           <a
             href={GITHUB_URL}

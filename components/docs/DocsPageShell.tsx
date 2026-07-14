@@ -25,7 +25,7 @@ export function DocsPageShell({
 }) {
   return (
     <div className="flex flex-col desktop:flex-row gap-0 desktop:gap-[1.664vw] items-start">
-      <div className={cn("min-w-0 w-full desktop:max-w-[37.44vw] flex flex-col", GAP_CLASS[gap])}>
+      <div className={cn("min-w-0 w-full flex flex-col", GAP_CLASS[gap])}>
         {children}
       </div>
       <DocsToc items={toc} />
