@@ -40,7 +40,7 @@ export default function DocsLayout({
       >
         <DocsBreadcrumb />
         {children}
-        <div className="desktop:max-w-[37.44vw]">
+        <div>
           <DocsPagination />
         </div>
       </main>

@@ -35,7 +35,7 @@ const PAGES = DOCS_PAGES.filter((page) => page.href !== "/docs").map(
  */
 export default function DocsIndexPage() {
   return (
-    <div className="min-w-0 w-full desktop:max-w-[37.44vw] flex flex-col gap-[6.408vw] tablet:gap-[3vw] desktop:gap-[1.248vw]">
+    <div className="min-w-0 w-full  flex flex-col gap-[6.408vw] tablet:gap-[3vw] desktop:gap-[1.248vw]">
       <DocsIntro title={t.docs.index.title}>
         {t.docs.index.intro.prefix}
         <Link
