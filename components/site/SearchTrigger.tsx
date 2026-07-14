@@ -65,14 +65,19 @@ export function SearchTrigger({ index }: { index: SearchEntry[] }) {
       <Button
         type="button"
         variant="outline"
-        size="sm"
+        size="lg"
         onClick={openPalette}
         aria-label={nav.search.triggerAriaLabel}
         aria-keyshortcuts="Meta+K Control+K"
         data-icon="inline-start"
+        className="desktop:px-[1.04vw] desktop:py-[0.936vw] desktop:w-[10.4vw] flex justify-between items-center"
       >
-        <SearchIcon aria-hidden="true" />
-        <span className="hidden tablet:inline">{nav.search.triggerLabel}</span>
+        <div className="flex gap-[1.068vw] tablet:gap-[0.5vw] desktop:gap-[0.208vw] items-center">
+          <SearchIcon aria-hidden="true" />
+          <span className="hidden tablet:inline">
+            {nav.search.triggerLabel}
+          </span>
+        </div>
         <kbd
           aria-hidden="true"
           className={cn(
