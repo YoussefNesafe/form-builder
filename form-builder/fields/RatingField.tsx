@@ -3,7 +3,7 @@
 import { useId, useRef } from "react";
 import { Controller, useFormContext } from "react-hook-form";
 import { Star } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "../internal/cn";
 import type { FieldComponentProps } from "../core/registry";
 import type { FieldConfig } from "../core/types";
 import { useFieldDisabled, useFieldRuntime } from "../components/FieldRuntime";

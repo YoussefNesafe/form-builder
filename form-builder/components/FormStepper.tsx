@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { useStore } from "zustand";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { cn } from "../internal/cn";
 import { conditionFieldNames, conditionSpecMatches } from "../core/conditions";
 import type { FormConfig } from "../core/types";
 import { createStepperStore } from "../store/stepper";

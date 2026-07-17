@@ -8,7 +8,7 @@ import type { DateRange, Matcher } from "react-day-picker";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
+import { cn } from "../internal/cn";
 import type { FieldComponentProps } from "../core/registry";
 import type { FieldConfig } from "../core/types";
 import { useFieldDisabled, useFieldRuntime } from "../components/FieldRuntime";

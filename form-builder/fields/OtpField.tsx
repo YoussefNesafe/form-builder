@@ -12,7 +12,7 @@ import {
 import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
-import { cn } from "@/lib/utils";
+import { cn } from "../internal/cn";
 import type { FieldComponentProps } from "../core/registry";
 import type { FieldConfig } from "../core/types";
 import { useFieldDisabled, useFieldRuntime } from "../components/FieldRuntime";

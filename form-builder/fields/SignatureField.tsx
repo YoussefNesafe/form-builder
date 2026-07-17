@@ -4,7 +4,7 @@ import { useEffect, useId, useRef } from "react";
 import { Controller, useFormContext } from "react-hook-form";
 import SignaturePad from "signature_pad";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { cn } from "../internal/cn";
 import type { FieldComponentProps } from "../core/registry";
 import type { FieldConfig } from "../core/types";
 import { useFieldDisabled, useFieldRuntime } from "../components/FieldRuntime";

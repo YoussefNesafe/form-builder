@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { validateFormConfig } from "@/form-builder/core/schema";
-import type { FieldConfig, FieldType, FormConfig } from "@/form-builder";
+import { validateFormConfig, type FieldConfig, type FieldType, type FormConfig } from "@/form-builder";
 import { FIELD_TYPE_ORDER, FIELD_VALUE_INFO } from "./fieldProps";
 
 /**

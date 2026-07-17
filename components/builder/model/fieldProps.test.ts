@@ -1,6 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { BUILT_IN_FIELD_TYPES, type FieldType } from "@/form-builder";
-import { validateFormConfig } from "@/form-builder/core/schema";
+import { BUILT_IN_FIELD_TYPES, validateFormConfig, type FieldType } from "@/form-builder";
 import { FIELD_PROPS } from "./fieldProps";
 import { FIELD_META } from "./fieldMeta";
 import { DEFAULT_PROPS } from "./defaults";
