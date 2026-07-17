@@ -1,0 +1,51 @@
+{
+  "name": "@form-builder/engine",
+  "version": "0.1.0",
+  "description": "Config-driven, headless-first form engine (React 19 / RHF 7 / Zod 4). Scoped package name is a placeholder for the owner to rename before publishing.",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "files": [
+    "dist",
+    "theme"
+  ],
+  "main": "./dist/headless.cjs",
+  "module": "./dist/headless.js",
+  "types": "./dist/headless.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/headless.d.ts",
+      "import": "./dist/headless.js",
+      "require": "./dist/headless.cjs"
+    },
+    "./theme.css": "./theme/tokens.css",
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "build": "tsup --config tsup.config.ts"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-hook-form": "^7.81.0",
+    "zod": "^4.4.3",
+    "date-fns": "^4.4.0",
+    "lucide-react": "^1.24.0"
+  },
+  "dependencies": {
+    "@hookform/resolvers": "^5.4.0",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "cmdk": "^1.1.1",
+    "input-otp": "^1.4.2",
+    "libphonenumber-js": "^1.13.8",
+    "radix-ui": "^1.6.2",
+    "react-day-picker": "^10.0.1",
+    "react-phone-number-input": "^3.4.17",
+    "signature_pad": "^5.1.3",
+    "tailwind-merge": "^3.6.0",
+    "zustand": "^5.0.14"
+  }
+}

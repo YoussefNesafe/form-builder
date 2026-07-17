@@ -20,6 +20,10 @@
 # generated at build/dev time by scripts/zip-form-builder.mjs
 /public/form-builder.zip
 
+# built output of the form-builder/ package (tsup) — publishable artifact,
+# not source
+/form-builder/dist
+
 # production
 /build
 
