@@ -20,6 +20,15 @@
 # generated at build/dev time by scripts/zip-form-builder.mjs
 /public/form-builder.zip
 
+# generated at build/dev time by scripts/build-registry.mjs + `shadcn build`
+# (Phase 2 registry — see docs/adr/0003-packaging-split-distribution.md)
+/registry/registry.json
+/public/r/
+
+# throwaway staging dir scripts/form-builder-add.mjs writes
+# registryDependencies-stripped item copies to before calling `shadcn add`
+/.registry-staging/
+
 # built output of the form-builder/ package (tsup) — publishable artifact,
 # not source
 /form-builder/dist

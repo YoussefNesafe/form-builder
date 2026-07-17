@@ -3,14 +3,17 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "predev": "node scripts/zip-form-builder.mjs",
+    "predev": "node scripts/zip-form-builder.mjs && yarn registry:generate && yarn registry:build",
     "dev": "next dev",
-    "prebuild": "node scripts/zip-form-builder.mjs",
+    "prebuild": "node scripts/zip-form-builder.mjs && yarn registry:generate && yarn registry:build",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
-    "zip:form-builder": "node scripts/zip-form-builder.mjs"
+    "zip:form-builder": "node scripts/zip-form-builder.mjs",
+    "registry:generate": "node scripts/build-registry.mjs",
+    "registry:build": "shadcn build registry/registry.json -o public/r",
+    "registry:add": "node scripts/form-builder-add.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",

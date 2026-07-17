@@ -4,7 +4,7 @@
 <!-- One ADR per decision. Keep it short; link out for detail. -->
 
 - **Status:** Accepted
-- **Date:** 2026-07-17
+- **Date:** 2026-07-18 (Unit B mechanism revised post-spike; originally 2026-07-17)
 - **Deciders:** architect, staff-engineer, documentation-engineer (recorded)
 - **Tags:** packaging, distribution, frontend, architecture
 
@@ -54,6 +54,15 @@ whole pitch is "edit the field components, they're yours," and (c) survives
 being loaded twice in one module graph, which only becomes possible once the
 code leaves this repo.
 
+**Revision note (2026-07-18).** Phase 2 had not been built when this ADR was
+first accepted; a validated spike into the shadcn-registry mechanism since
+refined Unit B's distribution model from an earlier draft (rendered-only
+copy-in installing `@form-builder/engine` as an npm dependency) to the
+self-contained whole-tree copy-in described below, and surfaced two registry
+constraints worth recording ahead of the Phase 2 build. The Decision and
+Alternatives sections below reflect the ratified model; the rejected draft is
+kept as an alternative for the record.
+
 ## Decision
 
 We will **split the package into two distribution units** rather than
@@ -75,13 +84,41 @@ NOT the published entry.
 **Unit B — rendered UI layer, copy-in (shadcn-registry style), NOT npm.**
 `ui` + `components` + `fields` + the 17 shadcn primitives stay copy-in,
 evolving today's zip download into a shadcn-style registry JSON + CLI `add`
-command (Phase 2, not yet built). Files land in the consumer's own repo,
-already Tailwind-configured and directly editable — the CLI installs Unit A
-as a dependency and copies the visual files on top. This is the load-bearing
-reason for the split: the rendered layer ships Tailwind utility-class
-strings against host-owned, themeable shadcn primitives, and neither a
-bundled JS package nor precompiled CSS can carry that without collapsing the
-theming story down to "pick our colors."
+command (Phase 2, not yet built; see "Registry mechanics" below for two
+constraints a validated spike surfaced). **The copy-in ships the entire
+`form-builder/` tree — headless (`core`/`hooks`/`store`) and rendered
+(`ui`/`components`/`fields`) together — self-contained.** It does **not**
+install `@form-builder/engine` as an npm dependency underneath itself: the
+rendered field components relative-import `../core/*` and `../hooks/*`, so
+the engine source travels with the copy rather than being resolved through
+`node_modules`. Unit A's npm package is a **separate door** — for
+headless-only or server-side-validation consumers who never touch the
+rendered layer — not something the copy-in depends on. Both doors ship the
+same source; the Phase 1 `globalThis`/`Symbol.for` registry anchor (below) is
+precisely what makes running both doors in the same app safe, since without
+it a host running both could end up with two independent `core/registry`
+instances — one from the copied tree, one from
+`node_modules/@form-builder/engine` — silently missing each other's
+registrations. Files land in the consumer's own repo, already
+Tailwind-configured and directly editable. This is the load-bearing reason
+for the split: the rendered layer ships Tailwind utility-class strings
+against host-owned, themeable shadcn primitives, and neither a bundled JS
+package nor precompiled CSS can carry that without collapsing the theming
+story down to "pick our colors."
+
+**Registry mechanics (verified by spike).** Two constraints the Phase 2
+spike confirmed before the registry/CLI gets built: (a) shadcn's
+`registryDependencies` field resolves bare names against shadcn's *public*
+registry only — a local `file://` path or same-repo relative reference is
+rejected, so cross-item dependencies inside our own registry cannot chain-
+resolve on their own. A thin generator/wrapper therefore owns the transitive
+dependency graph itself and calls `shadcn add` once with an explicit list of
+relative local paths, rather than relying on `registryDependencies` to
+resolve them. (b) The 17 shadcn primitives are **vendored into our
+registry**, not referenced from shadcn's public registry, because this
+repo's `components.json` is customized (`"style": "radix-nova"`, `"rtl":
+true`) — pulling `button`/`select`/etc. from the public registry would
+silently overwrite that customization with upstream defaults.
 
 **Why the rendered React entries are not npm-exported in Phase 1.** The
 `./react` and `./fields` subpaths are deliberately **absent** from the Phase 1
@@ -147,10 +184,16 @@ independently.
   `globalThis`; add `form-builder/package.json` + `tsup` build (`dist/headless.*`
   ESM+CJS+`.d.ts`) for Unit A; add the exact-match `@/form-builder` alias fix so
   the app keeps consuming live source via the alias.
-- **Phase 2 — Registry/CLI for the UI layer.** Turn
-  `zip-form-builder.mjs` into a shadcn-style registry manifest; script the
-  `add` flow (copy `ui`+`components`+`fields`+17 primitives, install the
-  engine as a dependency).
+- **Phase 2 — Registry/CLI for the UI layer.** Generate a shadcn registry
+  (`public/r/*.json` via `shadcn build`) covering the entire `form-builder/`
+  tree — headless and rendered together, per the self-contained Unit B model
+  above — plus the 17 vendored shadcn primitives and a `registry:theme` item
+  that auto-injects the `tablet`/`desktop` breakpoints; script a thin
+  add-wrapper that owns the transitive dependency graph and calls
+  `shadcn add` once with the resolved local paths (see "Registry mechanics"
+  above — local `registryDependencies` don't resolve on their own). Keep
+  `zip-form-builder.mjs`/`public/form-builder.zip` as a transitional download
+  path until the wrapper ships.
 - **Phase 3 — Publish & harden.** Publish the engine under semver +
   changesets; wire the docs "Download" button to the CLI; add a CI
   bundle-size budget to protect tree-shaking.
@@ -176,8 +219,10 @@ independently.
 
 ### Negative
 - Two distribution mechanisms (npm + registry/CLI) instead of one means two
-  install stories to document and two things that can drift out of sync
-  (the CLI must always install a compatible engine version).
+  install stories to document and two things that can drift out of sync —
+  the copy-in tree and the published `@form-builder/engine` ship the same
+  source through two different doors, and a change to `core`/`hooks` has to
+  land in both without one lagging the other.
 - The rendered layer still requires the consumer to have Tailwind v4, the
   `tablet`/`desktop` breakpoints, and the shadcn token set already in place
   — copy-in solves ownership, not the "zero setup" problem the analysis
@@ -207,6 +252,19 @@ independently.
   stay host-owned. Revisit only if the rendered layer moves to vendoring its
   own copy of the shadcn primitives, which would itself reopen the
   themeability tradeoff this ADR rejects above.
+- **Rendered-layer copy-in that installs `@form-builder/engine` as an npm
+  dependency (Option B)** — the originally drafted Unit B model; rejected
+  post-spike in favor of the self-contained whole-tree copy-in described in
+  Decision → Unit B above. It ships rewritten relative imports (`../core/*`
+  becoming a package specifier) that were never exercised inside this repo,
+  since the app itself always consumes `core`/`hooks`/`store` as live
+  source, never through `node_modules`; it adds a deep-internal version
+  coupling between the copied rendered layer and whatever
+  `@form-builder/engine` version resolves in the consumer's lockfile, where
+  today the two travel together by construction and can't drift; and it
+  blocks the copy-in's stated value proposition — a consumer could no longer
+  edit `core`/`hooks` alongside `fields` without forking a published
+  dependency instead of just editing the file in their own tree.
 - **Keeping the status-quo raw zip mirror (including tests) as the permanent
   distribution mechanism** — rejected: no build step, no version boundary,
   and it ships test files to consumers; Phase 2's registry manifest is the
