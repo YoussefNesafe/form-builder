@@ -21,13 +21,11 @@
 /public/form-builder.zip
 
 # generated at build/dev time by scripts/build-registry.mjs + `shadcn build`
-# (Phase 2 registry — see docs/adr/0003-packaging-split-distribution.md)
+# (Phase 2 registry — see docs/adr/0003-packaging-split-distribution.md; the
+# CLI at cli/ still uses the built fb-theme.json for its cssVars-injection
+# step, everything else is a direct copy, not a `shadcn add`)
 /registry/registry.json
 /public/r/
-
-# throwaway staging dir scripts/form-builder-add.mjs writes
-# registryDependencies-stripped item copies to before calling `shadcn add`
-/.registry-staging/
 
 # built output of the form-builder/ package (tsup) — publishable artifact,
 # not source

@@ -21,8 +21,9 @@ import { collectFiles } from "./collectFiles.mjs";
  *      bare names always hit the default/configured HTTP(S) registry, and
  *      `file://` URLs are rejected outright by Node's fetch. So every
  *      registryDependencies array this script writes is DOCUMENTATION ONLY
- *      (visible in `shadcn view`/the built JSON for humans and for
- *      scripts/form-builder-add.mjs, which computes installs itself).
+ *      (visible in `shadcn view`/the built JSON for humans; the actual
+ *      installer, cli/src/plan.mjs, computes installs itself rather than
+ *      relying on shadcn to walk this).
  *   2. A single `shadcn add` call given every needed item's local path
  *      explicitly (relative `./...` addresses, never absolute Windows
  *      paths — those get misparsed as a URL scheme) installs the whole set
@@ -372,7 +373,14 @@ function extractVars(block, names) {
   return out;
 }
 
-function buildThemeItem() {
+/**
+ * Exported (not just used internally) so cli/src/theme.mjs's direct
+ * globals.css writer reuses this exact derivation instead of duplicating
+ * the CSS-extraction logic — one source of truth for the token values,
+ * whether they end up in the registry's fb-theme.json or written straight
+ * into a consumer's globals.css.
+ */
+export function buildThemeItem() {
   const globalsCss = fs.readFileSync(GLOBALS_CSS, "utf8");
   const tokensCss = fs.readFileSync(TOKENS_CSS, "utf8");
 
@@ -468,7 +476,7 @@ function toRegistryItems(model) {
       "The shadcn-free-plus-runtime base every field depends on: core/hooks/store/ui/components/internal. See docs/adr/0003-packaging-split-distribution.md.",
     files: sortedArray(engine.filesRel).map((rel) => fileEntry(rel, "registry:file")),
     dependencies: sortedArray(engine.npmDeps),
-    // Documentation only — see the module doc comment. scripts/form-builder-add.mjs
+    // Documentation only — see the module doc comment. cli/src/plan.mjs
     // computes the real install set itself rather than relying on shadcn to
     // walk this.
     registryDependencies: sortedArray(engine.uiDeps).map(primitiveItemName),

@@ -13,6 +13,7 @@ export default defineConfig({
       "lib/**/*.test.{ts,tsx}",
       "locales/**/*.test.{ts,tsx}",
       "scripts/**/*.test.{ts,tsx,mjs}",
+      "cli/**/*.test.{ts,tsx,mjs}",
     ],
     passWithNoTests: true,
   },

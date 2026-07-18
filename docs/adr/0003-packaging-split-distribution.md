@@ -63,6 +63,32 @@ constraints worth recording ahead of the Phase 2 build. The Decision and
 Alternatives sections below reflect the ratified model; the rejected draft is
 kept as an alternative for the record.
 
+**Revision 2 (2026-07-18) — single-folder self-contained installer.** Per an
+owner requirement ("one command, everything in one place, editable, like
+shadcn"), Unit B's delivery evolved once more. Instead of copying the tree to
+the consumer root and leaving the 17 primitives at the consumer's own
+`components/ui/` (reached via `@/components/ui/*`), the installer now lands
+**everything under a single `<base>/form-builder/` folder** (`base` =
+`src/` → else `app/` → else root), with the primitives vendored inside it at
+`form-builder/components/ui/`. A dedicated CLI (`cli/`, `bin: form-builder`)
+does a **direct copy + an install-time import-rewrite pass** that turns every
+`@/components/ui/*` and `@/lib/utils` import into a relative path, so the
+folder has **zero `@/` aliases** and is portable regardless of the consumer's
+tsconfig (an output residual-`@/` scan hard-fails the install if any alias is
+missed). This supersedes the `shadcn add`-based wrapper: the CLI no longer
+shells shadcn at all, and the theme step writes a sentinel-wrapped `@theme`
+block **directly into the consumer's `globals.css`** (no `components.json`/
+`shadcn init` prerequisite). Re-runs skip existing files by default (protecting
+user edits; `--force` overwrites). The repo's `form-builder/**` source stays
+alias-based and unchanged — the rewrite is install-time only, on copies. The
+`scripts/build-registry.mjs` import-graph model is still the source of truth
+for the file/dependency closure; the compiled `public/r` registry remains for a
+future hosted-registry path but is not on the CLI's critical path. Trade-off
+accepted vs. the prior model: the primitives are duplicated into the folder
+rather than shared with the consumer's own shadcn UI, and copied field files
+differ from repo source by their rewritten import lines (covered by the
+residual scan + install smoke tests).
+
 ## Decision
 
 We will **split the package into two distribution units** rather than

@@ -1,8 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { buildRegistryModel } from "./build-registry.mjs";
-import { planInstall } from "./form-builder-add.mjs";
+import { buildRegistryModel } from "../../scripts/build-registry.mjs";
+import { planInstall } from "./plan.mjs";
 
 /**
+ * Ported from the earlier scripts/form-builder-add.test.mjs (the shadcn-add-
+ * based installer this CLI replaces) — the closure math these tests pin
+ * didn't change when install.mjs switched to direct copy + import-rewrite.
+ *
  * Locks the BLOCKER fix in resolveInstallSet(): a single-field install must
  * pull in form-engine's OWN primitive closure (fb-ui-field, from
  * ui/FieldWrapper.tsx; fb-ui-button/fb-ui-separator, from
@@ -14,7 +18,7 @@ import { planInstall } from "./form-builder-add.mjs";
  * ReviewStep.tsx with unresolved @/components/ui/field and
  * @/components/ui/separator imports.
  */
-describe("form-builder-add planInstall", () => {
+describe("form-builder CLI planInstall", () => {
   const model = buildRegistryModel();
 
   it("a single-field install pulls form-engine's own primitive closure, not just the field's", () => {

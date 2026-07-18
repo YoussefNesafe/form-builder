@@ -13,7 +13,7 @@
     "zip:form-builder": "node scripts/zip-form-builder.mjs",
     "registry:generate": "node scripts/build-registry.mjs",
     "registry:build": "shadcn build registry/registry.json -o public/r",
-    "registry:add": "node scripts/form-builder-add.mjs"
+    "form-builder": "node cli/bin/form-builder.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",

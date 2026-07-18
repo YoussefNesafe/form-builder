@@ -1,0 +1,20 @@
+{
+  "name": "form-builder-cli",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "One-command installer: copies the Form Builder engine + fields + shadcn primitives + theme into a consumer project as a single self-contained, editable form-builder/ folder. See docs/adr/0003-packaging-split-distribution.md.",
+  "bin": {
+    "form-builder": "bin/form-builder.mjs"
+  },
+  "files": [
+    "bin",
+    "src"
+  ],
+  "scripts": {
+    "prepublishOnly": "node -e \"console.error('form-builder-cli: not ready to publish — this package still resolves form-builder/ and components/ui/ via ../.. from the monorepo (see cli/src/install.mjs). Vendor those sources into cli/ first (Phase 3, see docs/adr/0003-packaging-split-distribution.md).'); process.exit(1);\""
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
