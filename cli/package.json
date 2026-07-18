@@ -1,6 +1,6 @@
 {
-  "name": "@yourscope/form-builder",
-  "//name": "PLACEHOLDER — the owner renames this (and drops the private:true below) before the first real `npm publish`. See docs/plans/2026-07-18-packaging-publish-runbook.md's CLI-publish section.",
+  "name": "form-builder-nextjs",
+  "//name": "Name confirmed free on npm (2026-07-18). Still private:true as the deliberate publish safety — the owner sets private:false, then `npm publish` (prepack auto-vendors). See docs/plans/2026-07-18-packaging-publish-runbook.md's CLI-publish section.",
   "version": "0.1.0",
   "private": true,
   "type": "module",

@@ -38,12 +38,12 @@ function assertVendorPresent() {
   const missing = required.filter((p) => !fs.existsSync(p));
   if (missing.length > 0) {
     throw new Error(
-      `form-builder-cli: self-sufficiency check failed — missing ${missing.map((p) => path.relative(CLI_ROOT, p)).join(", ")}. Run "node cli/scripts/vendor.mjs" first.`,
+      `form-builder-nextjs: self-sufficiency check failed — missing ${missing.map((p) => path.relative(CLI_ROOT, p)).join(", ")}. Run "node cli/scripts/vendor.mjs" first.`,
     );
   }
   const primitives = fs.readdirSync(path.join(VENDOR_DIR, "components-ui")).filter((f) => f.endsWith(".tsx"));
   if (primitives.length === 0) {
-    throw new Error("form-builder-cli: self-sufficiency check failed — cli/vendor/components-ui/ has no .tsx files.");
+    throw new Error("form-builder-nextjs: self-sufficiency check failed — cli/vendor/components-ui/ has no .tsx files.");
   }
 }
 
@@ -87,11 +87,11 @@ function assertNoMonorepoReach() {
 
   if (offenders.length > 0) {
     throw new Error(
-      `form-builder-cli: self-sufficiency check failed — a published tarball must never statically import outside cli/:\n${offenders.map((o) => `  - ${o}`).join("\n")}`,
+      `form-builder-nextjs: self-sufficiency check failed — a published tarball must never statically import outside cli/:\n${offenders.map((o) => `  - ${o}`).join("\n")}`,
     );
   }
 }
 
 assertVendorPresent();
 assertNoMonorepoReach();
-console.log("form-builder-cli: self-sufficiency check passed (cli/vendor/ present, no static imports reach outside cli/).");
+console.log("form-builder-nextjs: self-sufficiency check passed (cli/vendor/ present, no static imports reach outside cli/).");

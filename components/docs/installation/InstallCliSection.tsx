@@ -13,10 +13,10 @@ function Section() {
   return (
     <DocsSection id={id} title="2. Install (one command)">
       <DocsNote variant="warning" label="Pre-release">
-        Not on npm yet — <IC>npx form-builder-cli</IC> (the name isn&apos;t final either) won&apos;t resolve for
-        anyone outside this repo today. Two honest options right now: run it from a checkout of this repo (below),
-        or use the manual copy-in fallback further down this page. A real <IC>npx &lt;package-name&gt;</IC> is the
-        plan once this ships to npm.
+        Not on npm yet — <IC>npx form-builder-nextjs</IC> won&apos;t resolve for anyone outside this repo until
+        it&apos;s published. Two honest options right now: run it from a checkout of this repo (below), or use the
+        manual copy-in fallback further down this page. Once it ships to npm, <IC>npx form-builder-nextjs</IC> is
+        the one-command install.
       </DocsNote>
       <P>
         One command copies the engine, every built-in field, the 17 vendored shadcn primitives, and the theme
