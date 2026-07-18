@@ -1,18 +1,18 @@
 import fs from "node:fs";
 import path from "node:path";
-import { buildThemeItem } from "../../scripts/build-registry.mjs";
 
 /**
  * Direct globals.css theme writer — replaces the earlier `shadcn add
- * fb-theme.json` mechanism (ORCHESTRATOR RULING: shelling shadcn for the
- * theme step forced the consumer to have `components.json` + `tsconfig.json`
- * just to get a handful of cssVars, which fights the "self-contained, easy"
- * promise the rest of this installer makes). Pulls the exact token values
- * from the same derivation the registry generator uses
- * (scripts/build-registry.mjs's buildThemeItem(), which itself reads
- * app/globals.css + form-builder/theme/tokens.css) so the injected block
- * always matches what this repo actually ships — no shadcn dependency left
- * in the installer at all.
+ * fb-theme.json` mechanism (shelling shadcn for the theme step forced the
+ * consumer to have `components.json` + `tsconfig.json` just to get a
+ * handful of cssVars, which fights the "self-contained, easy" promise the
+ * rest of this installer makes).
+ *
+ * Zero reach outside cli/: every function here operates on a `themeItem`
+ * object ({ cssVars: { theme, light, dark } }) passed in by the caller
+ * (cli/src/install.mjs, via cli/src/source.mjs's dual-mode resolver) —
+ * this module never imports scripts/build-registry.mjs itself, vendored or
+ * not, so it's trivially self-contained in a published tarball.
  */
 
 const START_MARKER = "/* form-builder theme (managed) */";
@@ -30,9 +30,9 @@ function formatVars(vars) {
     .join("\n");
 }
 
-/** The full sentinel-wrapped CSS text this installer owns, derived fresh from the repo's current token values every time it's called. */
-export function buildThemeCssBlock() {
-  const { theme, light, dark } = buildThemeItem().cssVars;
+/** The full sentinel-wrapped CSS text this installer owns, built from `themeItem.cssVars` ({ theme, light, dark }). */
+export function buildThemeCssBlock(themeItem) {
+  const { theme, light, dark } = themeItem.cssVars;
   return [
     START_MARKER,
     "@theme {",
@@ -55,7 +55,7 @@ export function buildThemeCssBlock() {
  * in-place (idempotent — never duplicates), or appends one if none is
  * present yet.
  */
-export function mergeThemeBlock(existingCss, block = buildThemeCssBlock()) {
+export function mergeThemeBlock(existingCss, block) {
   if (MANAGED_BLOCK_RE.test(existingCss)) {
     return existingCss.replace(MANAGED_BLOCK_RE, block);
   }
@@ -123,9 +123,9 @@ export function findGlobalsCss(consumerRoot, base) {
  * never throws for "no globals.css found", since that's expected for some
  * project layouts and shouldn't fail the whole install.
  */
-export function injectThemeCss(consumerRoot, base, { force = false } = {}) {
+export function injectThemeCss(consumerRoot, base, themeItem, { force = false } = {}) {
   const target = findGlobalsCss(consumerRoot, base);
-  const block = buildThemeCssBlock();
+  const block = buildThemeCssBlock(themeItem);
 
   if (!target) {
     return { status: "not-found", path: null, block };

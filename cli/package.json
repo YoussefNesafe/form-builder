@@ -1,5 +1,6 @@
 {
-  "name": "form-builder-cli",
+  "name": "@yourscope/form-builder",
+  "//name": "PLACEHOLDER — the owner renames this (and drops the private:true below) before the first real `npm publish`. See docs/plans/2026-07-18-packaging-publish-runbook.md's CLI-publish section.",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -9,10 +10,19 @@
   },
   "files": [
     "bin",
-    "src"
+    "vendor",
+    "src/cli.mjs",
+    "src/detect.mjs",
+    "src/install.mjs",
+    "src/plan.mjs",
+    "src/rewrite.mjs",
+    "src/source.mjs",
+    "src/theme.mjs"
   ],
   "scripts": {
-    "prepublishOnly": "node -e \"console.error('form-builder-cli: not ready to publish — this package still resolves form-builder/ and components/ui/ via ../.. from the monorepo (see cli/src/install.mjs). Vendor those sources into cli/ first (Phase 3, see docs/adr/0003-packaging-split-distribution.md).'); process.exit(1);\""
+    "vendor": "node scripts/vendor.mjs",
+    "prepack": "node scripts/vendor.mjs && node scripts/assert-self-sufficient.mjs",
+    "prepublishOnly": "node scripts/vendor.mjs && node scripts/assert-self-sufficient.mjs"
   },
   "engines": {
     "node": ">=18"

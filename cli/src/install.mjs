@@ -1,43 +1,28 @@
 import fs from "node:fs";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
-import { fileURLToPath } from "node:url";
-import { buildRegistryModel } from "../../scripts/build-registry.mjs";
 import { planInstall } from "./plan.mjs";
 import { copyAndRewrite } from "./rewrite.mjs";
 import { detectBaseDir } from "./detect.mjs";
 import { injectThemeCss } from "./theme.mjs";
+import { loadSource } from "./source.mjs";
 
-/**
- * "Local mode" resolution: this CLI reads its source straight out of the
- * monorepo it lives in (form-builder/**, components/ui/**, the registry
- * generator) — the explicit requirement for now ("work locally now ... no
- * network required to run in-repo"). Publishing this as a standalone
- * package (Phase 3, an owner decision — see docs/adr/0003) would need to
- * vendor those directories into cli/'s own `files` instead of reaching
- * across `../..`.
- */
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const REPO_ROOT = path.resolve(__dirname, "../..");
-const FORM_BUILDER_SRC_DIR = path.join(REPO_ROOT, "form-builder");
-const UI_SRC_DIR = path.join(REPO_ROOT, "components", "ui");
-
-/** Maps one resolved item name to its {sourceAbs, rel} file list — `rel` is the path under `<base>/form-builder/` the file lands at. */
-export function resolveItemFiles(itemName, model) {
+/** Maps one resolved item name to its {sourceAbs, rel} file list — `rel` is the path under `<base>/form-builder/` the file lands at. `srcDirs` comes from source.mjs's loadSource() (vendored or local monorepo, resolved by the caller). */
+export function resolveItemFiles(itemName, model, { formBuilderSrcDir, uiSrcDir }) {
   if (itemName === "form-engine") {
-    return [...model.engine.filesRel].map((rel) => ({ sourceAbs: path.join(FORM_BUILDER_SRC_DIR, rel), rel }));
+    return [...model.engine.filesRel].map((rel) => ({ sourceAbs: path.join(formBuilderSrcDir, rel), rel }));
   }
   if (itemName === "form-builder") {
-    return [{ sourceAbs: path.join(FORM_BUILDER_SRC_DIR, "fields", "index.ts"), rel: "fields/index.ts" }];
+    return [{ sourceAbs: path.join(formBuilderSrcDir, "fields", "index.ts"), rel: "fields/index.ts" }];
   }
   if (itemName === "fb-theme") return []; // cssVars only, no files — see theme.mjs
   if (itemName.startsWith("fb-ui-")) {
     const name = itemName.slice("fb-ui-".length);
-    return [{ sourceAbs: path.join(UI_SRC_DIR, `${name}.tsx`), rel: `components/ui/${name}.tsx` }];
+    return [{ sourceAbs: path.join(uiSrcDir, `${name}.tsx`), rel: `components/ui/${name}.tsx` }];
   }
   const info = model.fields.get(itemName);
   if (!info) throw new Error(`form-builder: resolveItemFiles: unknown item "${itemName}"`);
-  return [...info.filesRel].map((rel) => ({ sourceAbs: path.join(FORM_BUILDER_SRC_DIR, rel), rel }));
+  return [...info.filesRel].map((rel) => ({ sourceAbs: path.join(formBuilderSrcDir, rel), rel }));
 }
 
 /** Union of bundled npm deps (see ADR-0003 peer/bundled split) the resolved item set needs, plus fb-theme's devDependency. */
@@ -66,12 +51,16 @@ const PEER_PACKAGES_MESSAGE =
   "form-builder: peer dependencies (install yourself if missing): react, react-dom, react-hook-form, zod, date-fns, lucide-react";
 
 /**
- * The whole install, in order: plan -> detect base dir -> copy+rewrite the
- * tree (skipping files that already exist, unless force) -> inject theme
- * cssVars directly into globals.css (same skip-unless-force protection) ->
- * install npm leaf deps. `cwd` is trusted developer-supplied input (an
- * operator running this locally or a CI job under repo control), never
- * untrusted/user-facing input.
+ * The whole install, in order: resolve source (vendored or local monorepo,
+ * via source.mjs) -> plan -> detect base dir -> copy+rewrite the tree
+ * (skipping files that already exist, unless force) -> inject theme cssVars
+ * directly into globals.css (same skip-unless-force protection) -> install
+ * npm leaf deps. `cwd` is trusted developer-supplied input (an operator
+ * running this locally or a CI job under repo control), never untrusted/
+ * user-facing input.
+ *
+ * Async because source.mjs's local-mode fallback needs a dynamic import —
+ * see that module for why it can't be a top-level static import.
  *
  * The two `npm install` spawns below are the only remaining child processes
  * this module launches (the earlier `shadcn add`-based theme injection is
@@ -81,8 +70,15 @@ const PEER_PACKAGES_MESSAGE =
  * `cwd` is passed as a spawnSync OPTION, not a shell-concatenated argument,
  * so a spaced path there is never split by cmd.exe.
  */
-export function installFormBuilder({ mode, fields = [], cwd = process.cwd(), install = true, theme = true, force = false }) {
-  const model = buildRegistryModel();
+export async function installFormBuilder({
+  mode,
+  fields = [],
+  cwd = process.cwd(),
+  install = true,
+  theme = true,
+  force = false,
+}) {
+  const { model, themeItem, formBuilderSrcDir, uiSrcDir } = await loadSource();
   const requested = mode === "add" ? fields : ["all"];
   const itemNames = planInstall(requested, { includeTheme: theme, model });
 
@@ -95,7 +91,9 @@ export function installFormBuilder({ mode, fields = [], cwd = process.cwd(), ins
   const fileMap = new Map(); // rel -> sourceAbs, deduped across items
   for (const itemName of itemNames) {
     if (itemName === "fb-theme") continue;
-    for (const { sourceAbs, rel } of resolveItemFiles(itemName, model)) fileMap.set(rel, sourceAbs);
+    for (const { sourceAbs, rel } of resolveItemFiles(itemName, model, { formBuilderSrcDir, uiSrcDir })) {
+      fileMap.set(rel, sourceAbs);
+    }
   }
 
   const written = [];
@@ -112,7 +110,7 @@ export function installFormBuilder({ mode, fields = [], cwd = process.cwd(), ins
 
   let themeResult = null;
   if (theme && itemNames.includes("fb-theme")) {
-    themeResult = injectThemeCss(cwd, base, { force });
+    themeResult = injectThemeCss(cwd, base, themeItem, { force });
     if (themeResult.status === "not-found") {
       console.log(
         "form-builder: no globals.css found (looked under <base>/app/, <base>/styles/, and <base>/) — " +

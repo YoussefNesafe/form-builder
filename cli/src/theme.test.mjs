@@ -2,7 +2,15 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { buildThemeItem } from "../../scripts/build-registry.mjs";
 import { buildThemeCssBlock, findGlobalsCss, hasManagedThemeBlock, injectThemeCss, mergeThemeBlock } from "./theme.mjs";
+
+// theme.mjs takes themeItem as data (no reach outside cli/ — see its module
+// doc comment), so tests supply it from the live derivation. In production
+// this comes from cli/src/source.mjs's loadSource() (vendored JSON or a
+// live buildThemeItem() call, depending on mode) — either way it's the same
+// shape, so testing against the live value here is representative.
+const themeItem = buildThemeItem();
 
 describe("theme.mjs", () => {
   let dir;
@@ -16,7 +24,7 @@ describe("theme.mjs", () => {
   });
 
   it("buildThemeCssBlock produces a sentinel-wrapped @theme block with the repo's real breakpoint values", () => {
-    const block = buildThemeCssBlock();
+    const block = buildThemeCssBlock(themeItem);
     expect(block).toContain("/* form-builder theme (managed) */");
     expect(block).toContain("/* end form-builder theme */");
     expect(block).toContain("@theme {");
@@ -76,7 +84,7 @@ describe("theme.mjs", () => {
 
   it("injectThemeCss reports not-found (and never throws) when there's no globals.css", () => {
     fs.mkdirSync(path.join(dir, "src"), { recursive: true });
-    const result = injectThemeCss(dir, "src");
+    const result = injectThemeCss(dir, "src", themeItem);
     expect(result.status).toBe("not-found");
     expect(result.block).toContain("--breakpoint-tablet: 481px;");
   });
@@ -86,7 +94,7 @@ describe("theme.mjs", () => {
     const cssPath = path.join(dir, "src", "app", "globals.css");
     fs.writeFileSync(cssPath, "@import \"tailwindcss\";\n");
 
-    const first = injectThemeCss(dir, "src");
+    const first = injectThemeCss(dir, "src", themeItem);
     expect(first.status).toBe("written");
     const afterFirst = fs.readFileSync(cssPath, "utf8");
     expect(afterFirst).toContain("--breakpoint-tablet: 481px;");
@@ -95,7 +103,7 @@ describe("theme.mjs", () => {
     const edited = afterFirst.replace("--breakpoint-tablet: 481px;", "--breakpoint-tablet: 481px; /* my edit */");
     fs.writeFileSync(cssPath, edited);
 
-    const second = injectThemeCss(dir, "src");
+    const second = injectThemeCss(dir, "src", themeItem);
     expect(second.status).toBe("skipped");
     expect(fs.readFileSync(cssPath, "utf8")).toContain("/* my edit */"); // untouched
   });
@@ -105,8 +113,8 @@ describe("theme.mjs", () => {
     const cssPath = path.join(dir, "src", "app", "globals.css");
     fs.writeFileSync(cssPath, "@import \"tailwindcss\";\n");
 
-    injectThemeCss(dir, "src");
-    const result = injectThemeCss(dir, "src", { force: true });
+    injectThemeCss(dir, "src", themeItem);
+    const result = injectThemeCss(dir, "src", themeItem, { force: true });
 
     expect(result.status).toBe("written");
     const content = fs.readFileSync(cssPath, "utf8");

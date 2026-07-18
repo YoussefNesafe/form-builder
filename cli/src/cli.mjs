@@ -54,7 +54,7 @@ export function parseArgs(argv) {
   return { mode: "all", cwd, install, theme, force };
 }
 
-export function runCli(argv) {
+export async function runCli(argv) {
   const args = parseArgs(argv);
   if (args.mode === "help") {
     console.log(HELP);
@@ -63,7 +63,7 @@ export function runCli(argv) {
   if (args.mode === "add" && args.fields.length === 0) {
     throw new Error('form-builder: "add" needs at least one field name, e.g. "form-builder add text email"');
   }
-  const summary = installFormBuilder(args);
+  const summary = await installFormBuilder(args);
   console.log(
     `form-builder: installed ${summary.itemNames.length} item(s), ${summary.fileCount} file(s) under ${summary.base}/form-builder/`,
   );
