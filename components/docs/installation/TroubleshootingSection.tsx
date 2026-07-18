@@ -18,8 +18,8 @@ function Section() {
           <strong className="text-foreground"><IC>tablet:</IC>/<IC>desktop:</IC> classes doing nothing</strong> —
           the theme step never found a <IC>globals.css</IC> to write into. Check what the install printed to the
           terminal (it prints the block for you to paste manually when it can&apos;t find one), or search your
-          stylesheet for the <IC>/* form-builder theme (managed) */</IC> sentinel comment to confirm whether it
-          ran at all.
+          stylesheet for the <IC>{"/* form-builder theme (managed) */"}</IC> sentinel comment to confirm whether
+          it ran at all.
         </li>
         <li>
           <strong className="text-foreground">

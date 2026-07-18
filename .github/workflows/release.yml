@@ -88,7 +88,11 @@ jobs:
         run: yarn install --frozen-lockfile
 
       - name: Build engine (tsup)
-        run: cd form-builder && yarn build
+        # tsup lives in the root node_modules/.bin only (form-builder/ has its
+        # own package.json but no node_modules — not a workspace member), so
+        # invoke it by explicit relative path; `yarn build` run from inside
+        # form-builder/ would fail with 127 (its .bin has no tsup).
+        run: cd form-builder && ../node_modules/.bin/tsup --config tsup.config.ts
 
       - name: "Guard: package name is not the placeholder scope"
         id: pkg_name_check

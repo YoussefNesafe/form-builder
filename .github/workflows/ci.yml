@@ -60,16 +60,17 @@ jobs:
       # Full root install is intentional, not something to "optimize" into a
       # partial/filtered install: form-builder/ has its own package.json (for
       # a real `exports` map) but is NOT a yarn workspace member — it has no
-      # node_modules of its own. `cd form-builder && yarn build` below
-      # resolves `tsup` by walking up to the root node_modules/.bin, the same
-      # way Yarn classic resolves any script run from a subdirectory. A
-      # scoped/partial install here would leave that resolution with nothing
-      # to find.
+      # node_modules of its own, so `tsup` lives ONLY in the root
+      # node_modules/.bin. The build step below invokes it by explicit
+      # relative path from within form-builder/ (Yarn classic does NOT put an
+      # ancestor's .bin on PATH when a script is run from a subdir that has
+      # its own package.json — so `yarn build` there would fail with 127). A
+      # scoped/partial install here would leave that binary unresolvable.
       - name: Install dependencies
         run: yarn install --frozen-lockfile
 
       - name: Build engine (tsup)
-        run: cd form-builder && yarn build
+        run: cd form-builder && ../node_modules/.bin/tsup --config tsup.config.ts
 
       - name: Check engine dist gzip budget + rendering-layer coupling
         run: node scripts/check-bundle-size.mjs
