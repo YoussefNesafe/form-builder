@@ -14,7 +14,7 @@ const PEER_DEPENDENCIES = `react-hook-form @hookform/resolvers zod zustand \\
 
 function Section() {
   return (
-    <DocsSection id={id} title="4. Install the runtime peer dependencies">
+    <DocsSection id={id} title="9. Install the runtime peer dependencies">
       <P>These are the libraries the copied field components actually import at runtime:</P>
       <CommandBlock kind="install" args={PEER_DEPENDENCIES} />
       <P>

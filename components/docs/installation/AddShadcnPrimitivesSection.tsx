@@ -16,7 +16,7 @@ const GLOBALS_CSS_IMPORT = `@import "shadcn/tailwind.css";`;
 
 function Section() {
   return (
-    <DocsSection id={id} title="2. Add the shadcn primitives">
+    <DocsSection id={id} title="7. Add the shadcn primitives">
       <P>
         The engine&apos;s fields are built on these shadcn primitives — it&apos;s the exact set under{" "}
         <IC>components/ui/</IC> in this repo, so check your own <IC>components/ui/</IC> before re-adding anything

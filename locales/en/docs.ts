@@ -62,7 +62,7 @@ export const docs = {
     /** Index card descriptions, keyed by page slug (not the page's own metadata title). */
     descriptions: {
       installation:
-        "Copy the form-builder/ folder into your app, add the shadcn primitives it depends on, and register the built-in fields.",
+        "Run one CLI command to copy the engine, every field, and the shadcn primitives into a self-contained folder — or copy form-builder/ in by hand.",
       yourFirstForm:
         "A minimal FormConfig — two fields and a submit button — rendered live, plus what you get for free.",
       conditions:

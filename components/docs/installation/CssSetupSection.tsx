@@ -105,7 +105,7 @@ const GLOBALS_CSS_TOKENS = `@custom-variant dark (&:is(.dark *));
 
 function Section() {
   return (
-    <DocsSection id={id} title="3. Set up the required CSS">
+    <DocsSection id={id} title="8. Set up the required CSS">
       <P>
         Three things the copied engine silently depends on and that nothing
         above wires up yet. First, <IC>tablet:</IC> and <IC>desktop:</IC>{" "}
