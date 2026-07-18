@@ -19,6 +19,7 @@ export type {
 export { BUILT_IN_FIELD_TYPES, isBuiltInField } from "./core/types";
 export { defaultMessages, type Messages } from "./core/messages";
 export { registerField, getRegisteredTypes, type FieldComponentProps } from "./core/registry";
+export { validateFormConfig } from "./core/schema";
 export { FormRenderer } from "./components/FormRenderer";
 export { FormSection } from "./components/FormSection";
 // For custom field authors: match built-in chrome and runtime behavior.

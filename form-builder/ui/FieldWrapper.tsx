@@ -9,7 +9,7 @@ import {
   FieldLegend,
   FieldSet,
 } from "@/components/ui/field";
-import { cn } from "@/lib/utils";
+import { cn } from "../internal/cn";
 import { fieldWrapperVariants, type FieldWrapperSize } from "./variants";
 import { RequiredMark } from "./RequiredMark";
 

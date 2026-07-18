@@ -11,7 +11,7 @@ registerBuiltInFields();`;
 
 function Section() {
   return (
-    <DocsSection id={id} title="5. Register the built-in fields">
+    <DocsSection id={id} title="10. Register the built-in fields">
       <P>
         Field types render through a registry, not a switch statement — nothing renders until it&apos;s
         registered. Call this once, before the first <IC>FormRenderer</IC> mounts (a root layout or app entry

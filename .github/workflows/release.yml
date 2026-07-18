@@ -1,0 +1,153 @@
+# Releases the HEADLESS ENGINE ONLY (Unit A, ADR-0003) — `form-builder/`
+# built by tsup to `dist/headless.{js,cjs,d.ts}` — to npm. The rendered UI
+# layer (fields/components/ui) is copy-in/registry distribution (Phase 2)
+# and is never published from this workflow.
+#
+# ============================================================================
+# INERT BY DESIGN — this workflow cannot publish anything until an OWNER does
+# ALL FOUR of the following. Until then every run is a clean no-op/dry-run:
+#
+#   1. Rename the placeholder package scope. `form-builder/package.json`
+#      "name" is currently "@form-builder/engine" — a placeholder this
+#      machine/CI identity has no publish rights to. The publish step below
+#      refuses to run while the name is still the placeholder (see the
+#      "Guard: package name" step). Pick a real, owned npm name/scope first.
+#   2. Add an NPM_TOKEN repo secret (Settings → Secrets and variables →
+#      Actions). Must be an npm automation token with publish rights to the
+#      renamed package. The publish step is gated on this secret being
+#      present (see the "Guard: NPM_TOKEN" step) — absent, it skips cleanly
+#      with an ::notice:: instead of failing the run.
+#   3. Create a `release` GitHub Environment (Settings → Environments → New
+#      environment, named exactly `release`) with at least one required
+#      reviewer. The `publish` job below declares `environment: release`, so
+#      GitHub will pause the run and wait for that reviewer's approval before
+#      any step in the job executes — this is the human-in-the-loop gate on
+#      the irreversible real publish. Without this environment configured
+#      (or with no required reviewers on it), the job runs unattended, so
+#      this step is not optional if you want the approval gate to actually
+#      bite.
+#   4. Push a tag matching `engine-v*` (e.g. `git tag engine-v0.1.0 && git
+#      push origin engine-v0.1.0`) — the only push-triggered path in. This
+#      workflow does NOT run on push to any branch (see `on:` below), so it
+#      cannot fire from ordinary commits.
+#
+# Until all four are true: tag pushes have no tag to match, a manual
+# `workflow_dispatch` run will hit the name/token guards and skip the actual
+# `npm publish` call, and even a fully-activated repo pauses on environment
+# approval before anything runs. Nothing here can reach the registry by
+# accident.
+# ============================================================================
+
+name: Release Engine
+
+on:
+  push:
+    tags:
+      - "engine-v*"
+  workflow_dispatch:
+    inputs:
+      dryRun:
+        description: "Publish with npm's --dry-run (no package is actually uploaded/registered)"
+        type: boolean
+        default: true
+
+# Never run two releases at once for the same ref — publishing is not an
+# operation you want two workflow runs racing on. Deliberately NOT
+# cancel-in-progress: a half-finished `npm publish` should run to completion
+# or fail on its own, not be killed mid-upload by a newer run.
+concurrency:
+  group: release-engine-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Build & publish @form-builder/engine
+    runs-on: ubuntu-latest
+    # Human approval gate: pauses the job here until a required reviewer on
+    # the `release` GitHub Environment approves the run (see activation
+    # checklist item 3 above). This is the backstop against "one accidental
+    # engine-v* tag after activation = instant real publish" — the tag alone
+    # is no longer sufficient, a person has to also click approve.
+    environment: release
+    permissions:
+      contents: read # only needs to read the repo to build; no write scope required to publish to npm
+      id-token: write # OIDC token for npm provenance attestation on the real publish (see "Publish to npm" step)
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: yarn
+          # Writes a scoped ~/.npmrc that reads the auth token from the
+          # NODE_AUTH_TOKEN env var at publish time (set below) — no token
+          # is ever written to a file in the repo or the workflow YAML.
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Build engine (tsup)
+        # tsup lives in the root node_modules/.bin only (form-builder/ has its
+        # own package.json but no node_modules — not a workspace member), so
+        # invoke it by explicit relative path; `yarn build` run from inside
+        # form-builder/ would fail with 127 (its .bin has no tsup).
+        run: cd form-builder && ../node_modules/.bin/tsup --config tsup.config.ts
+
+      - name: "Guard: package name is not the placeholder scope"
+        id: pkg_name_check
+        working-directory: form-builder
+        run: |
+          NAME=$(node -p "require('./package.json').name")
+          echo "Resolved package name: $NAME"
+          if [ "$NAME" = "@form-builder/engine" ]; then
+            echo "placeholder=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "placeholder=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: "Guard: NPM_TOKEN secret is present"
+        id: npm_token_check
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          if [ -z "$NPM_TOKEN" ]; then
+            echo "present=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Determine publish mode (real vs --dry-run)
+        id: publish_mode
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.dryRun }}" = "true" ]; then
+            echo "args=--dry-run" >> "$GITHUB_OUTPUT"
+            echo "Publish mode: --dry-run (workflow_dispatch, dryRun=true)"
+          else
+            # Real publish only: --provenance attaches a signed npm
+            # provenance attestation (linking the published package back to
+            # this exact workflow run/commit) using the id-token: write OIDC
+            # permission granted to this job above. Not added to the
+            # --dry-run path — dry-run never talks to the registry, so there
+            # is nothing for provenance to attest to.
+            echo "args=--provenance" >> "$GITHUB_OUTPUT"
+            echo "Publish mode: real publish (with --provenance)"
+          fi
+
+      - name: Publish to npm
+        if: steps.pkg_name_check.outputs.placeholder == 'false' && steps.npm_token_check.outputs.present == 'true'
+        working-directory: form-builder
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --access public ${{ steps.publish_mode.outputs.args }}
+
+      - name: Skip publish (guard not satisfied)
+        if: steps.pkg_name_check.outputs.placeholder != 'false' || steps.npm_token_check.outputs.present != 'true'
+        run: |
+          if [ "${{ steps.pkg_name_check.outputs.placeholder }}" = "true" ]; then
+            echo "::notice::Skipping publish — form-builder/package.json still has the placeholder name @form-builder/engine. Rename it to a real, owned package name before releasing."
+          fi
+          if [ "${{ steps.npm_token_check.outputs.present }}" != "true" ]; then
+            echo "::notice::Skipping publish — NPM_TOKEN repo secret is not set. Add it under Settings > Secrets and variables > Actions."
+          fi
+          echo "::notice::This is expected/inert on a repo that has not been activated for release yet. See the header comment in this workflow file for the full activation checklist."

@@ -3,7 +3,7 @@
 import { useId } from "react";
 import { Controller, useFormContext } from "react-hook-form";
 import { RadioGroup as RadioGroupPrimitive } from "radix-ui";
-import { cn } from "@/lib/utils";
+import { cn } from "../internal/cn";
 import type { FieldComponentProps } from "../core/registry";
 import type { FieldConfig } from "../core/types";
 import { useFieldDisabled } from "../components/FieldRuntime";

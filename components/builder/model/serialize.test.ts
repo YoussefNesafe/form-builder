@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { validateFormConfig } from "@/form-builder/core/schema";
+import { validateFormConfig } from "@/form-builder";
 import { serialize, slugify } from "./serialize";
 import type { BuilderNode, BuilderState } from "./types";
 

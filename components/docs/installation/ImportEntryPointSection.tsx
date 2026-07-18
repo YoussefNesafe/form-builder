@@ -12,7 +12,7 @@ import { FormRenderer } from "@/form-builder/components/FormRenderer";`;
 
 function Section() {
   return (
-    <DocsSection id={id} title="6. Import only from the package entry point">
+    <DocsSection id={id} title="11. Import only from the package entry point">
       <P>
         <IC>form-builder/index.ts</IC> is the package&apos;s only supported import path — it&apos;s the public
         API surface (<IC>FormRenderer</IC>, <IC>useDynamicForm</IC>, types, and the rest of the exports live

@@ -19,6 +19,20 @@
       }
     ],
     "paths": {
+      // Exact (non-wildcard) entry, tried before the "@/*" fallback below.
+      // `form-builder/` now ships its own package.json with an "exports"
+      // map pointing at built `dist/` output (for real npm consumption).
+      // Without this, a bare `@/form-builder` import resolves to that
+      // directory and the bundler's directory-index resolution picks up
+      // the package.json "exports" field instead of `index.ts`, silently
+      // switching the whole app from live source to stale/bundled dist
+      // (and losing per-file "use client" boundaries in the process — see
+      // docs/plans/2026-07-17-packaging-analysis.md). Pin the bare import
+      // straight at the source file so in-repo consumption is unaffected;
+      // deep imports (`@/form-builder/fields/...`) are untouched by this
+      // and keep resolving via the "@/*" pattern below, which is a plain
+      // file resolve, not a directory-index resolve.
+      "@/form-builder": ["./form-builder/index.ts"],
       "@/*": ["./*"]
     }
   },

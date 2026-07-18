@@ -32,3 +32,45 @@ jobs:
 
       - name: Build
         run: yarn build
+
+      - name: Landing route bundle size (soft/warn — never fails)
+        # Best-effort estimate of the "/" route's client JS payload from the
+        # `next build` output above (see script header for why this can't be
+        # a hard gate: Next 16 Turbopack no longer prints per-route sizes).
+        # The script itself always exits 0; continue-on-error is a second,
+        # cheap layer of safety so a future change to the script can never
+        # accidentally turn this into a blocking step.
+        run: node scripts/check-app-route-size.mjs
+        continue-on-error: true
+
+  bundle-budget:
+    name: Engine bundle-size budget
+    runs-on: ubuntu-latest
+    # Independent of the `checks` job — only needs the headless engine
+    # built, not the app's lint/test/next-build — so it runs in parallel and
+    # stays fast (ADR-0003 Phase 3: protect the tree-shaking win).
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: yarn
+
+      # Full root install is intentional, not something to "optimize" into a
+      # partial/filtered install: form-builder/ has its own package.json (for
+      # a real `exports` map) but is NOT a yarn workspace member — it has no
+      # node_modules of its own, so `tsup` lives ONLY in the root
+      # node_modules/.bin. The build step below invokes it by explicit
+      # relative path from within form-builder/ (Yarn classic does NOT put an
+      # ancestor's .bin on PATH when a script is run from a subdir that has
+      # its own package.json — so `yarn build` there would fail with 127). A
+      # scoped/partial install here would leave that binary unresolvable.
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Build engine (tsup)
+        run: cd form-builder && ../node_modules/.bin/tsup --config tsup.config.ts
+
+      - name: Check engine dist gzip budget + rendering-layer coupling
+        run: node scripts/check-bundle-size.mjs

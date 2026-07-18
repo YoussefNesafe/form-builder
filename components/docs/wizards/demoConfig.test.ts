@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { validateFormConfig } from "@/form-builder/core/schema";
+import { validateFormConfig } from "@/form-builder";
 import { wizardDemoConfig } from "./demoConfig";
 
 describe("wizards docs demo config", () => {

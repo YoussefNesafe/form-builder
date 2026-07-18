@@ -40,4 +40,15 @@ describe("collectFiles", () => {
   it("returns an empty array for an empty directory (caller decides that's fatal)", () => {
     expect(collectFiles(root)).toEqual([]);
   });
+
+  it("skips a dist/ directory (tsup build output, not source) at any depth", () => {
+    fs.writeFileSync(path.join(root, "index.ts"), "");
+    fs.mkdirSync(path.join(root, "dist"));
+    fs.writeFileSync(path.join(root, "dist", "index.js"), "");
+    fs.mkdirSync(path.join(root, "fields", "dist"), { recursive: true });
+    fs.writeFileSync(path.join(root, "fields", "dist", "TextField.js"), "");
+    fs.writeFileSync(path.join(root, "fields", "TextField.tsx"), "");
+
+    expect(collectFiles(root)).toEqual(["fields/TextField.tsx", "index.ts"]);
+  });
 });

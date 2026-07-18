@@ -1,8 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import type { FormConfig } from "@/form-builder";
-import { validateFormConfig } from "@/form-builder/core/schema";
+import { validateFormConfig, type FormConfig } from "@/form-builder";
 import { useBuilderStore } from "./store";
 import { serialize } from "./serialize";
 

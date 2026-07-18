@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { validateFormConfig } from "@/form-builder/core/schema";
+import { validateFormConfig } from "@/form-builder";
 import { landingDemoConfig } from "./demoConfig";
 
 // The landing page no longer carries a hand-maintained marketing code
