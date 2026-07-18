@@ -4,6 +4,28 @@
   "version": "0.1.0",
   "type": "module",
   "description": "One-command installer: copies the Form Builder engine + fields + shadcn primitives + theme into a consumer project as a single self-contained, editable form-builder/ folder. See docs/adr/0003-packaging-split-distribution.md.",
+  "license": "MIT",
+  "author": "YoussefNesafe",
+  "homepage": "https://form-builder.youssefnesafe.com",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/YoussefNesafe/form-builder.git",
+    "directory": "cli"
+  },
+  "bugs": {
+    "url": "https://github.com/YoussefNesafe/form-builder/issues"
+  },
+  "keywords": [
+    "form",
+    "form-builder",
+    "react",
+    "nextjs",
+    "react-hook-form",
+    "zod",
+    "tailwindcss",
+    "shadcn",
+    "cli"
+  ],
   "bin": {
     "form-builder": "bin/form-builder.mjs"
   },
