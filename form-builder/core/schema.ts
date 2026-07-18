@@ -67,7 +67,12 @@ const baseFieldSchema = z.strictObject({
   name: z
     .string()
     .min(1)
-    .refine((name) => !name.includes("."), { message: "field names must not contain dots" }),
+    .refine((name) => !name.includes("."), { message: "field names must not contain dots" })
+    // Reserved object keys become value-object / schema-shape keys downstream;
+    // reject them so an untrusted config can't use one as a field name.
+    .refine((name) => !["__proto__", "constructor", "prototype"].includes(name), {
+      message: "field name must not be a reserved object key (__proto__, constructor, prototype)",
+    }),
   label: z.string().optional(),
   description: z.string().optional(),
   placeholder: z.string().optional(),
