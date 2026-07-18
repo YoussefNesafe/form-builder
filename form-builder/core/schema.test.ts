@@ -61,6 +61,14 @@ describe("validateFormConfig", () => {
       validateFormConfig({ id: "t", fields: [{ type: "text", name: "a.b" }] }),
     ).toThrow(/dots/));
 
+  it("rejects reserved object keys as field names", () => {
+    for (const name of ["__proto__", "constructor", "prototype"]) {
+      expect(() =>
+        validateFormConfig({ id: "t", fields: [{ type: "text", name }] }),
+      ).toThrow(/reserved object key/);
+    }
+  });
+
   it("rejects nested-quantifier patterns (ReDoS heuristic)", () =>
     expect(() =>
       validateFormConfig({
