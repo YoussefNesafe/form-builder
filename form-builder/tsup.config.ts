@@ -41,6 +41,14 @@ export default defineConfig({
       // worker resolvable if a future headless-safe module ever gains one.
       baseUrl: path.resolve(import.meta.dirname, ".."),
       paths: { "@/*": ["./*"] },
+      // `core/schema.ts` reads `process.env.NODE_ENV` (dev-warning guards).
+      // The isolated dts worker does not reliably auto-include @types/node
+      // (fine locally, TS2591 "Cannot find name 'process'" on a fresh CI
+      // install), so pin it. React/date-fns/RHF types are imported by module
+      // name and resolve regardless of this `types` list. skipLibCheck keeps
+      // an unrelated dependency .d.ts from failing the declaration build.
+      types: ["node"],
+      skipLibCheck: true,
     },
   },
   sourcemap: true,
