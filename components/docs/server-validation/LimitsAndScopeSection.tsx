@@ -18,10 +18,12 @@ function Section() {
   return (
     <DocsSection id={id} title={title}>
       <P>
-        <IC>maxStringLength</IC> (default 10,000) is the{" "}
-        <strong className="text-foreground">only</strong> size limit this library owns — it exists to bound
-        ReDoS amplification from a config <IC>rules.pattern</IC> and to cap oversized <IC>signature</IC>{" "}
-        data-URLs, nothing broader.
+        <IC>maxStringLength</IC> (default 10,000) bounds string content — it exists to bound ReDoS amplification
+        from a config <IC>rules.pattern</IC> and to cap oversized <IC>signature</IC> data-URLs. A second, fixed,
+        non-configurable depth cap (32 levels) also exists, purely so a maliciously deep, nested body can&apos;t
+        turn this size check&apos;s own recursion into a stack overflow. Both are{" "}
+        <strong className="text-foreground">self-protection</strong> for <IC>parseSubmission</IC>&apos;s own
+        checks, nothing broader.
       </P>
       <DocsNote variant="note" label="The host's job">
         Overall request body size, rate limiting, and how many rows a <IC>group</IC> is allowed to submit are all

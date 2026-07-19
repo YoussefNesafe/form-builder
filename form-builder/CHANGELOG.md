@@ -52,20 +52,24 @@ practice.
   the-wire optional field resolves identically to the client's RHF default
   — not `undefined` — before visibility AND the form-level `superRefine`
   (cross-field rules, `optionsFrom` branch membership) are evaluated;
-  re-injects `hidden` field values from config on top of that (the body can
-  never override them); computes the visible field set the same way the
-  client does (`visibleFieldsFor` — field *and* step `visibleWhen`); omits
-  `file` fields from schema validation (naming them, and fields of a custom
-  registered type, in the returned `unvalidated` array) while still passing
-  a submitted file value's raw payload through in `values` unvalidated,
-  same as a custom field's value; enforces `maxStringLength` (default
-  10,000, recursive into group rows) against the untrusted wire body only —
-  before any regex-bearing `rules.pattern` refine runs; fails closed with
-  `code: "otp_checker_missing"` when a visible `otp` field exists and
-  `opts.otpVerified` was not supplied — no bypass flag; rejects an `otp`
-  field nested inside a `group`, at any depth, with
+  re-injects `hidden` field values from config on top of that, recursively
+  into every `group` row at any nesting depth (the body can never override
+  a `hidden` value, top-level or per-row); computes the visible field set
+  the same way the client does (`visibleFieldsFor` — field *and* step
+  `visibleWhen`); omits `file` fields from schema validation (naming them,
+  and fields of a custom registered type, in the returned `unvalidated`
+  array) while still passing a submitted file value's raw payload through
+  in `values` unvalidated, same as a custom field's value; enforces
+  `maxStringLength` (default 10,000, recursive into group rows) against the
+  untrusted wire body, guarded by a fixed, non-configurable recursion-depth
+  cap (32) so a maliciously deep body can't turn the size check itself into
+  a stack overflow — before any regex-bearing `rules.pattern` refine runs;
+  fails closed with `code: "otp_checker_missing"` when a visible `otp` field
+  exists and `opts.otpVerified` was not supplied — no bypass flag; rejects
+  an `otp` field nested inside a `group`, at any depth, with
   `code: "otp_in_group"`, unconditionally; and re-asserts `hidden` field
-  values in the `ok: true` output. Every *non-`validation_failed`* failure
+  values (again recursively into every `group` row) in the `ok: true`
+  output. Every *non-`validation_failed`* failure
   branch returns the same generic `formError` copy regardless of cause —
   `code` is for server-side logging only, never disclosed as a
   client-visible signal (`validation_failed` returns per-field messages by
@@ -97,7 +101,7 @@ practice.
 See `docs/adr/0004-server-side-submission-validation.md` for the pinned
 design rulings (sync-not-async, fail-closed otp with no opt-out, files
 always omitted, disclosure via `unvalidated` instead of a fail-closed
-custom-type gate, one size limit instead of three) and
+custom-type gate, two size limits instead of three) and
 `/docs/server-validation` on the docs site for Route Handler / Server
 Action / Express recipes and the secure two-phase otp pattern.
 
