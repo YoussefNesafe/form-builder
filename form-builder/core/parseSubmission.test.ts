@@ -801,3 +801,263 @@ describe("parseSubmission — formError uniformity across non-validation_failed 
     }
   });
 });
+
+// ---------------------------------------------------------------------------
+// BUG 1 (HIGH, RED): reinjectHiddenFields (parseSubmission.ts:62-70) and the
+// post-parse re-assert loop (parseSubmission.ts:167-171) both iterate
+// config.fields only — neither recurses into group.fields. A group-nested
+// hidden field's value is therefore trusted straight from the request body.
+//
+// The staff-engineer-approved fix is per-row recursion over the SUBMITTED
+// array (indexed by arrival position, arbitrary depth), never coercing
+// non-object rows/non-array group values. These tests pin that target
+// behavior; several are expected to fail today because no group recursion
+// happens at all.
+// ---------------------------------------------------------------------------
+describe("parseSubmission — group-nested hidden fields (BUG 1: reinjectHiddenFields does not recurse into groups)", () => {
+  const config: FormConfig = {
+    id: "t",
+    fields: [
+      { type: "hidden", name: "topPrice", value: 100 },
+      {
+        type: "group",
+        name: "items",
+        fields: [
+          { type: "number", name: "qty", required: true },
+          { type: "hidden", name: "price", value: 100 },
+        ],
+      },
+    ],
+  };
+
+  it("injects the per-row hidden value into every submitted row, indexed by arrival order, without adding/removing/reordering rows (also regression-pins the existing top-level re-injection)", () => {
+    const result = parseSubmission(config, {
+      topPrice: 0,
+      items: [
+        { qty: 1, price: 0 },
+        { qty: 2, price: 999 },
+      ],
+    });
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      // Regression pin: top-level hidden re-injection already works and must
+      // keep working after any shared-recursion refactor.
+      expect(result.values.topPrice).toBe(100);
+      // The bug: today these come back as { qty: 1, price: 0 } / { qty: 2, price: 999 }.
+      expect(result.values.items).toEqual([
+        { qty: 1, price: 100 },
+        { qty: 2, price: 100 },
+      ]);
+    }
+  });
+
+  // Load-bearing: every other test in this block observes `result.values`,
+  // which is the POST-reassert output — reassertHiddenFields is guarded by
+  // `field.name in asserted` and can only overwrite a key that's already
+  // present, never add one that's absent. Those tests would therefore still
+  // pass even if reinjectHiddenFields never learned to recurse into groups
+  // at all (reassert alone would happily paper over it whenever the row
+  // already has the key). This sparse-row case is the one that isolates
+  // injection from re-assert, because `price` is absent from the row and
+  // only reinjectHiddenFields's own recursion can put it there. Don't merge
+  // this into the test above — doing so would silently lose the only case
+  // that actually exercises reinjectHiddenFields's recursion.
+  it("injects the hidden value even when the key is entirely absent from a sparse row (most-likely-missed case)", () => {
+    const result = parseSubmission(config, { items: [{ qty: 1 }] });
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.values.items).toEqual([{ qty: 1, price: 100 }]);
+    }
+  });
+
+  it("injects hidden values at arbitrary depth — two levels of nested groups", () => {
+    const nestedConfig: FormConfig = {
+      id: "t",
+      fields: [
+        {
+          type: "group",
+          name: "outer",
+          fields: [
+            { type: "text", name: "label", required: true },
+            {
+              type: "group",
+              name: "inner",
+              fields: [
+                { type: "text", name: "code", required: true },
+                { type: "hidden", name: "secret", value: "server-secret" },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+    const result = parseSubmission(nestedConfig, {
+      outer: [{ label: "row-a", inner: [{ code: "x1", secret: "attacker-value" }] }],
+    });
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.values.outer).toEqual([
+        { label: "row-a", inner: [{ code: "x1", secret: "server-secret" }] },
+      ]);
+    }
+  });
+
+  it("leaves non-object rows and non-array group values untouched — no coercion to {}, the row schema rejects them on its own (forward-looking invariant, not a bug pin: nothing coerces today either since groups aren't recursed into at all)", () => {
+    const stringGroup = parseSubmission(config, { items: "not-an-array" });
+    expect(stringGroup.ok).toBe(false);
+    if (!stringGroup.ok) expect(stringGroup.code).toBe("validation_failed");
+
+    expect(() => parseSubmission(config, { items: [null] })).not.toThrow();
+    const nullRow = parseSubmission(config, { items: [null] });
+    expect(nullRow.ok).toBe(false);
+
+    expect(() => parseSubmission(config, { items: [["nested-array-row"]] })).not.toThrow();
+    const arrayRow = parseSubmission(config, { items: [["nested-array-row"]] });
+    expect(arrayRow.ok).toBe(false);
+  });
+
+  it("still injects rows beyond the group's max, then lets zod reject the oversized array — no ok:true leak (black-box: indistinguishable from today's already-correct max enforcement)", () => {
+    const cappedConfig: FormConfig = {
+      id: "t",
+      fields: [
+        {
+          type: "group",
+          name: "items",
+          max: 1,
+          fields: [
+            { type: "number", name: "qty", required: true },
+            { type: "hidden", name: "price", value: 100 },
+          ],
+        },
+      ],
+    };
+    const result = parseSubmission(cappedConfig, { items: [{ qty: 1 }, { qty: 2 }] });
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.code).toBe("validation_failed");
+      expect(result.errors.fieldErrors?.items).toBe(defaultMessages.max(1));
+    }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Hidden field values are aliased BY REFERENCE from the module-level
+// FormConfig into every row (and across requests) unless cloned. Pins the
+// structuredClone fix in reinjectHiddenFields/reassertHiddenFields: a
+// mutation on a returned row's hidden object must not leak into the config
+// object itself, into a sibling row, or into the next parseSubmission call.
+// ---------------------------------------------------------------------------
+describe("parseSubmission — hidden field values are cloned, not aliased by reference", () => {
+  const topMetaValue = { role: "admin" };
+  const rowMetaValue = { tier: "gold" };
+  const config: FormConfig = {
+    id: "t",
+    fields: [
+      { type: "hidden", name: "topMeta", value: topMetaValue },
+      {
+        type: "group",
+        name: "items",
+        fields: [
+          { type: "number", name: "qty", required: true },
+          { type: "hidden", name: "rowMeta", value: rowMetaValue },
+        ],
+      },
+    ],
+  };
+
+  it("returns distinct clones per row/request; mutating a returned value never affects the config or a later call", () => {
+    const first = parseSubmission(config, {
+      topMeta: {},
+      items: [
+        { qty: 1, rowMeta: {} },
+        { qty: 2, rowMeta: {} },
+      ],
+    });
+    expect(first.ok).toBe(true);
+    if (!first.ok) return;
+
+    expect(first.values.topMeta).toEqual(topMetaValue);
+    expect(first.values.topMeta).not.toBe(topMetaValue);
+
+    const rows = first.values.items as Array<Record<string, unknown>>;
+    expect(rows[0].rowMeta).toEqual(rowMetaValue);
+    expect(rows[0].rowMeta).not.toBe(rowMetaValue);
+    // Each row must get its own clone, not share one object across rows.
+    expect(rows[0].rowMeta).not.toBe(rows[1].rowMeta);
+
+    // Mutate the returned values the way a careless host integration might.
+    (first.values.topMeta as Record<string, unknown>).role = "hacked";
+    rows[0].rowMeta = { tampered: true };
+
+    const second = parseSubmission(config, { topMeta: {}, items: [{ qty: 1, rowMeta: {} }] });
+    expect(second.ok).toBe(true);
+    if (!second.ok) return;
+    expect(second.values.topMeta).toEqual({ role: "admin" });
+    expect((second.values.items as Array<Record<string, unknown>>)[0].rowMeta).toEqual({ tier: "gold" });
+
+    // The module-level config values themselves must be untouched too.
+    expect(topMetaValue).toEqual({ role: "admin" });
+    expect(rowMetaValue).toEqual({ tier: "gold" });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// BUG 2 (MEDIUM, RED): exceedsMaxStringLength (parseSubmission.ts:72-77)
+// recurses through body-controlled arrays/objects with no depth cap. A
+// deeply-nested body blows the call stack with an uncaught RangeError
+// instead of parseSubmission returning ok:false. Per AGENTS.md, throwing is
+// reserved for malformed CONFIG — a bad BODY must always return ok:false.
+// ---------------------------------------------------------------------------
+describe("parseSubmission — unbounded recursion in exceedsMaxStringLength (BUG 2: uncaught RangeError on deeply-nested body)", () => {
+  function buildDeeplyNestedArray(depth: number): unknown {
+    let value: unknown = "leaf";
+    for (let i = 0; i < depth; i++) value = [value];
+    return value;
+  }
+
+  it("returns ok:false with an input-too-large-style code for a ~50,000-deep nested array body, never throwing a RangeError", () => {
+    const deepBody = { firstName: "Ada", email: "ada@example.com", nested: buildDeeplyNestedArray(50_000) };
+    let result: ReturnType<typeof parseSubmission> | undefined;
+    expect(() => {
+      result = parseSubmission(baseConfig, deepBody);
+    }).not.toThrow();
+    expect(result?.ok).toBe(false);
+    if (result && !result.ok) {
+      expect(result.code).toBe("input_too_large");
+    }
+  });
+
+  // Boundary-precise pins: the only existing coverage is ~50,000 (way over)
+  // and a couple of levels of nested groups (way under) — nothing near
+  // MAX_STRING_LENGTH_CHECK_DEPTH (32) itself, so a typo that changed 32 to
+  // e.g. 3200 would sail through the rest of this file undetected.
+  it("accepts a body nested exactly 31 levels deep — one under the depth cap", () => {
+    const deepBody = { firstName: "Ada", email: "ada@example.com", nested: buildDeeplyNestedArray(31) };
+    const result = parseSubmission(baseConfig, deepBody);
+    expect(result.ok).toBe(true);
+  });
+
+  it("rejects a body nested 33 levels deep with input_too_large — two over the depth cap", () => {
+    const deepBody = { firstName: "Ada", email: "ada@example.com", nested: buildDeeplyNestedArray(33) };
+    const result = parseSubmission(baseConfig, deepBody);
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.code).toBe("input_too_large");
+  });
+
+  it("still parses a legitimately-nested-but-reasonable body (a few levels of nested groups) — the depth cap must not break real submissions", () => {
+    const reasonableConfig: FormConfig = {
+      id: "t",
+      fields: [
+        {
+          type: "group",
+          name: "level1",
+          fields: [
+            { type: "group", name: "level2", fields: [{ type: "text", name: "value", required: true }] },
+          ],
+        },
+      ],
+    };
+    const result = parseSubmission(reasonableConfig, { level1: [{ level2: [{ value: "ok" }] }] });
+    expect(result.ok).toBe(true);
+  });
+});
