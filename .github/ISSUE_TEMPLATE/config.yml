@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 💡 Ideas & suggestions
+    url: https://github.com/YoussefNesafe/form-builder/discussions/categories/ideas
+    about: Share improvement ideas, feedback, or notes to make the package better. These gather upvotes and discussion before becoming tracked work.
+  - name: 🙏 Questions & help
+    url: https://github.com/YoussefNesafe/form-builder/discussions/categories/q-a
+    about: Ask how to use form-builder-nextjs — usage questions belong in Discussions, not Issues.
+  - name: 🎉 Show and tell
+    url: https://github.com/YoussefNesafe/form-builder/discussions/categories/show-and-tell
+    about: Built something with the package? Share it with the community.

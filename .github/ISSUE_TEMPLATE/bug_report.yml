@@ -1,0 +1,93 @@
+name: 🐛 Bug report
+description: Something in form-builder-nextjs behaves incorrectly.
+title: "[Bug]: "
+labels: ["bug", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug. Please fill out the sections below so it can be reproduced quickly.
+        For usage questions or ideas, use [Discussions](https://github.com/YoussefNesafe/form-builder/discussions) instead.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: A clear description of the bug and what you expected instead.
+      placeholder: |
+        When I ... the form ...
+        I expected ... but got ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: config
+    attributes:
+      label: Form config (minimal repro)
+      description: >
+        This is a config-driven engine — paste the smallest `FormConfig` (or field config)
+        that reproduces the issue. Redact anything sensitive.
+      render: ts
+    validations:
+      required: false
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Render FormRenderer with the config above
+        2. Fill field X
+        3. See error
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      description: Which part of the package?
+      options:
+        - Core (schema / validation / conditions)
+        - Field renderer / a specific field type
+        - Stepper / multi-step
+        - OTP flow
+        - Server validation (parseSubmission)
+        - Visual builder
+        - CLI / install
+        - Other / not sure
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Package version
+      description: Version of `form-builder-nextjs` you are on.
+      placeholder: "0.1.2"
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Next.js, React, Node, browser, OS.
+      placeholder: |
+        - Next.js: 16.2.10
+        - React: 19
+        - Node: 22
+        - Browser: Chrome 141
+        - OS: Windows 11
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Confirmations
+      options:
+        - label: I searched existing issues and this is not a duplicate.
+          required: true
+        - label: I am on a recent version and confirmed the bug still exists.
+          required: false

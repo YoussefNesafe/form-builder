@@ -1,0 +1,57 @@
+name: ✨ Feature request
+description: A concrete, actionable proposal for a new capability or change.
+title: "[Feature]: "
+labels: ["enhancement", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this for a **specific, actionable** proposal (a new field type, a config option, an API change).
+        For open-ended ideas, brainstorms, or "would it be nice if..." — post in
+        [💡 Ideas Discussions](https://github.com/YoussefNesafe/form-builder/discussions/categories/ideas)
+        so it can gather feedback before becoming tracked work.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What are you trying to do that the package makes hard or impossible today?
+      placeholder: As a developer building X, I can't ... because ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: What should the API / config / behavior look like? Sketch config or types if helpful.
+      render: ts
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Workarounds you tried, or other designs you weighed.
+    validations:
+      required: false
+
+  - type: dropdown
+    id: breaking
+    attributes:
+      label: Is this a breaking change?
+      options:
+        - "No — additive only"
+        - "Maybe — not sure"
+        - "Yes — changes existing behavior/API"
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Confirmations
+      options:
+        - label: I searched existing issues and Discussions for the same idea.
+          required: true
