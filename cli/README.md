@@ -108,6 +108,11 @@ Some install names cover more than one `type` value — `text` carries `text`,
 - Docs & visual builder: <https://form-builder.youssefnesafe.com>
 - Source: <https://github.com/YoussefNesafe/form-builder>
 
+## Feedback & ideas
+
+- 🐛 Bugs & feature requests → [open an issue](https://github.com/YoussefNesafe/form-builder/issues/new/choose)
+- 💡 Ideas, questions, show and tell → [Discussions](https://github.com/YoussefNesafe/form-builder/discussions)
+
 ## License
 
 MIT © [YoussefNesafe](https://github.com/YoussefNesafe)

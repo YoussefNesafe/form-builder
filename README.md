@@ -127,6 +127,19 @@ yarn test    # vitest run (single pass, no watch)
 yarn lint    # eslint
 ```
 
+## Feedback & ideas
+
+Found a bug or have a concrete feature in mind? [Open an
+issue](https://github.com/YoussefNesafe/form-builder/issues/new/choose) — the
+picker routes bug reports and feature requests to the right form.
+
+Everything more open-ended lives in
+[Discussions](https://github.com/YoussefNesafe/form-builder/discussions):
+
+- **[💡 Ideas](https://github.com/YoussefNesafe/form-builder/discussions/categories/ideas)** — improvements and suggestions to make the package better
+- **[🙏 Q&A](https://github.com/YoussefNesafe/form-builder/discussions/categories/q-a)** — usage questions
+- **[🎉 Show and tell](https://github.com/YoussefNesafe/form-builder/discussions/categories/show-and-tell)** — share what you built with the engine
+
 ## License
 
 MIT © 2026 [YoussefNesafe](https://github.com/YoussefNesafe) — see
