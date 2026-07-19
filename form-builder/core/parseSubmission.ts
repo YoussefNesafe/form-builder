@@ -59,20 +59,80 @@ function hasGroupOtp(fields: AnyFieldConfig[], insideGroup: boolean): boolean {
   return false;
 }
 
+// Hidden field values live on the (module-level, process-lifetime) FormConfig
+// object. Assigning field.value directly aliases that object by reference
+// into the result: two rows (or two separate requests sharing the same
+// config) end up pointing at the SAME object, and a host mutating a returned
+// row's hidden value would silently mutate the config for every subsequent
+// submission in the process. structuredClone breaks that aliasing. Hidden
+// values are JSON-ish by contract (BaseField & { value: unknown }), but
+// "unknown" technically permits something non-cloneable (a function, a
+// symbol) if a host misconfigures it — a config value must never crash the
+// submission path, so we fall back to the original reference rather than
+// throw. That fallback re-introduces the aliasing risk only for that
+// pathological, contract-violating value.
+function cloneHiddenValue(value: unknown): unknown {
+  try {
+    return structuredClone(value);
+  } catch {
+    return value;
+  }
+}
+
 function reinjectHiddenFields(fields: AnyFieldConfig[], body: Record<string, unknown>): Record<string, unknown> {
   const injected: Record<string, unknown> = { ...body };
   for (const field of fields) {
-    if (isBuiltInField(field) && field.type === "hidden") {
-      injected[field.name] = field.value;
+    if (!isBuiltInField(field)) continue;
+    if (field.type === "hidden") {
+      injected[field.name] = cloneHiddenValue(field.value);
+      continue;
     }
+    if (field.type !== "group") continue;
+    const rows = injected[field.name];
+    if (!Array.isArray(rows)) continue;
+    const rowFields = Array.isArray(field.fields) ? field.fields : [];
+    injected[field.name] = rows.map((row) => (isPlainObject(row) ? reinjectHiddenFields(rowFields, row) : row));
   }
   return injected;
 }
 
-function exceedsMaxStringLength(value: unknown, maxLength: number): boolean {
+function reassertHiddenFields(fields: AnyFieldConfig[], values: Record<string, unknown>): Record<string, unknown> {
+  const asserted: Record<string, unknown> = { ...values };
+  for (const field of fields) {
+    if (!isBuiltInField(field)) continue;
+    if (field.type === "hidden") {
+      if (field.name in asserted) asserted[field.name] = cloneHiddenValue(field.value);
+      continue;
+    }
+    if (field.type !== "group") continue;
+    const rows = asserted[field.name];
+    if (!Array.isArray(rows)) continue;
+    const rowFields = Array.isArray(field.fields) ? field.fields : [];
+    asserted[field.name] = rows.map((row) => (isPlainObject(row) ? reassertHiddenFields(rowFields, row) : row));
+  }
+  return asserted;
+}
+
+// Depth is counted per recursive call over the BODY's structure — each
+// nested array/object encountered while walking the submitted value adds 1 —
+// NOT per level of config (group) nesting; a form with two levels of nested
+// groups is nowhere near this cap. Past the cap we return true (reject)
+// rather than keep searching: continuing to recurse is exactly the unbounded
+// recursion this cap exists to prevent, so "found a violation" is the only
+// safe answer once we can no longer afford to look further. This reuses
+// "input_too_large" deliberately rather than a distinct code — the code is
+// never echoed back to the submitter (see ADR-0004's generic formError), and
+// a body nested 33+ levels deep is abusive by definition regardless of
+// whether a string happened to be too long too.
+const MAX_STRING_LENGTH_CHECK_DEPTH = 32;
+
+function exceedsMaxStringLength(value: unknown, maxLength: number, depth = 0): boolean {
+  if (depth > MAX_STRING_LENGTH_CHECK_DEPTH) return true;
   if (typeof value === "string") return value.length > maxLength;
-  if (Array.isArray(value)) return value.some((entry) => exceedsMaxStringLength(entry, maxLength));
-  if (isPlainObject(value)) return Object.values(value).some((entry) => exceedsMaxStringLength(entry, maxLength));
+  if (Array.isArray(value)) return value.some((entry) => exceedsMaxStringLength(entry, maxLength, depth + 1));
+  if (isPlainObject(value)) {
+    return Object.values(value).some((entry) => exceedsMaxStringLength(entry, maxLength, depth + 1));
+  }
   return false;
 }
 
@@ -122,6 +182,15 @@ export function parseSubmission(
   }
   const injected = reinjectHiddenFields(config.fields, seeded);
 
+  // Deliberately checks `scrubbed`, not `injected`: `scrubbed` is exactly the
+  // attacker-controlled surface (the request body, minus reserved-key
+  // pollution), while `injected` also carries hidden field values pulled
+  // from the config. Checking `injected` would mean a config with a
+  // legitimately large hidden value (a serialized token, a base64 blob)
+  // fails EVERY submission to that form with input_too_large — a bug the
+  // submitter can never fix, since the oversized value isn't theirs. Both
+  // the code-reviewer and security-engineer independently confirmed this is
+  // correct as written — do not "align" it to `injected`.
   const maxStringLength = opts?.maxStringLength ?? DEFAULT_MAX_STRING_LENGTH;
   if (exceedsMaxStringLength(scrubbed, maxStringLength)) {
     return { ok: false, code: "input_too_large", errors: { formError: GENERIC_SUBMISSION_ERROR }, unvalidated: [] };
@@ -163,12 +232,7 @@ export function parseSubmission(
     };
   }
 
-  const values = { ...parsed.data } as FormValues;
-  for (const field of config.fields) {
-    if (isBuiltInField(field) && field.type === "hidden" && field.name in values) {
-      values[field.name] = field.value;
-    }
-  }
+  const values = reassertHiddenFields(config.fields, parsed.data as Record<string, unknown>) as FormValues;
 
   for (const field of visibleFields) {
     if (isBuiltInField(field) && field.type === "file" && field.name in scrubbed) {
