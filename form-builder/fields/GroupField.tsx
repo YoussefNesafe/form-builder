@@ -10,7 +10,7 @@ import { toConditionGroups } from "../core/conditions";
 import { renderField } from "../components/renderField";
 import { useFieldDisabled, useFieldRuntime } from "../components/FieldRuntime";
 import { FieldWrapper } from "../ui/FieldWrapper";
-import { buildDefaultValues } from "../hooks/useDynamicForm";
+import { buildDefaultValues } from "../core/defaults";
 
 type GroupFieldConfig = Extract<FieldConfig, { type: "group" }>;
 

@@ -5,7 +5,7 @@ import { FormProvider, useForm, type UseFormReturn } from "react-hook-form";
 import { registerBuiltInFields } from "../fields";
 import { defaultMessages } from "../core/messages";
 import type { FormConfig } from "../core/types";
-import { buildDefaultValues } from "../hooks/useDynamicForm";
+import { buildDefaultValues } from "../core/defaults";
 import { FieldRuntimeContext } from "./FieldRuntime";
 import { FormRenderer } from "./FormRenderer";
 import { FormStepper } from "./FormStepper";

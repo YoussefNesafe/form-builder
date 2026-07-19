@@ -4,6 +4,7 @@ import { TOC_ITEMS as installationToc } from "@/components/docs/installation/sec
 import { TOC_ITEMS as firstFormToc } from "@/components/docs/your-first-form/sections";
 import { TOC_ITEMS as conditionsToc } from "@/components/docs/conditions/sections";
 import { TOC_ITEMS as wizardsToc } from "@/components/docs/wizards/sections";
+import { TOC_ITEMS as serverValidationToc } from "@/components/docs/server-validation/sections";
 import { fieldTypes, type FieldTypeCopy } from "@/locales/en/fieldTypes";
 import { docs } from "@/locales/en/docs";
 import type { SearchEntry } from "./types";
@@ -34,6 +35,7 @@ const pageDescriptions: Record<string, string> = {
   "/docs/your-first-form": docs.index.descriptions.yourFirstForm,
   "/docs/conditions": docs.index.descriptions.conditions,
   "/docs/wizards": docs.index.descriptions.wizards,
+  "/docs/server-validation": docs.index.descriptions.serverValidation,
   "/docs/field-types": docs.index.descriptions.fieldTypes,
 };
 
@@ -45,6 +47,7 @@ const HEADING_SOURCES: { href: string; toc: { id: string; title: string }[] }[] 
   { href: "/docs/your-first-form", toc: firstFormToc },
   { href: "/docs/conditions", toc: conditionsToc },
   { href: "/docs/wizards", toc: wizardsToc },
+  { href: "/docs/server-validation", toc: serverValidationToc },
 ];
 
 function buildIndex(): SearchEntry[] {

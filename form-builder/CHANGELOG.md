@@ -37,9 +37,69 @@ publishable package appears in this repo (multi-package versioning is where
 changesets earns its keep) or if this changelog becomes a bottleneck in
 practice.
 
-## [Unreleased]
+## [0.2.0] - 2026-07-19
 
-_Nothing yet._
+### Added
+
+- **`parseSubmission(config, rawBody, opts?)`** — the engine's first
+  server-side trust boundary. Pure, synchronous, reuses the exact schema
+  builder (`buildFieldsSchema`, via the shared `buildResolverSchema` seam)
+  the client's condition-aware resolver uses.
+  Scrubs `__proto__`/`constructor`/`prototype` keys (top-level and inside
+  every `group` row) before anything else runs; seeds config-authored
+  default values (`buildDefaultValues`, moved to `core/defaults.ts` so both
+  the client hook and this function share one table) so an omitted-from-
+  the-wire optional field resolves identically to the client's RHF default
+  — not `undefined` — before visibility AND the form-level `superRefine`
+  (cross-field rules, `optionsFrom` branch membership) are evaluated;
+  re-injects `hidden` field values from config on top of that (the body can
+  never override them); computes the visible field set the same way the
+  client does (`visibleFieldsFor` — field *and* step `visibleWhen`); omits
+  `file` fields from schema validation (naming them, and fields of a custom
+  registered type, in the returned `unvalidated` array) while still passing
+  a submitted file value's raw payload through in `values` unvalidated,
+  same as a custom field's value; enforces `maxStringLength` (default
+  10,000, recursive into group rows) against the untrusted wire body only —
+  before any regex-bearing `rules.pattern` refine runs; fails closed with
+  `code: "otp_checker_missing"` when a visible `otp` field exists and
+  `opts.otpVerified` was not supplied — no bypass flag; rejects an `otp`
+  field nested inside a `group`, at any depth, with
+  `code: "otp_in_group"`, unconditionally; and re-asserts `hidden` field
+  values in the `ok: true` output. Every *non-`validation_failed`* failure
+  branch returns the same generic `formError` copy regardless of cause —
+  `code` is for server-side logging only, never disclosed as a
+  client-visible signal (`validation_failed` returns per-field messages by
+  design, and `otp_checker_missing`'s `fieldErrors` entry stays actionable
+  for the same reason). Throws (does not return `ok: false`) if `config`
+  itself is malformed, since `validateFormConfig` always runs and a broken
+  config is an authoring error, not user input. `opts.messages` accepts a
+  `Partial<Messages>` (merged over `defaultMessages`, same as the client's
+  `useDynamicForm({ messages })`), not a complete `Messages`.
+- *Internal extraction — not part of the public surface, no semver
+  obligation:* `core/validation.ts` gained `buildFormSchema(config, messages,
+  otpVerified?)` (the raw zod schema for a config's full field list, used by
+  `useDynamicForm`) and `buildResolverSchema(config, messages, otpVerified,
+  values)` (the exact visibility-then-schema step the client's resolver
+  runs for a given `values` snapshot — the shared seam `parseSubmission`'s
+  parity tests use too). Neither is re-exported from `index.ts`/
+  `headless.ts`; `buildFormSchema` was deliberately kept unexported (see
+  ADR-0004 — adding a barrel export later is a free minor bump, removing one
+  is a breaking major, so the reversible default wins). Both skip every
+  trust-boundary step `parseSubmission` applies (scrubbing, default seeding,
+  hidden re-injection, otp fail-closed, size capping); `parseSubmission` is
+  the public entry point for handling an actual request body.
+- **`buildDefaultValues(fields)`** — moved from `hooks/useDynamicForm.ts` to
+  `core/defaults.ts` (pure, sync, React-free); re-exported from the same
+  public names (`index.ts`, `headless.ts`) as before, no surface change.
+- `ParseSubmissionErrorCode`, `ParseSubmissionOptions`,
+  `ParseSubmissionResult` types.
+
+See `docs/adr/0004-server-side-submission-validation.md` for the pinned
+design rulings (sync-not-async, fail-closed otp with no opt-out, files
+always omitted, disclosure via `unvalidated` instead of a fail-closed
+custom-type gate, one size limit instead of three) and
+`/docs/server-validation` on the docs site for Route Handler / Server
+Action / Express recipes and the secure two-phase otp pattern.
 
 ## [0.1.0] - 2026-07-18
 
@@ -111,5 +171,6 @@ rendering-layer coupling (`core/boundary.test.ts` at the source level;
   reserved as an empty placeholder (a reserved-but-broken entry was cut in
   review as a footgun).
 
-[Unreleased]: https://github.com/YoussefNesafe/form-builder/compare/engine-v0.1.0...HEAD
+[Unreleased]: https://github.com/YoussefNesafe/form-builder/compare/engine-v0.2.0...HEAD
+[0.2.0]: https://github.com/YoussefNesafe/form-builder/compare/engine-v0.1.0...engine-v0.2.0
 [0.1.0]: https://github.com/YoussefNesafe/form-builder/releases/tag/engine-v0.1.0

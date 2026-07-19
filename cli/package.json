@@ -1,7 +1,7 @@
 {
   "name": "form-builder-nextjs",
   "//name": "Publishable. `npm publish` from cli/ ships it (prepack auto-vendors + runs the self-sufficiency gate). Requires `npm login` with an account that owns this name. See docs/plans/2026-07-18-packaging-publish-runbook.md's CLI-publish section.",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "type": "module",
   "description": "One-command installer: copies the Form Builder engine + fields + shadcn primitives + theme into a consumer project as a single self-contained, editable form-builder/ folder. See docs/adr/0003-packaging-split-distribution.md.",
   "license": "MIT",

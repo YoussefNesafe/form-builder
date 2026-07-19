@@ -18,6 +18,7 @@ const DESCRIPTIONS: Record<string, string> = {
   "/docs/your-first-form": t.docs.index.descriptions.yourFirstForm,
   "/docs/conditions": t.docs.index.descriptions.conditions,
   "/docs/wizards": t.docs.index.descriptions.wizards,
+  "/docs/server-validation": t.docs.index.descriptions.serverValidation,
   "/docs/field-types": t.docs.index.descriptions.fieldTypes,
 };
 

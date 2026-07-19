@@ -34,6 +34,7 @@ export const docs = {
       yourFirstForm: "Your first form",
       conditions: "Conditions",
       wizards: "Multi-step wizards",
+      serverValidation: "Server-side validation",
       fieldTypes: "Field types",
     },
   },
@@ -68,6 +69,8 @@ export const docs = {
       conditions:
         "visibleWhen, disabledWhen, and enabledWhen — the real Condition operators, the isValid oracle, and the group-nesting limitation.",
       wizards: "The steps config shape, Next/Back gating, conditional steps, and the read-only review step.",
+      serverValidation:
+        "parseSubmission — the server-side trust boundary for a submitted config. Route Handler/Server Action recipes, the fail-closed otp pattern, and every documented sharp edge.",
       fieldTypes:
         "Every built-in field type the registry ships, generated from the package's own type list so it can't drift.",
     },
