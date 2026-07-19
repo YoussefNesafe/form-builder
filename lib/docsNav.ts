@@ -36,6 +36,7 @@ export const DOCS_NAV_GROUPS: DocsNavGroup[] = [
     items: [
       { href: "/docs/conditions", title: docs.nav.pages.conditions },
       { href: "/docs/wizards", title: docs.nav.pages.wizards },
+      { href: "/docs/server-validation", title: docs.nav.pages.serverValidation },
     ],
   },
   {

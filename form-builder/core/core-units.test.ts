@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { defaultMessages, mergeMessages } from "./messages";
 import { getPasswordChecks } from "./password";
 import { registerField } from "./registry";
-import { buildDefaultValues } from "../hooks/useDynamicForm";
+import { buildDefaultValues } from "./defaults";
 
 describe("mergeMessages", () => {
   it("overrides only the provided keys", () => {

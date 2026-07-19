@@ -1,9 +1,10 @@
 import { z } from "zod";
 import { getCountries, isValidPhoneNumber } from "libphonenumber-js";
+import { visibleFieldsFor } from "./conditions";
 import type { Messages } from "./messages";
 import { getPasswordChecks } from "./password";
 import { isBuiltInField } from "./types";
-import type { AnyFieldConfig, FieldConfig, FormConfig, Option, TextRules } from "./types";
+import type { AnyFieldConfig, FieldConfig, FormConfig, FormValues, Option, TextRules } from "./types";
 
 type FieldSchema = z.ZodType | null;
 
@@ -457,4 +458,13 @@ export function buildFieldsSchema(
 
 export function buildFormSchema(config: FormConfig, messages: Messages, otpVerified?: OtpVerifiedChecker): z.ZodObject {
   return buildFieldsSchema(config.fields, messages, otpVerified);
+}
+
+export function buildResolverSchema(
+  config: FormConfig,
+  messages: Messages,
+  otpVerified: OtpVerifiedChecker | undefined,
+  values: FormValues,
+): z.ZodObject {
+  return buildFieldsSchema(visibleFieldsFor(config, values), messages, otpVerified);
 }

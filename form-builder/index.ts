@@ -34,7 +34,8 @@ export {
   evaluateCondition,
   type IsFieldValid,
 } from "./core/conditions";
-export { useDynamicForm, buildDefaultValues, type FormDraft } from "./hooks/useDynamicForm";
+export { useDynamicForm, type FormDraft } from "./hooks/useDynamicForm";
+export { buildDefaultValues } from "./core/defaults";
 export { clearDraft, type AutosaveOptions } from "./core/autosave";
 export { useOtpFlow, type OtpFlowConfig, type OtpFlowStatus } from "./hooks/useOtpFlow";
 export {
@@ -51,6 +52,12 @@ export {
   type ServerErrorResult,
   type AppliedServerErrors,
 } from "./core/serverErrors";
+export {
+  parseSubmission,
+  type ParseSubmissionOptions,
+  type ParseSubmissionResult,
+  type ParseSubmissionErrorCode,
+} from "./core/parseSubmission";
 export { registerBuiltInFields } from "./fields";
 // Masked payloads carry the RAW value; hosts re-format for display (e.g.
 // review/confirmation screens) with the same helpers the field uses.

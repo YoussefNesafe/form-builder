@@ -22,6 +22,10 @@ import { SECTIONS as installationSections, TOC_ITEMS as installationToc } from "
 import { SECTIONS as yourFirstFormSections, TOC_ITEMS as yourFirstFormToc } from "./your-first-form/sections";
 import { SECTIONS as conditionsSections, TOC_ITEMS as conditionsToc } from "./conditions/sections";
 import { SECTIONS as wizardsSections, TOC_ITEMS as wizardsToc } from "./wizards/sections";
+import {
+  SECTIONS as serverValidationSections,
+  TOC_ITEMS as serverValidationToc,
+} from "./server-validation/sections";
 import { SECTIONS as fieldTypesSections, TOC_ITEMS as fieldTypesToc } from "./field-types/sections";
 
 registerBuiltInFields();
@@ -42,6 +46,7 @@ const PAGES: { name: string; SECTIONS: SectionEntry[]; TOC_ITEMS: { id: string; 
   { name: "your-first-form", SECTIONS: yourFirstFormSections, TOC_ITEMS: yourFirstFormToc },
   { name: "conditions", SECTIONS: conditionsSections, TOC_ITEMS: conditionsToc },
   { name: "wizards", SECTIONS: wizardsSections, TOC_ITEMS: wizardsToc },
+  { name: "server-validation", SECTIONS: serverValidationSections, TOC_ITEMS: serverValidationToc },
   { name: "field-types", SECTIONS: fieldTypesSections, TOC_ITEMS: fieldTypesToc },
 ];
 
