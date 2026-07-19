@@ -1,6 +1,6 @@
 {
   "name": "@form-builder/engine",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Config-driven, headless-first form engine (React 19 / RHF 7 / Zod 4). Scoped package name is a placeholder for the owner to rename before publishing.",
   "license": "MIT",
   "type": "module",
