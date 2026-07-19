@@ -37,7 +37,7 @@ publishable package appears in this repo (multi-package versioning is where
 changesets earns its keep) or if this changelog becomes a bottleneck in
 practice.
 
-## [Unreleased]
+## [0.2.0] - 2026-07-19
 
 ### Added
 
@@ -171,5 +171,6 @@ rendering-layer coupling (`core/boundary.test.ts` at the source level;
   reserved as an empty placeholder (a reserved-but-broken entry was cut in
   review as a footgun).
 
-[Unreleased]: https://github.com/YoussefNesafe/form-builder/compare/engine-v0.1.0...HEAD
+[Unreleased]: https://github.com/YoussefNesafe/form-builder/compare/engine-v0.2.0...HEAD
+[0.2.0]: https://github.com/YoussefNesafe/form-builder/compare/engine-v0.1.0...engine-v0.2.0
 [0.1.0]: https://github.com/YoussefNesafe/form-builder/releases/tag/engine-v0.1.0
