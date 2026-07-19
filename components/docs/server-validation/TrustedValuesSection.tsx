@@ -40,6 +40,10 @@ function Section() {
         <IC>hidden</IC> fields are legal <IC>visibleWhen</IC> sources, so if the body&apos;s value were trusted
         even briefly, an attacker could flip which <em>other</em> fields the form treats as required.
       </P>
+      <P>
+        This recursion reaches into every <IC>group</IC> row too, at any nesting depth — a per-row{" "}
+        <IC>hidden</IC> field (a line-item price, a SKU) is exactly as protected as a top-level one.
+      </P>
       <CodeBlock code={HIDDEN_VS_DISABLED_CODE} label="hidden vs. disabled" copy copyLabel="code" />
     </DocsSection>
   );

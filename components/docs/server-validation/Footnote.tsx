@@ -14,8 +14,8 @@ export function Footnote() {
       <Link href="/examples/multi-step-signup" className="underline underline-offset-2 hover:text-foreground">
         the multi-step signup example
       </Link>
-      . ADR-0004 records the pinned rulings behind this design (sync-not-async, fail-closed otp, one size limit,
-      disclosure via <IC>unvalidated</IC> instead of a fail-closed custom-type gate).
+      . ADR-0004 records the pinned rulings behind this design (sync-not-async, fail-closed otp, its two size
+      limits, disclosure via <IC>unvalidated</IC> instead of a fail-closed custom-type gate).
     </DocsFootnote>
   );
 }

@@ -189,17 +189,43 @@ field's. The rule this forces on config authors: a value the server must
 own belongs in a `hidden` field (or nowhere in the form, read from session
 state instead) — never in a merely `disabled` one.
 
-**One size limit, not three.** `opts.maxStringLength` (default 10,000,
-recursive into every `group` row, checked before any `rules.pattern`
-regex-bearing refine runs) is the only limit `parseSubmission` owns. Overall
-request body size, rate limiting, and `group` row-count ceilings are left to
-the host's edge/framework layer entirely — deliberately not reimplemented
-inside the library, which would just be a worse, unconfigurable copy of
-what a WAF, API gateway, or the framework's own body-size cap already does.
-`maxStringLength` exists specifically to bound ReDoS amplification from a
-config-authored `rules.pattern` and to cap oversized `signature`
-data-URLs — problems unique to this library's own regex/schema construction,
-not general request hygiene.
+**`hidden` re-injection and re-assertion recurse into `group` rows,
+unconditionally — recurse, not reject.** A per-row `hidden` field (a
+line-item `price`, a `sku`) is re-injected before visibility is computed and
+re-asserted after parsing, at every nesting depth, exactly like a top-level
+`hidden` field. This closes a HIGH-severity gap: a group-nested `hidden`
+value was previously trusted from the body untouched (verified PoC: a
+per-row `price` of `100` came back as an attacker-submitted `0`).
+Staff-engineer ruled **recurse, not reject**, against the tempting parallel
+to the existing `insideGroup` rejections in `core/schema.ts` (`dependsOn`,
+`countryFrom`, `otp` wiring): those are rejected because group rows are
+runtime-prefixed (`"team.0.code"`) and genuinely *cannot* resolve — an
+impossibility, not an oversight. That reasoning does not transfer to
+`hidden`: its value is a static config literal with no name resolution
+involved, so nothing about group nesting makes it impossible to re-assert,
+only unimplemented until now. Rejecting group-nested `hidden` instead of
+fixing it would have forced real per-row server-owned values onto
+`disabled`, which this ADR already documents as trusted-from-body —
+converting a fixable defect into a permanent, ADR-sanctioned footgun.
+
+**Two size limits it owns, not three.** `opts.maxStringLength` (default
+10,000, recursive into every `group` row, checked before any `rules.pattern`
+regex-bearing refine runs) bounds string content. A second, fixed,
+non-configurable structural depth cap (`MAX_STRING_LENGTH_CHECK_DEPTH = 32`)
+bounds the recursive check itself: without it, a body nested tens of
+thousands of arrays deep threw an uncaught `RangeError` (stack overflow) out
+of `parseSubmission` instead of returning `ok: false` — turning
+attacker-controlled input into a crash rather than a rejection. Both exist
+for the same reason — bounding what this library's *own* string/depth
+checking can be hurt by, not general request hygiene — which is why the
+"not three" still holds: overall request body size, rate limiting, and
+`group` row-count ceilings are left to the host's edge/framework layer
+entirely — deliberately not reimplemented inside the library, which would
+just be a worse, unconfigurable copy of what a WAF, API gateway, or the
+framework's own body-size cap already does. `maxStringLength` specifically
+bounds ReDoS amplification from a config-authored `rules.pattern` and caps
+oversized `signature` data-URLs; the depth cap specifically bounds the cost
+of checking a maliciously-shaped body at all.
 
 **A malformed `config` throws; every other rejection returns `ok: false`.**
 `validateFormConfig` always runs unconditionally (configs may be
@@ -306,6 +332,12 @@ config-authored field names, applied here to the untrusted body instead.
   trustworthy than any other body field: MIME sniffing and size limits
   belong against the host's actual storage API, not a JSON payload's
   self-reported shape.
+- **Reject `hidden` fields nested inside `group` rows** (mirroring the
+  `insideGroup` rejections for `otp`/`dependsOn`/`countryFrom`) — rejected:
+  those rejections exist because group-row names are runtime-prefixed and
+  genuinely can't resolve, an impossibility that doesn't apply to a static
+  `hidden` value; rejecting instead of recursing would only push server-owned
+  per-row values onto `disabled`, trading a fixable bug for a documented one.
 - **A single combined size/rate/row-count limit surface inside the
   library** — rejected: rate limiting and body-size caps are inherently
   request/transport-layer concerns (need access to IP, headers, a request
