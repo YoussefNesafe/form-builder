@@ -105,6 +105,14 @@ jobs:
           if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.dryRun }}" = "true" ]; then
             echo "args=--dry-run" >> "$GITHUB_OUTPUT"
             echo "Publish mode: --dry-run (workflow_dispatch, dryRun=true)"
+          elif [ "${{ github.event.repository.private }}" = "true" ]; then
+            # npm rejects a provenance bundle from a PRIVATE repo with E422
+            # ("Only public source repositories are supported when publishing
+            # with provenance"), so the flag must be omitted here. This is
+            # keyed off repo visibility rather than hardcoded, so provenance
+            # switches itself on automatically if the repo is ever made public.
+            echo "args=" >> "$GITHUB_OUTPUT"
+            echo "Publish mode: real publish (no --provenance — repo is private)"
           else
             # --provenance attaches a signed attestation linking the published
             # tarball to this workflow run/commit, using the id-token: write
