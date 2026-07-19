@@ -10,3 +10,17 @@ updates:
         update-types:
           - "minor"
           - "patch"
+
+  # Keeps the SHA-pinned actions in the release workflows current — without
+  # this, a full-SHA pin never receives security/version bumps and silently
+  # rots. Dependabot rewrites both the SHA and the trailing `# v4.x.x` comment.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    groups:
+      actions:
+        update-types:
+          - "minor"
+          - "patch"

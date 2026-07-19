@@ -73,9 +73,14 @@ jobs:
       contents: read # only needs to read the repo to build; no write scope required to publish to npm
       id-token: write # OIDC token for npm provenance attestation on the real publish (see "Publish to npm" step)
     steps:
-      - uses: actions/checkout@v4
+      # Actions are pinned to full commit SHAs (not moving `@v4` tags) in this
+      # workflow specifically because the publish job can read NPM_TOKEN: a
+      # compromise of a mutable tag would run in a context with registry-write
+      # credentials. CI (ci.yml) stays on tags — it touches no secrets, so the
+      # churn of SHA bumps isn't worth it there. Dependabot updates these pins.
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 22
           cache: yarn

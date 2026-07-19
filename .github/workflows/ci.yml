@@ -27,8 +27,17 @@ jobs:
         run: yarn test
 
       - name: Audit production dependencies
+        # Hard gate: a high/critical advisory in a PRODUCTION dependency fails
+        # CI. This package vendors its source into consumers' repos (copy-in
+        # distribution), so a vulnerable transitive dep ships straight to them
+        # — an advisory-only warning is not enough protection. Scoped to
+        # `--groups dependencies` so a devDependency advisory never blocks a
+        # merge. Caveat: yarn classic `audit` has no per-advisory allowlist
+        # (unlike berry's `yarn npm audit --exclude`); if an UNFIXABLE prod
+        # advisory ever wedges CI, the escape hatch is to bump/replace the dep,
+        # or temporarily restore `continue-on-error: true` on this step with a
+        # tracking issue — do not silence it permanently.
         run: yarn audit --groups dependencies --level high
-        continue-on-error: true
 
       - name: Build
         run: yarn build
