@@ -1,0 +1,129 @@
+# Releases the CLI INSTALLER ONLY (Unit B, ADR-0003) — `cli/`, published to
+# npm as `form-builder-nextjs`. The CLI carries the engine + rendered UI layer
+# as vendored source inside its own tarball (`cli/vendor/`, produced by
+# `cli/scripts/vendor.mjs` at prepublishOnly time), so this publish ships the
+# engine to consumers without the engine being a separate npm package.
+#
+# This is a SEPARATE publish from `release.yml` (Unit A, the headless engine).
+# Per docs/plans/2026-07-18-packaging-publish-runbook.md §6c the two are
+# independent: neither blocks nor triggers the other.
+#
+# ============================================================================
+# ACTIVATION CHECKLIST — until all three are true, runs are a clean no-op:
+#
+#   1. Add an NPM_TOKEN repo secret (Settings → Secrets and variables →
+#      Actions). It MUST be an npm *automation* (or granular read+write)
+#      token — a classic publish token still prompts for a 2FA OTP, which
+#      no CI runner can answer, and the publish step would fail with EOTP.
+#      Absent, the publish step skips cleanly with an ::notice::.
+#   2. Create a `release` GitHub Environment (Settings → Environments) with
+#      at least one required reviewer. The job below declares
+#      `environment: release`, so GitHub pauses and waits for approval before
+#      any step runs — the human gate on an irreversible publish. Without
+#      required reviewers the job runs unattended.
+#   3. Push a tag matching `cli-v*` whose version equals cli/package.json's
+#      "version" (e.g. `git tag cli-v0.1.2 && git push origin cli-v0.1.2`).
+#      A mismatch fails the run before reaching the registry.
+#
+# `workflow_dispatch` defaults to --dry-run, so a manual run can never
+# publish by accident; it must be explicitly unchecked.
+# ============================================================================
+
+name: Release CLI
+
+on:
+  push:
+    tags:
+      - "cli-v*"
+  workflow_dispatch:
+    inputs:
+      dryRun:
+        description: "Publish with npm's --dry-run (nothing is uploaded/registered)"
+        type: boolean
+        default: true
+
+# Never race two publishes of the same ref. Deliberately NOT
+# cancel-in-progress: a half-finished `npm publish` should complete or fail on
+# its own rather than be killed mid-upload.
+concurrency:
+  group: release-cli-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Publish form-builder-nextjs
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      contents: read # only needs to read the repo; npm auth comes from the secret
+      id-token: write # OIDC token for npm provenance attestation on a real publish
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: yarn
+          # Writes a scoped ~/.npmrc reading auth from NODE_AUTH_TOKEN at
+          # publish time — no token is ever written into the repo or this YAML.
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Install dependencies
+        # cli/ declares no dependencies of its own, but its prepublishOnly
+        # scripts import from the repo root (`scripts/collectFiles.mjs`,
+        # `scripts/build-registry.mjs`), so the root install must run first.
+        run: yarn install --frozen-lockfile
+
+      - name: "Guard: tag version matches cli/package.json"
+        # Only meaningful on a tag push; workflow_dispatch has no version to
+        # compare against and is skipped.
+        if: startsWith(github.ref, 'refs/tags/cli-v')
+        working-directory: cli
+        run: |
+          TAG_VERSION="${GITHUB_REF_NAME#cli-v}"
+          PKG_VERSION=$(node -p "require('./package.json').version")
+          echo "Tag: $TAG_VERSION / package.json: $PKG_VERSION"
+          if [ "$TAG_VERSION" != "$PKG_VERSION" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match cli/package.json version $PKG_VERSION. Bump the version and retag."
+            exit 1
+          fi
+
+      - name: "Guard: NPM_TOKEN secret is present"
+        id: npm_token_check
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          if [ -z "$NPM_TOKEN" ]; then
+            echo "present=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Determine publish mode (real vs --dry-run)
+        id: publish_mode
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.dryRun }}" = "true" ]; then
+            echo "args=--dry-run" >> "$GITHUB_OUTPUT"
+            echo "Publish mode: --dry-run (workflow_dispatch, dryRun=true)"
+          else
+            # --provenance attaches a signed attestation linking the published
+            # tarball to this workflow run/commit, using the id-token: write
+            # OIDC permission above. Omitted on --dry-run, which never reaches
+            # the registry and so has nothing to attest to.
+            echo "args=--provenance" >> "$GITHUB_OUTPUT"
+            echo "Publish mode: real publish (with --provenance)"
+          fi
+
+      - name: Publish to npm
+        # `npm publish` runs cli/'s prepublishOnly, which re-vendors the engine
+        # source and runs the self-sufficiency gate — no separate vendor step.
+        if: steps.npm_token_check.outputs.present == 'true'
+        working-directory: cli
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --access public ${{ steps.publish_mode.outputs.args }}
+
+      - name: Skip publish (guard not satisfied)
+        if: steps.npm_token_check.outputs.present != 'true'
+        run: |
+          echo "::notice::Skipping publish — NPM_TOKEN repo secret is not set. Add it under Settings > Secrets and variables > Actions, using an npm automation token (a classic token would fail on 2FA)."

@@ -62,3 +62,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# npm auth — never commit a registry token
+.npmrc
+**/.npmrc
