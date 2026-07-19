@@ -1,5 +1,9 @@
 # Form Builder
 
+[![npm version](https://img.shields.io/npm/v/form-builder-nextjs.svg)](https://www.npmjs.com/package/form-builder-nextjs)
+[![npm downloads](https://img.shields.io/npm/dm/form-builder-nextjs.svg)](https://www.npmjs.com/package/form-builder-nextjs)
+[![license](https://img.shields.io/npm/l/form-builder-nextjs.svg)](./LICENSE)
+
 **shadcn for forms.** Design a form visually, then copy out real, Zod- and
 React-Hook-Form–validated React code you own — not a hosted widget, not a
 runtime dependency on this repo.

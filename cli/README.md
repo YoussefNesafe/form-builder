@@ -1,5 +1,9 @@
 # form-builder-nextjs
 
+[![npm version](https://img.shields.io/npm/v/form-builder-nextjs.svg)](https://www.npmjs.com/package/form-builder-nextjs)
+[![npm downloads](https://img.shields.io/npm/dm/form-builder-nextjs.svg)](https://www.npmjs.com/package/form-builder-nextjs)
+[![license](https://img.shields.io/npm/l/form-builder-nextjs.svg)](https://github.com/YoussefNesafe/form-builder/blob/master/LICENSE)
+
 One-command installer for the **Form Builder** engine — a config-driven,
 conditional, multi-step form engine for React 19 / Next.js, built on
 React Hook Form 7 + Zod 4 + Tailwind 4.
