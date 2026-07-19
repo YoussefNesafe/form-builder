@@ -37,6 +37,45 @@ publishable package appears in this repo (multi-package versioning is where
 changesets earns its keep) or if this changelog becomes a bottleneck in
 practice.
 
+## [0.1.3] - 2026-07-19
+
+### Security
+
+- **HIGH — `parseSubmission` trusted a submitted value for a `hidden` field
+  nested inside a `group` row.** `hidden` is the documented mechanism for a
+  server-owned value (a per-line-item price, SKU, or owner id), but the
+  re-injection and post-parse re-assertion steps walked only the top-level
+  field list, never descending into `group.fields` — so a per-row `hidden`
+  value arrived from the request body and was returned unchanged in the
+  `ok: true` result instead of the config-authored value. **Top-level
+  `hidden` fields were never affected.** Both steps now recurse into every
+  `group` row at any nesting depth. No config change is required to receive
+  the fix; if your form uses `hidden` fields inside a `group`, upgrade.
+- **MEDIUM — a deeply nested request body could crash the handler.** The
+  `maxStringLength` walk recursed body-controlled structure without a depth
+  bound, so a body nested tens of thousands of levels deep threw an uncaught
+  `RangeError` out of `parseSubmission` rather than returning `ok: false` —
+  turning the size check itself into the failure. Bounded by a fixed,
+  non-configurable structural depth cap (32), routed through the existing
+  `input_too_large` result. Throwing remains reserved for a malformed
+  *config*, never a malformed body.
+
+### Fixed
+
+- Config-authored `hidden` values were aliased into results **by reference**,
+  so a host mutating a returned value (e.g. `result.values.items[0].meta`)
+  corrupted the in-memory config for every later request in that process.
+  Values are now defensively cloned via `structuredClone`, falling back to
+  the original reference for the rare non-cloneable value (`HiddenField`'s
+  `value` is typed `unknown`) rather than throwing on the submission path.
+
+### Changed
+
+- `parseSubmission` now owns **two** size limits, not one: the configurable
+  `opts.maxStringLength` (content bound, default 10,000) and the fixed
+  structural depth cap above. The depth cap is self-protection for the size
+  check — request body size and rate limiting remain the host's job.
+
 ## [0.1.2] - 2026-07-19
 
 ### Added
@@ -52,25 +91,22 @@ practice.
   the-wire optional field resolves identically to the client's RHF default
   — not `undefined` — before visibility AND the form-level `superRefine`
   (cross-field rules, `optionsFrom` branch membership) are evaluated;
-  re-injects `hidden` field values from config on top of that, recursively
-  into every `group` row at any nesting depth (the body can never override
-  a `hidden` value, top-level or per-row); computes the visible field set
-  the same way the client does (`visibleFieldsFor` — field *and* step
-  `visibleWhen`); omits `file` fields from schema validation (naming them,
-  and fields of a custom registered type, in the returned `unvalidated`
-  array) while still passing a submitted file value's raw payload through
-  in `values` unvalidated, same as a custom field's value; enforces
+  re-injects top-level `hidden` field values from config on top of that (the
+  body can never override a top-level `hidden` value); computes the visible
+  field set the same way the client does (`visibleFieldsFor` — field *and*
+  step `visibleWhen`); omits `file` fields from schema validation (naming
+  them, and fields of a custom registered type, in the returned `unvalidated`
+  array) while still passing a submitted file value's raw payload through in
+  `values` unvalidated, same as a custom field's value; enforces
   `maxStringLength` (default 10,000, recursive into group rows) against the
-  untrusted wire body, guarded by a fixed, non-configurable recursion-depth
-  cap (32) so a maliciously deep body can't turn the size check itself into
-  a stack overflow — before any regex-bearing `rules.pattern` refine runs;
-  fails closed with `code: "otp_checker_missing"` when a visible `otp` field
-  exists and `opts.otpVerified` was not supplied — no bypass flag; rejects
-  an `otp` field nested inside a `group`, at any depth, with
-  `code: "otp_in_group"`, unconditionally; and re-asserts `hidden` field
-  values (again recursively into every `group` row) in the `ok: true`
-  output. Every *non-`validation_failed`* failure
-  branch returns the same generic `formError` copy regardless of cause —
+  untrusted wire body only — before any regex-bearing `rules.pattern` refine
+  runs; fails closed with `code: "otp_checker_missing"` when a visible `otp`
+  field exists and `opts.otpVerified` was not supplied — no bypass flag;
+  rejects an `otp` field nested inside a `group`, at any depth, with
+  `code: "otp_in_group"`, unconditionally; and re-asserts top-level `hidden`
+  field values in the `ok: true` output. Every *non-`validation_failed`*
+  failure branch returns the same generic `formError` copy regardless of
+  cause —
   `code` is for server-side logging only, never disclosed as a
   client-visible signal (`validation_failed` returns per-field messages by
   design, and `otp_checker_missing`'s `fieldErrors` entry stays actionable
@@ -101,7 +137,7 @@ practice.
 See `docs/adr/0004-server-side-submission-validation.md` for the pinned
 design rulings (sync-not-async, fail-closed otp with no opt-out, files
 always omitted, disclosure via `unvalidated` instead of a fail-closed
-custom-type gate, two size limits instead of three) and
+custom-type gate, one size limit instead of three) and
 `/docs/server-validation` on the docs site for Route Handler / Server
 Action / Express recipes and the secure two-phase otp pattern.
 
