@@ -111,16 +111,21 @@ runbook (not yet in this branch as of 2026-07-18 — confirm it has landed on
   publish — a release that blows the budget should fail the workflow, not
   publish an oversized package.
 
-**Tag format:** `v<major>.<minor>.<patch>` (plain semver, no `engine-`
-prefix — there is only one publishable package in this repo, so the tag
-doesn't need a component prefix to disambiguate). Cut the tag from `master`
-only, after the corresponding `form-builder/CHANGELOG.md` entry is merged.
+**Tag format:** `engine-v<major>.<minor>.<patch>` — the shipped
+`release.yml` triggers only on the `engine-v*` glob (`release.yml:46`); a
+plain `v*` tag does NOT fire it. The `engine-` prefix disambiguates the
+engine (Unit A) release from the CLI's `cli-v*` tag (Unit B, `release-cli.yml`).
+Cut the tag from `master` only, after the corresponding
+`form-builder/CHANGELOG.md` entry is merged.
 
 ```bash
 git checkout master && git pull
-git tag v0.1.0
-git push origin v0.1.0
+git tag engine-v0.1.0
+git push origin engine-v0.1.0
 ```
+
+> **Corrected 2026-07-20:** an earlier draft of this section showed a plain
+> `v0.1.0` tag, which never fires `release.yml`. The trigger is `engine-v*`.
 
 Confirm the workflow run in the Actions tab, then confirm the version landed
 on npm (`npm view <name> versions`).
@@ -422,3 +427,164 @@ remaining one-time steps, not new engineering:
   separately via devops.
 - `form-builder/CHANGELOG.md` — landing via devops as part of Phase 3;
   required, populated, before every release per §3.
+
+---
+
+## Addendum (2026-07-20): npm Trusted Publishing migration — ready to apply, owner-gated
+
+This is additive to §1/§6b above — it does not replace the `NPM_TOKEN` steps
+documented there; it describes the token-free path this repo moves to once
+the owner completes the npm-side activation below. See Item 1 of the
+[Socket supply-chain hardening plan](2026-07-20-socket-supply-chain-hardening.md)
+for why: a long-lived npm automation token sitting in a repo secret is a
+standing exfiltration target. npm **Trusted Publishing** (OIDC) removes it
+entirely — `release-cli.yml` authenticates per-run via a GitHub Actions OIDC
+token, exchanged for a short-lived npm credential, with no secret to leak.
+
+### What changes
+
+The diff below is **illustrative** — it shows the exact line-level *content*
+change for `.github/workflows/release-cli.yml`, but its hunk headers/context
+are approximate and it is **not guaranteed to `git apply` cleanly**; apply the
+changes by hand (or regenerate a real `git diff` at apply time). **It has not
+been applied to the workflow yet** — this addendum documents it as
+ready-to-apply once the owner completes the npm-side setup. Net effect:
+the `NODE_AUTH_TOKEN`/`NPM_TOKEN` plumbing is removed from the workflow (the
+empty-string assignment on `setup-node` stays only to keep the `yarn cache`
+step's env-expand from failing — see the inline comment, unchanged
+mechanism), a step upgrading npm to a Trusted-Publishing-capable version is
+added, and the two guard/skip steps that existed solely to make an absent
+`NPM_TOKEN` a clean no-op are removed — there's no longer a token to be
+absent. `permissions:` (`id-token: write`) and the `--provenance`
+mode-detection logic (the "Determine publish mode" step) are **unchanged** —
+both already exist for the current provenance flow, and Trusted Publishing
+reuses the same OIDC permission to authenticate instead of just to attest.
+
+```diff
+--- a/.github/workflows/release-cli.yml
++++ b/.github/workflows/release-cli.yml
+@@ -67,20 +67,27 @@
+       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+         with:
+           node-version: 22
+           cache: yarn
+           # Writes a scoped ~/.npmrc reading auth from NODE_AUTH_TOKEN at
+           # publish time — no token is ever written into the repo or this YAML.
+           registry-url: "https://registry.npmjs.org"
+         env:
+           # setup-node v7 writes the ~/.npmrc auth line
+           # (//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}) BEFORE the
+           # `cache: yarn` step shells out to `yarn cache dir`. yarn-classic then
+           # env-expands that .npmrc and hard-fails ("Failed to replace env in
+-          # config: ${NODE_AUTH_TOKEN}") when the var is undefined. Defining it
+-          # on THIS step lets the cache step resolve it (an empty value is fine
+-          # when the secret is absent — the publish step re-sets it for the real
+-          # upload). Regression introduced by the actions/setup-node 4->7 bump;
+-          # setup-node v4 ordered its steps so this never triggered.
+-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
++          # config: ${NODE_AUTH_TOKEN}") when the var is undefined. Trusted
++          # Publishing removes the NPM_TOKEN secret entirely, so this is now
++          # hardcoded to an empty string purely to keep the cache step's
++          # env-expand from failing — the real publish below authenticates via
++          # OIDC, not this var. Regression introduced by the actions/setup-node
++          # 4->7 bump; setup-node v4 ordered its steps so this never triggered.
++          NODE_AUTH_TOKEN: ""
++
++      - name: Ensure npm supports Trusted Publishing
++        # Trusted Publishing (OIDC token exchange) requires npm >=11.5.1,
++        # newer than the version bundled with Node 22 — upgrade in place so
++        # the OIDC exchange is available when the Publish step runs.
++        run: npm install -g npm@latest
+ 
+       - name: Install dependencies
+         # cli/ declares no dependencies of its own, but its prepublishOnly
+@@ -105,15 +112,7 @@
+           fi
+ 
+       - name: "Guard: tag version matches cli/package.json"
+         # Only meaningful on a tag push; workflow_dispatch has no version to
+         # compare against and is skipped.
+         if: startsWith(github.ref, 'refs/tags/cli-v')
+         working-directory: cli
+         run: |
+           TAG_VERSION="${GITHUB_REF_NAME#cli-v}"
+           PKG_VERSION=$(node -p "require('./package.json').version")
+           echo "Tag: $TAG_VERSION / package.json: $PKG_VERSION"
+           if [ "$TAG_VERSION" != "$PKG_VERSION" ]; then
+             echo "::error::Tag $GITHUB_REF_NAME does not match cli/package.json version $PKG_VERSION. Bump the version and retag."
+             exit 1
+           fi
+ 
+-      - name: "Guard: NPM_TOKEN secret is present"
+-        id: npm_token_check
+-        env:
+-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+-        run: |
+-          if [ -z "$NPM_TOKEN" ]; then
+-            echo "present=false" >> "$GITHUB_OUTPUT"
+-          else
+-            echo "present=true" >> "$GITHUB_OUTPUT"
+-          fi
+-
+       - name: Determine publish mode (real vs --dry-run)
+         id: publish_mode
+         run: |
+@@ -138,15 +134,7 @@
+           fi
+ 
+       - name: Publish to npm
+         # `npm publish` runs cli/'s prepublishOnly, which re-vendors the engine
+         # source and runs the self-sufficiency gate — no separate vendor step.
+-        if: steps.npm_token_check.outputs.present == 'true'
+         working-directory: cli
+-        env:
+-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+         run: npm publish --access public ${{ steps.publish_mode.outputs.args }}
+-
+-      - name: Skip publish (guard not satisfied)
+-        if: steps.npm_token_check.outputs.present != 'true'
+-        run: |
+-          echo "::notice::Skipping publish — NPM_TOKEN repo secret is not set. Add it under Settings > Secrets and variables > Actions, using an npm automation token (a classic token would fail on 2FA)."
+```
+
+### Owner activation steps (do these in order, before applying the patch)
+
+1. **Confirm tooling versions.** Trusted Publishing needs **npm >=11.5.1**
+   and **Node >=22.14.0**. `setup-node` already pins Node 22; the new
+   "Ensure npm supports Trusted Publishing" step (`npm install -g npm@latest`)
+   in the patch covers the npm-side minimum — after the patch lands, confirm
+   the run log shows a qualifying npm version.
+2. **Link the repo as a Trusted Publisher on npm**, for the
+   `form-builder-nextjs` package (npmjs.com → package → Settings → Trusted
+   Publisher):
+   - Organization/user: `YoussefNesafe`
+   - Repository: `form-builder`
+   - Workflow filename: `release-cli.yml`
+   - Environment: `release`
+3. **Apply the patch** above to `.github/workflows/release-cli.yml`.
+4. **Dry-run before the first token-free real publish.** Run
+   `workflow_dispatch` with `dryRun: true` (the default) and confirm in the
+   run log that npm resolves OIDC identity — no `EOTP`/`E401`, no fallback to
+   a missing token — before ever cutting a real `cli-v*` tag against the new
+   flow. **Specific failure mode to rule out:** `setup-node`'s `registry-url`
+   input writes `//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}` into
+   `~/.npmrc`; with `NODE_AUTH_TOKEN=""` that becomes an *empty* auth token,
+   which npm can send as an empty bearer and `401` on **instead of** falling
+   back to the OIDC exchange. If the dry run 401s, drop the `registry-url:`
+   input (so no `_authToken` line is written at all) rather than re-adding a
+   token — the OIDC publish does not need `registry-url`.
+5. **Remove the `NPM_TOKEN` repo secret** (Settings → Secrets and variables →
+   Actions) once step 4's dry run confirms OIDC auth works and at least one
+   real publish has succeeded through it. Keep it until then as a rollback
+   path.
+6. **Revisit the "require 2FA, disallow tokens" npm package setting** (see
+   [`docs/publish-policy.md`](../publish-policy.md)) — safe to enable only
+   after the token is actually gone, not before.
+
+### Note: the file's ACTIVATION CHECKLIST header comment is not part of this patch
+
+The diff above deliberately doesn't touch `release-cli.yml`'s top-of-file
+"ACTIVATION CHECKLIST" comment block, which still describes the `NPM_TOKEN`
+requirement — updating that prose is a small follow-up to make in the same
+PR that applies this patch, kept separate here so this addendum's embedded
+diff stays exactly the reviewed patch.

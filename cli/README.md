@@ -107,6 +107,21 @@ Some install names cover more than one `type` value — `text` carries `text`,
   writes only to the visiting browser's `localStorage`.
 - The `signature` field is pointer/touch-only and has no keyboard fallback.
 
+## Security & supply chain
+
+- Every release is built and published by the tagged `release-cli.yml` GitHub
+  Actions workflow — never a local `npm publish` — and carries an npm
+  registry signature plus a SLSA v1 build provenance attestation. Verify with
+  `npm view form-builder-nextjs dist` or the
+  [Socket package page](https://socket.dev/npm/package/form-builder-nextjs).
+- `cli/vendor/` (this package's install payload) is a generated mirror of
+  this repo's own `form-builder/` engine and shadcn primitives — first-party
+  source, not a third-party dependency.
+- Socket flags on this package's dependency tree are catalogued, expected
+  traits of the runtime libraries it imports (URL strings, env reads,
+  minified builds, an upstream ownership handoff) — zero CVEs. Full verdict
+  per flag: [dependency audit](https://github.com/YoussefNesafe/form-builder/blob/master/docs/plans/2026-07-20-dependency-audit.md).
+
 ## Links
 
 - Docs & visual builder: <https://form-builder.youssefnesafe.com>
