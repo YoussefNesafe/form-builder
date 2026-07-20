@@ -136,6 +136,80 @@ function exceedsMaxStringLength(value: unknown, maxLength: number, depth = 0): b
   return false;
 }
 
+// Same top-level-only iteration bug class as reinjectHiddenFields/
+// reassertHiddenFields above: file and custom-registered fields must be
+// excluded from the SCHEMA at every group depth, not just the top level, or
+// a JSON body can never satisfy a nested `z.instanceof(File)` row schema.
+// `prefix` accumulates the dotted, index-less group path ("items",
+// "outer.inner", ...) so `unvalidated` reports a config-derived key that
+// does NOT vary with how many rows were actually submitted. Group fields are
+// re-pushed as a shallow clone with a pruned `.fields` list (files dropped,
+// custom types kept — they validate as z.unknown().optional() and only need
+// reporting) so buildFieldsSchema's `case "group"` builds a row schema with
+// no nested file instanceof check, while every other group property (min,
+// max, name) passes through unchanged.
+function partitionValidatable(
+  fields: AnyFieldConfig[],
+  prefix: string,
+): { schemaFields: AnyFieldConfig[]; unvalidated: string[] } {
+  const schemaFields: AnyFieldConfig[] = [];
+  const unvalidated: string[] = [];
+  for (const field of fields) {
+    const path = prefix ? `${prefix}.${field.name}` : field.name;
+    const isFile = isBuiltInField(field) && field.type === "file";
+    if (isFile || !isBuiltInField(field)) unvalidated.push(path);
+    if (isFile) continue;
+    if (isBuiltInField(field) && field.type === "group") {
+      // Guard `field.fields` like every sibling walker (scrubReservedKeys,
+      // reinjectHiddenFields, reassertHiddenFields, reinjectNestedFileValues)
+      // rather than lean on validateFormConfig having run first — keeps this
+      // walker locally safe if it's ever reused before validation.
+      const rowFields = Array.isArray(field.fields) ? field.fields : [];
+      const nested = partitionValidatable(rowFields, path);
+      unvalidated.push(...nested.unvalidated);
+      schemaFields.push({ ...field, fields: nested.schemaFields });
+      continue;
+    }
+    schemaFields.push(field);
+  }
+  return { schemaFields, unvalidated };
+}
+
+// Mirrors the top-level file pass-through below (`field.name in scrubbed`),
+// but recurses into group rows by INDEX, pairing each `values` row with its
+// RAW `scrubbed` row — never `injected`. buildDefaultValues seeds a group's
+// default rows with `file: undefined`, and `injected` carries those
+// seeded/hidden-merged rows; checking `injected` would synthesize a
+// `receipt: undefined` key the client never sent. `scrubbed` is the raw body
+// (reserved keys stripped, recursively) and is the correct "did the client
+// send it" oracle. Only recurses where both the parsed row and the raw row
+// are plain objects and both arrays exist; indices align because a
+// successful zod array parse preserves order and count.
+function reinjectNestedFileValues(
+  fields: AnyFieldConfig[],
+  values: Record<string, unknown>,
+  scrubbed: Record<string, unknown>,
+): void {
+  for (const field of fields) {
+    if (!isBuiltInField(field) || field.type !== "group") continue;
+    const valueRows = values[field.name];
+    const scrubbedRows = scrubbed[field.name];
+    if (!Array.isArray(valueRows) || !Array.isArray(scrubbedRows)) continue;
+    const rowFields = Array.isArray(field.fields) ? field.fields : [];
+    for (let i = 0; i < valueRows.length; i++) {
+      const valueRow = valueRows[i];
+      const scrubbedRow = scrubbedRows[i];
+      if (!isPlainObject(valueRow) || !isPlainObject(scrubbedRow)) continue;
+      for (const rowField of rowFields) {
+        if (isBuiltInField(rowField) && rowField.type === "file" && rowField.name in scrubbedRow) {
+          valueRow[rowField.name] = scrubbedRow[rowField.name];
+        }
+      }
+      reinjectNestedFileValues(rowFields, valueRow, scrubbedRow);
+    }
+  }
+}
+
 type MinimalIssue = { path: PropertyKey[]; message: string };
 
 function mapIssuesToServerErrors(issues: MinimalIssue[]): ServerErrorResult {
@@ -198,14 +272,14 @@ export function parseSubmission(
 
   const visibleFields = visibleFieldsFor(config, injected as FormValues);
 
-  const schemaFields: AnyFieldConfig[] = [];
-  const unvalidated: string[] = [];
-  for (const field of visibleFields) {
-    const isFile = isBuiltInField(field) && field.type === "file";
-    if (isFile || !isBuiltInField(field)) unvalidated.push(field.name);
-    if (!isFile) schemaFields.push(field);
-  }
+  const { schemaFields, unvalidated } = partitionValidatable(visibleFields, "");
 
+  // Top-level only ON PURPOSE, and only safe because of it: a group-nested otp
+  // is rejected upstream (hasGroupOtp -> otp_in_group above, plus the config
+  // validator rejects group-nested otp wiring), so an otp can never reach this
+  // filter from inside a group. If group-nested otp is ever permitted, this
+  // derivation MUST recurse too or nested otp fields silently skip the
+  // verified-code submit gate.
   const otpFieldNames = schemaFields
     .filter((field) => isBuiltInField(field) && field.type === "otp")
     .map((field) => field.name);
@@ -239,6 +313,7 @@ export function parseSubmission(
       values[field.name] = injected[field.name];
     }
   }
+  reinjectNestedFileValues(visibleFields, values, scrubbed);
 
   return { ok: true, values, unvalidated };
 }
