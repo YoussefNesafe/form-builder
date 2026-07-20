@@ -1,0 +1,11 @@
+# Release-critical paths require owner review before merge.
+# See docs/plans/2026-07-20-socket-supply-chain-hardening.md (Item 4).
+# Order matters: GitHub applies the LAST matching pattern.
+
+cli/**                              @YoussefNesafe
+form-builder/**                     @YoussefNesafe
+.github/workflows/**                @YoussefNesafe
+/socket.yml                         @YoussefNesafe
+/.github/CODEOWNERS                 @YoussefNesafe
+/package.json                       @YoussefNesafe
+/yarn.lock                          @YoussefNesafe

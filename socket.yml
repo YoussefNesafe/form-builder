@@ -1,0 +1,86 @@
+# Socket for GitHub — repo-level config for the published `form-builder-nextjs`
+# CLI package (Unit B, `cli/`). See docs/plans/2026-07-20-socket-supply-chain-hardening.md
+# (Item 3) for the plan this implements.
+#
+# WARN-MOSTLY RATIONALE (day 1):
+# The 2026-07-20 Socket baseline on v0.1.4 scored 79/100 with ZERO CVEs; every
+# existing alert is a heuristic trait of a legitimate installer + a rich field
+# library (doc/registry URL strings, the CLI's dynamic fs copy/rewrite reading
+# as an "AI-detected anomaly", transitive deps reading env vars or shipping
+# minified/network-capable code). None of that is a real threat, but it *is*
+# noisy. Gating every PR on it on day one would train reviewers to
+# rubber-stamp the Socket check — worse for security than a smaller, sharper
+# gate. So: block only on signals that are cheap to state and rarely false
+# ("this brand-new dependency runs an install script" is either true or
+# false), warn on everything else. Tighten the block list once the Item 2
+# dependency audit (docs/plans/2026-07-20-dependency-audit.md) is done and the
+# team has a feel for the noise floor.
+#
+# IMPORTANT — schema note: `issueRules` below only controls whether an alert
+# *type* is scanned/reported for this repo (true/false), per the real
+# @socketsecurity/config v2 schema (https://docs.socket.dev/docs/socket-yml).
+# It has NO block/warn/monitor concept — that action is set per alert type in
+# Socket's org-level Security Policy (dashboard → Security Policy), which only
+# the app installer (owner) can configure. This file keeps every alert type
+# relevant to this project visible; the owner must apply the matching action
+# in the Security Policy UI after installing the app. Recommended day-1
+# matrix (works because Socket's PR/dependency-overview checks are inherently
+# scoped to the new/changed deps in a PR's diff, not the whole existing tree):
+#
+#   BLOCK  — installScripts, shellAccess, hasNativeCode, malware, didYouMean
+#            (typosquat), gptMalware, telemetry, networkAccess
+#            -> genuinely dangerous when true of a *newly added* dependency.
+#   WARN   — urlStrings, envVars, minifiedFile, unmaintained, gptAnomaly,
+#            unstableOwnership
+#            -> the existing baseline heuristic noise (see plan Item 2);
+#               surfaced on every PR that touches the dependency tree, but
+#               must never fail the check by itself.
+#
+# Everything below is a real key from the @socketsecurity/config v2 JSON
+# Schema (verified against github.com/SocketDev/socket-config-js/lib
+# 2026-07-20) — no invented keys.
+#
+# NOTE: `issueRules` is currently supported but flagged deprecated in Socket's
+# docs (they intend to replace it with repository labels). If a future Socket
+# release drops it, migrate these toggles to the repository-labels mechanism —
+# the block/warn matrix above (org Security Policy) is unaffected either way.
+
+version: 2
+
+# Paths excluded from Socket's source-level scanning (AI-anomaly, minified
+# file, eval/entropy heuristics, etc.). cli/vendor/ is a *generated mirror* of
+# form-builder/ + the shadcn primitives, rebuilt byte-for-byte from that
+# source by cli/scripts/vendor.mjs at prepublish time (see AGENTS.md /
+# docs/adr/0003-packaging-split-distribution.md) — it is not third-party code
+# and scanning it would just double-report every alert already raised against
+# the real source.
+projectIgnorePaths:
+  - "cli/vendor/**"
+  - "public/r/**" # generated shadcn registry build output, not source
+
+# Keep every alert type this project cares about visible/reported so the
+# Security Policy action (set by the owner, see rationale above) actually has
+# something to act on. `true` here matches Socket's own default for these
+# types today, but is spelled out so a future default change can't silently
+# drop coverage of the categories this policy depends on.
+issueRules:
+  installScripts: true
+  shellAccess: true
+  hasNativeCode: true
+  malware: true
+  didYouMean: true
+  gptMalware: true
+  telemetry: true
+  networkAccess: true
+  urlStrings: true
+  envVars: true
+  minifiedFile: true
+  unmaintained: true
+  gptAnomaly: true
+  unstableOwnership: true
+
+githubApp:
+  enabled: true
+  pullRequestAlertsEnabled: true
+  projectReportsEnabled: true
+  dependencyOverviewEnabled: true
