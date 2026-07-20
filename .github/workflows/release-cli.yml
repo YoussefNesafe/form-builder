@@ -71,6 +71,17 @@ jobs:
           # Writes a scoped ~/.npmrc reading auth from NODE_AUTH_TOKEN at
           # publish time — no token is ever written into the repo or this YAML.
           registry-url: "https://registry.npmjs.org"
+        env:
+          # setup-node v7 writes the ~/.npmrc auth line
+          # (//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}) BEFORE the
+          # `cache: yarn` step shells out to `yarn cache dir`. yarn-classic then
+          # env-expands that .npmrc and hard-fails ("Failed to replace env in
+          # config: ${NODE_AUTH_TOKEN}") when the var is undefined. Defining it
+          # on THIS step lets the cache step resolve it (an empty value is fine
+          # when the secret is absent — the publish step re-sets it for the real
+          # upload). Regression introduced by the actions/setup-node 4->7 bump;
+          # setup-node v4 ordered its steps so this never triggered.
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Install dependencies
         # cli/ declares no dependencies of its own, but its prepublishOnly
