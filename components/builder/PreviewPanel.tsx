@@ -19,13 +19,10 @@ function hasType(nodes: BuilderNode[], type: string): boolean {
   );
 }
 
-/** Center pane: the form built so far, rendered live by the real engine. */
 export function PreviewPanel() {
   const nodes = useBuilderStore((s) => s.nodes);
   const multiStep = useBuilderStore((s) => s.multiStep);
   const steps = useBuilderStore((s) => s.steps);
-  // Tag a submission with the structural key it came from so it auto-hides once
-  // the form changes shape (no reset effect needed).
   const [submission, setSubmission] = useState<{
     key: string;
     values: FormValues;
@@ -100,8 +97,6 @@ function EmptyPreview() {
 
 function IssuesPanel({ message }: { message: string }) {
   return (
-    // status/polite (not alert/assertive): validity toggles on every keystroke
-    // while editing — assertive would spam screen readers.
     <Alert
       role="status"
       className="flex flex-col gap-[1.602vw] tablet:gap-[0.75vw] desktop:gap-[0.312vw] p-[4.272vw] tablet:p-[2vw] desktop:p-[0.832vw]"

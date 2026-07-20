@@ -1,10 +1,5 @@
 import type { FormConfig } from "@/form-builder";
 
-/**
- * Single-step showcase of the newer field types: masked input, date + time
- * pairs with sibling-bound ordering, rating, segmented, slider, signature,
- * and file.
- */
 export const advancedFieldsConfig: FormConfig = {
   id: "advanced-fields",
   title: "Advanced fields",

@@ -4,12 +4,6 @@ import { SHARED_SHAPES } from "./fieldProps";
 const id = "shared-shapes";
 const title = "Shared shapes";
 
-/**
- * Placed before the per-type sections (see ./sections.ts ordering) so every
- * per-type prop table that names one of these shapes (TextRules, Option,
- * optionsFrom, countryFrom, ...) points at a shape that's already been
- * defined on the page, not a forward reference.
- */
 function Section() {
   return (
     <DocsSection id={id} title={title}>

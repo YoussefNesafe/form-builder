@@ -26,9 +26,7 @@ export type PropDescriptor = {
   key: string;
   label: string;
   control: PropControl;
-  /** Options for `control: "select"`. */
   options?: { label: string; value: string }[];
-  /** Which siblings a `control: "fieldRef"` may reference. */
   refKind?:
     | "otp"
     | "countrySource"
@@ -38,11 +36,8 @@ export type PropDescriptor = {
     | "timeSource"
     | "sameType"
     | "any";
-  /** `control: "condition"`: offer the is valid / is invalid operators. */
   validityOps?: boolean;
-  /** Props to clear when this one is set (mutually exclusive pairs). */
   clears?: string[];
-  /** Native constraints for `control: "number"`. */
   min?: number;
   max?: number;
   step?: number;
@@ -52,7 +47,6 @@ export type PropDescriptor = {
 
 const P = builder.props.fields;
 
-// Shared identity/behavior props. Order matters — this is render order in the editor.
 const IDENTITY: PropDescriptor[] = [
   { key: "name", label: P.name.label, control: "text", help: P.name.help },
   { key: "label", label: P.label.label, control: "text" },
@@ -89,13 +83,10 @@ const BEHAVIOR: PropDescriptor[] = [
   },
 ];
 
-/** Full base descriptor set for standard input fields. */
 const BASE: PropDescriptor[] = [...IDENTITY, ...BEHAVIOR];
 
 const OPTIONS: PropDescriptor = { key: "options", label: P.options.label, control: "options" };
 
-// Only on types the engine allows as copy targets (no phone/otp/password/
-// file/signature/group/layout types).
 const COPY_FROM: PropDescriptor = {
   key: "copyFrom",
   label: P.copyFrom.label,
@@ -111,18 +102,11 @@ const AS_OPTIONS = [
   { label: P.as.options.divider, value: "divider" },
 ];
 
-// Button `variant` values are the shadcn Button component's own enum, not
-// display copy — the identifier IS the label, so it's excluded from the
-// dictionary the same way field names/ids are.
 const VARIANT_OPTIONS = ["default", "destructive", "outline", "secondary", "ghost", "link"].map((v) => ({
   label: v,
   value: v,
 }));
 
-/**
- * Editable props per built-in field type, mirroring the `FieldConfig` union in
- * form-builder/core/types.ts. Drives the generic prop editor (Phase 4).
- */
 export const FIELD_PROPS: Record<FieldType, PropDescriptor[]> = {
   text: [...BASE, COPY_FROM, { key: "rules", label: P.rules.label, control: "rules" }],
   email: [...BASE, COPY_FROM, { key: "rules", label: P.rules.label, control: "rules" }],
@@ -245,7 +229,6 @@ export const FIELD_PROPS: Record<FieldType, PropDescriptor[]> = {
     { key: "maxSizeMB", label: P.maxSizeMB.label, control: "number", min: 0 },
     { key: "multiple", label: P.multiple.label, control: "boolean" },
   ],
-  // Layout / non-standard: opt out of the input BASE set.
   hidden: [
     { key: "name", label: P.name.label, control: "text" },
     { key: "value", label: P.value.label, control: "json", help: P.value.help },
@@ -262,8 +245,6 @@ export const FIELD_PROPS: Record<FieldType, PropDescriptor[]> = {
     { key: "visibleWhen", label: P.visibleWhen.label, control: "condition" },
     { key: "width", label: P.width.label, control: "width" },
   ],
-  // Submit is gated by formState.isValid, but the runtime (FieldGate) still
-  // honors visibleWhen/disabledWhen/disabled/enabledWhenVerified on it.
   submit: [
     { key: "name", label: P.name.label, control: "text" },
     { key: "text", label: P.text.label, control: "text" },

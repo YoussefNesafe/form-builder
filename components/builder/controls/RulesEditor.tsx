@@ -18,7 +18,6 @@ import type { ControlProps } from "./types";
 
 const C = builder.controls.rules;
 
-/** Edit `TextRules` (length, pattern, message, trim, allow, matches). */
 export function RulesEditor({
   id,
   value,
@@ -29,8 +28,6 @@ export function RulesEditor({
   const patch = (p: Partial<TextRules>) =>
     onChange(pruneEmptyOrUndefined({ ...r, ...p }));
   const num = (raw: string) => (raw === "" ? undefined : Number(raw));
-  // Cross-field wiring resolves same-level names; the engine rejects it
-  // inside groups — hide the row there, like the other wiring props.
   const matchNames = ctx.isNested
     ? []
     : eligibleRefs(ctx.siblings, "textFamily", ctx.node._id);

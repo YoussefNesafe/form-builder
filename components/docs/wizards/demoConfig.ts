@@ -1,11 +1,5 @@
 import type { FormConfig } from "@/form-builder";
 
-/**
- * Compact 2-step + review wizard for the Multi-step wizards doc page: two
- * fields on step one, one field on step two, then a read-only review step.
- * The fuller demo (confirm-password matches rule, cross-step email OTP)
- * lives at /examples/multi-step-signup.
- */
 export const wizardDemoConfig: FormConfig = {
   id: "wizard-demo",
   title: "Quick signup",

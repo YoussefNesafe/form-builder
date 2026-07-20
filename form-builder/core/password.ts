@@ -7,8 +7,6 @@ export type PasswordCheck = {
   test: (value: string) => boolean;
 };
 
-// Single source for password complexity rules: validation refines and the
-// live checklist in the password field both consume this list.
 export function getPasswordChecks(complexity: PasswordComplexity, messages: Messages): PasswordCheck[] {
   const checks: PasswordCheck[] = [];
   if (complexity.uppercase) {

@@ -12,7 +12,6 @@ describe("ThemeExportPanel", () => {
   it("defaults to vw: fluid, no reference-width inputs", () => {
     const { container } = render(<ThemeExportPanel />);
     expect(pre(container)).toContain("--fb-space-3: 1.602vw;");
-    // vw has no ref/base inputs
     expect(screen.queryAllByRole("spinbutton")).toHaveLength(0);
     expect(note(container)).toMatch(/fluid/i);
   });
@@ -20,7 +19,7 @@ describe("ThemeExportPanel", () => {
   it("switching to px reveals 3 reference inputs and emits fixed px", () => {
     const { container } = render(<ThemeExportPanel />);
     fireEvent.click(screen.getByRole("radio", { name: "px" }));
-    expect(screen.getAllByRole("spinbutton")).toHaveLength(3); // no base for px
+    expect(screen.getAllByRole("spinbutton")).toHaveLength(3);
     expect(pre(container)).toContain("--fb-space-8-desktop: 16px;");
     expect(note(container)).toMatch(/fixed/i);
   });
@@ -28,7 +27,7 @@ describe("ThemeExportPanel", () => {
   it("rem adds the base input and divides by it", () => {
     const { container } = render(<ThemeExportPanel />);
     fireEvent.click(screen.getByRole("radio", { name: "rem" }));
-    expect(screen.getAllByRole("spinbutton")).toHaveLength(4); // 3 refs + base
+    expect(screen.getAllByRole("spinbutton")).toHaveLength(4);
     expect(pre(container)).toContain("--fb-space-8-desktop: 1rem;");
   });
 
@@ -36,7 +35,6 @@ describe("ThemeExportPanel", () => {
     const { container } = render(<ThemeExportPanel />);
     fireEvent.click(screen.getByRole("radio", { name: "px" }));
     fireEvent.change(screen.getByLabelText(/desktop/i), { target: { value: "" } });
-    // toNum falls back to 1920 -> desktop step 8 still 16px, no NaN/crash
     expect(pre(container)).toContain("--fb-space-8-desktop: 16px;");
   });
 });

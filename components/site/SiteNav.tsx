@@ -8,11 +8,6 @@ import { t } from "@/locales";
 
 const GITHUB_URL = "https://github.com/YoussefNesafe/form-builder";
 
-/**
- * Shared header for every page except /builder (that workspace stays
- * chrome-minimal, full-height). Stays a Server Component — only the
- * active-link highlighting (NavLinks) needs the client for usePathname.
- */
 export function SiteNav() {
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background">

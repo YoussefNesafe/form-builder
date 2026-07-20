@@ -11,10 +11,6 @@ const NAV_LINKS = [
   { href: "/docs", label: nav.links.docs },
 ] as const;
 
-/**
- * Just the link list, split out as a client component so only it needs the
- * pathname (for aria-current) — the rest of SiteNav stays server-rendered.
- */
 export function NavLinks() {
   const pathname = usePathname();
 

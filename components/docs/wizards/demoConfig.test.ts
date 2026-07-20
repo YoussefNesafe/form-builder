@@ -15,8 +15,6 @@ describe("wizards docs demo config", () => {
     ]);
   });
 
-  // Pins the claim on the page: static fields are NOT step-exempt (only
-  // hidden and submit are) — an unstepped static field must fail validation.
   it("rejects a static field not assigned to any step", () => {
     const withUnsteppedStatic = {
       ...wizardDemoConfig,

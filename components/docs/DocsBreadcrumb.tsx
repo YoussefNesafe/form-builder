@@ -5,15 +5,6 @@ import { usePathname } from "next/navigation";
 import { DOCS_NAV_GROUPS, DOCS_PAGES } from "@/lib/docsNav";
 import { docs } from "@/locales/en/docs";
 
-/**
- * "Docs / Group / Page" trail above the H1 (spec §5.3), driven by
- * DOCS_NAV_GROUPS so it can't drift from the sidebar/pagination — same
- * single-source-of-truth property as the rest of lib/docsNav.ts. Client leaf
- * for usePathname, same pattern as DocsSidebar/DocsPagination. Rendered once
- * in app/(site)/docs/layout.tsx above {children}. Not rendered on the docs index
- * itself — "Docs / Overview" pointing at the page you're already on is not
- * useful orientation.
- */
 export function DocsBreadcrumb() {
   const pathname = usePathname();
   if (pathname === "/docs") return null;

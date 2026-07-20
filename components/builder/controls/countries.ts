@@ -1,6 +1,5 @@
 import { getCountries } from "libphonenumber-js";
 
-/** ISO 3166-1 alpha-2 codes with English display labels, sorted by label. */
 export const COUNTRIES: { code: string; label: string }[] = (() => {
   let display: Intl.DisplayNames | undefined;
   try {

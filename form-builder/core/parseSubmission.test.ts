@@ -802,18 +802,6 @@ describe("parseSubmission — formError uniformity across non-validation_failed 
   });
 });
 
-// ---------------------------------------------------------------------------
-// BUG 1 (HIGH, RED): reinjectHiddenFields (parseSubmission.ts:62-70) and the
-// post-parse re-assert loop (parseSubmission.ts:167-171) both iterate
-// config.fields only — neither recurses into group.fields. A group-nested
-// hidden field's value is therefore trusted straight from the request body.
-//
-// The staff-engineer-approved fix is per-row recursion over the SUBMITTED
-// array (indexed by arrival position, arbitrary depth), never coercing
-// non-object rows/non-array group values. These tests pin that target
-// behavior; several are expected to fail today because no group recursion
-// happens at all.
-// ---------------------------------------------------------------------------
 describe("parseSubmission — group-nested hidden fields (BUG 1: reinjectHiddenFields does not recurse into groups)", () => {
   const config: FormConfig = {
     id: "t",
@@ -840,10 +828,7 @@ describe("parseSubmission — group-nested hidden fields (BUG 1: reinjectHiddenF
     });
     expect(result.ok).toBe(true);
     if (result.ok) {
-      // Regression pin: top-level hidden re-injection already works and must
-      // keep working after any shared-recursion refactor.
       expect(result.values.topPrice).toBe(100);
-      // The bug: today these come back as { qty: 1, price: 0 } / { qty: 2, price: 999 }.
       expect(result.values.items).toEqual([
         { qty: 1, price: 100 },
         { qty: 2, price: 100 },
@@ -851,17 +836,6 @@ describe("parseSubmission — group-nested hidden fields (BUG 1: reinjectHiddenF
     }
   });
 
-  // Load-bearing: every other test in this block observes `result.values`,
-  // which is the POST-reassert output — reassertHiddenFields is guarded by
-  // `field.name in asserted` and can only overwrite a key that's already
-  // present, never add one that's absent. Those tests would therefore still
-  // pass even if reinjectHiddenFields never learned to recurse into groups
-  // at all (reassert alone would happily paper over it whenever the row
-  // already has the key). This sparse-row case is the one that isolates
-  // injection from re-assert, because `price` is absent from the row and
-  // only reinjectHiddenFields's own recursion can put it there. Don't merge
-  // this into the test above — doing so would silently lose the only case
-  // that actually exercises reinjectHiddenFields's recursion.
   it("injects the hidden value even when the key is entirely absent from a sparse row (most-likely-missed case)", () => {
     const result = parseSubmission(config, { items: [{ qty: 1 }] });
     expect(result.ok).toBe(true);
@@ -940,13 +914,6 @@ describe("parseSubmission — group-nested hidden fields (BUG 1: reinjectHiddenF
   });
 });
 
-// ---------------------------------------------------------------------------
-// Hidden field values are aliased BY REFERENCE from the module-level
-// FormConfig into every row (and across requests) unless cloned. Pins the
-// structuredClone fix in reinjectHiddenFields/reassertHiddenFields: a
-// mutation on a returned row's hidden object must not leak into the config
-// object itself, into a sibling row, or into the next parseSubmission call.
-// ---------------------------------------------------------------------------
 describe("parseSubmission — hidden field values are cloned, not aliased by reference", () => {
   const topMetaValue = { role: "admin" };
   const rowMetaValue = { tier: "gold" };
@@ -982,10 +949,8 @@ describe("parseSubmission — hidden field values are cloned, not aliased by ref
     const rows = first.values.items as Array<Record<string, unknown>>;
     expect(rows[0].rowMeta).toEqual(rowMetaValue);
     expect(rows[0].rowMeta).not.toBe(rowMetaValue);
-    // Each row must get its own clone, not share one object across rows.
     expect(rows[0].rowMeta).not.toBe(rows[1].rowMeta);
 
-    // Mutate the returned values the way a careless host integration might.
     (first.values.topMeta as Record<string, unknown>).role = "hacked";
     rows[0].rowMeta = { tampered: true };
 
@@ -995,19 +960,11 @@ describe("parseSubmission — hidden field values are cloned, not aliased by ref
     expect(second.values.topMeta).toEqual({ role: "admin" });
     expect((second.values.items as Array<Record<string, unknown>>)[0].rowMeta).toEqual({ tier: "gold" });
 
-    // The module-level config values themselves must be untouched too.
     expect(topMetaValue).toEqual({ role: "admin" });
     expect(rowMetaValue).toEqual({ tier: "gold" });
   });
 });
 
-// ---------------------------------------------------------------------------
-// BUG 2 (MEDIUM, RED): exceedsMaxStringLength (parseSubmission.ts:72-77)
-// recurses through body-controlled arrays/objects with no depth cap. A
-// deeply-nested body blows the call stack with an uncaught RangeError
-// instead of parseSubmission returning ok:false. Per AGENTS.md, throwing is
-// reserved for malformed CONFIG — a bad BODY must always return ok:false.
-// ---------------------------------------------------------------------------
 describe("parseSubmission — unbounded recursion in exceedsMaxStringLength (BUG 2: uncaught RangeError on deeply-nested body)", () => {
   function buildDeeplyNestedArray(depth: number): unknown {
     let value: unknown = "leaf";
@@ -1027,10 +984,6 @@ describe("parseSubmission — unbounded recursion in exceedsMaxStringLength (BUG
     }
   });
 
-  // Boundary-precise pins: the only existing coverage is ~50,000 (way over)
-  // and a couple of levels of nested groups (way under) — nothing near
-  // MAX_STRING_LENGTH_CHECK_DEPTH (32) itself, so a typo that changed 32 to
-  // e.g. 3200 would sail through the rest of this file undetected.
   it("accepts a body nested exactly 31 levels deep — one under the depth cap", () => {
     const deepBody = { firstName: "Ada", email: "ada@example.com", nested: buildDeeplyNestedArray(31) };
     const result = parseSubmission(baseConfig, deepBody);
@@ -1062,25 +1015,6 @@ describe("parseSubmission — unbounded recursion in exceedsMaxStringLength (BUG
   });
 });
 
-// ---------------------------------------------------------------------------
-// BUG 3 (Issue #21, RED): the unvalidated-field loop in parseSubmission
-// (parseSubmission.ts:203-207) walks `visibleFields` — a FLAT, top-level-only
-// list — and only ever inspects each field's own `.type`. A `file` (or
-// custom-registered) field nested inside a `group`'s `.fields` is never seen
-// by this loop at all: it isn't excluded from the row schema (still typed
-// `z.instanceof(File)` by buildFieldsSchema), so a JSON body can never
-// satisfy it and EVERY submission to such a form returns
-// `{ ok:false, code:"validation_failed" }`. Its name is also never reported
-// in `unvalidated`.
-//
-// Ruled target behavior: recurse into every group depth, excluding
-// file/custom fields from the row schema at each level, and report their
-// dotted (index-less) path in `unvalidated` — e.g. a file `receipt` inside
-// group `items` is `"items.receipt"`; two levels deep, `"outer.inner.receipt"`.
-// This is config-derived, so it must not vary with submitted row count.
-// These tests pin that target; several fail today because no group recursion
-// of file/custom exclusion happens at all.
-// ---------------------------------------------------------------------------
 describe("parseSubmission — group-nested file/custom fields (BUG 3, Issue #21: excluded fields don't recurse into groups)", () => {
   const nestedFileConfig: FormConfig = {
     id: "t",
@@ -1219,10 +1153,6 @@ describe("parseSubmission — group-nested file/custom fields (BUG 3, Issue #21:
     if (result.ok) expect(result.unvalidated).toEqual([]);
   });
 
-  // unvalidated is config-derived, so it must be present on the ok:false branch
-  // too — the top-level analog is pinned at "still lists file + custom … on the
-  // ok:false branch"; this is its nested counterpart (row fails on the missing
-  // required `label`, yet the file's dotted path is still reported).
   it("reports the nested file's dotted path even on the validation_failed branch", () => {
     const receipt = { key: "uploads/receipt.pdf", size: 123, contentType: "application/pdf" };
     const result = parseSubmission(nestedFileConfig, { items: [{ receipt }] });
@@ -1233,11 +1163,6 @@ describe("parseSubmission — group-nested file/custom fields (BUG 3, Issue #21:
     }
   });
 
-  // Class-killer (staff-engineer): all three recursive passes — hidden
-  // re-injection, file/custom exclusion+reporting, and file value pass-through
-  // — must behave together at depth >= 2. One test that exercises every pass
-  // at the deepest level guards against any single pass regressing to
-  // top-level-only iteration again.
   it("handles hidden + file + custom fields together at two levels of group nesting", () => {
     const Widget = ({ field }: FieldComponentProps) => field.name;
     registerField("my-widget", Widget);
@@ -1274,9 +1199,7 @@ describe("parseSubmission — group-nested file/custom fields (BUG 3, Issue #21:
     });
     expect(result.ok).toBe(true);
     if (result.ok) {
-      // file + custom both reported with their fully-dotted, index-less paths
       expect(result.unvalidated).toEqual(["outer.inner.receipt", "outer.inner.gizmo"]);
-      // hidden constant wins over the attacker value; file + custom round-trip
       expect(result.values.outer).toEqual([
         {
           label: "row-a",

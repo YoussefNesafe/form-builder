@@ -17,8 +17,6 @@ export function renderField(field: AnyFieldConfig) {
     );
   }
 
-  // FieldGate outermost: a condition-hidden field must not leave an empty
-  // grid cell behind; hidden fields render no cell at all.
   return (
     <FieldGate key={field.name} field={field}>
       {field.type === "hidden" ? (

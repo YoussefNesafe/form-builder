@@ -1,10 +1,5 @@
 import type { FormConfig } from "@/form-builder";
 
-/**
- * Trimmed-down cousin of examples/conditional-profile/config.ts for the
- * landing-page hero: same visibleWhen wiring (companyName only shows for
- * accountType "company"), cut to ~4 fields so the panel stays small.
- */
 export const landingDemoConfig: FormConfig = {
   id: "landing-demo",
   title: "Contact",

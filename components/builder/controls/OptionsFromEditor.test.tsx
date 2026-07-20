@@ -49,12 +49,9 @@ describe("OptionsFromEditor", () => {
       />,
     );
     const secondKey = screen.getByLabelText("Branch 2 source value");
-    // Rename "ab" passing THROUGH "a" — the committed record keeps the older
-    // "a" branch (first wins) and flags the duplicate.
     fireEvent.change(secondKey, { target: { value: "a" } });
     expect(onChange).toHaveBeenLastCalledWith({ field: "country", map: { a: optionsA } });
     expect(screen.getByText(/duplicate source value/i)).toBeTruthy();
-    // Typing onward resolves the collision with BOTH branches intact.
     fireEvent.change(secondKey, { target: { value: "ac" } });
     expect(onChange).toHaveBeenLastCalledWith({ field: "country", map: { a: optionsA, ac: optionsAB } });
     expect(screen.queryByText(/duplicate source value/i)).toBeNull();
@@ -73,7 +70,6 @@ describe("OptionsFromEditor", () => {
     );
     fireEvent.click(screen.getByLabelText("Add value branch"));
     fireEvent.click(screen.getByLabelText("Add value branch"));
-    // Both rows render (second flagged duplicate) instead of replacing.
     expect(screen.getByLabelText("Branch 1 source value")).toBeTruthy();
     expect(screen.getByLabelText("Branch 2 source value")).toBeTruthy();
   });

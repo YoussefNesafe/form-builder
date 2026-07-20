@@ -8,7 +8,6 @@ import type { BuilderNode } from "../model/types";
 
 afterEach(cleanup);
 
-// Radix Select needs these to open/pick in jsdom.
 window.HTMLElement.prototype.scrollIntoView = () => {};
 window.HTMLElement.prototype.hasPointerCapture = () => false;
 window.HTMLElement.prototype.releasePointerCapture = () => {};

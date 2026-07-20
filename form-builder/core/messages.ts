@@ -11,8 +11,6 @@ export type Messages = {
   sendCode: string;
   codeSent: string;
   resend: string;
-  // Resend line reads: `{otpDidntReceive} {resendIn} {n} {seconds}` — split
-  // so the countdown number can be styled separately.
   otpDidntReceive: string;
   resendIn: string;
   seconds: string;
@@ -44,15 +42,12 @@ export type Messages = {
   removeFile: (name: string) => string;
   noOptions: string;
   ratingValue: (n: number, max: number) => string;
-  // optionsFrom: value not in the option branch of the source's current value.
   invalidOption: string;
-  // Review step.
   edit: string;
   yes: string;
   no: string;
   notAnswered: string;
   signed: string;
-  // Cross-field rules — label is the source field's label (fallback: name).
   matches: (label: string) => string;
   dateAfter: (label: string) => string;
   dateBefore: (label: string) => string;

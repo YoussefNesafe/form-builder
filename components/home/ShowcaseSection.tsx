@@ -6,18 +6,6 @@ import { peekFields } from "./fieldPeek";
 import { SectionCtas } from "./SectionCtas";
 import { SectionHeading } from "./SectionHeading";
 
-/**
- * Showcase-style card grid: a navigation surface ("here's what you can go
- * look at"), distinct from the flagship split below it, which is a proof
- * surface ("here's the engine actually running"). Links to real routes
- * only. Each card's code peek is generated from the card's real config (see
- * fieldPeek.ts) — no decorative skeleton/chip bars, but the peek itself is
- * `decorative` (aria-hidden, unfocusable) since it's nested inside the
- * card's own `<Link>`: an unlabelled focusable `<pre>` there would be a dead
- * second tab stop, and its text would otherwise concatenate into the link's
- * accessible name. `LinkCard`'s explicit `ariaLabel` makes that name not
- * depend on the peek staying aria-hidden as this section evolves.
- */
 export function ShowcaseSection() {
   return (
     <section

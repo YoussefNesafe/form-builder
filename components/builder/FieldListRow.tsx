@@ -22,7 +22,6 @@ import type { BuilderNode } from "./model/types";
 
 const UNASSIGNED = "__unassigned__";
 
-/** One field in the list. Recurses to render `group` children indented. */
 export function FieldListRow({
   node,
   topLevel = true,
@@ -41,7 +40,6 @@ export function FieldListRow({
   const assignNodeToStep = useBuilderStore((s) => s.assignNodeToStep);
 
   const selected = selectedId === node._id;
-  // hidden/submit render automatically and must not be assigned to a step.
   const stepEligible = isStepEligible(node.type);
   const assignedStep = steps.findIndex((s) => s.nodeIds.includes(node._id));
   const showStepSelect =
@@ -56,8 +54,6 @@ export function FieldListRow({
         tabIndex={0}
         onClick={() => selectNode(node._id)}
         onKeyDown={(e) => {
-          // Only the row itself activates — never swallow Enter/Space aimed at a
-          // nested action button (that would cancel the button's default action).
           if (e.target !== e.currentTarget) return;
           if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
@@ -134,7 +130,6 @@ export function FieldListRow({
               {builder.fieldList.unassigned}
             </SelectItem>
             {steps.map((s, i) =>
-              // Review steps own no fields — not an assignment target.
               s.review ? null : (
                 <SelectItem key={i} value={String(i)}>
                   {s.title || fmt(builder.fieldList.stepFallback, { n: i + 1 })}

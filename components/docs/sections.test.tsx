@@ -1,20 +1,4 @@
 // @vitest-environment jsdom
-//
-// Replaces the old app/(site)/docs/toc.test.ts, which regex-scanned page
-// source for `<DocsSection id="...">` to keep TOC_ITEMS and heading ids from
-// drifting apart. That scan doesn't apply anymore: TOC_ITEMS is now DERIVED
-// from each page's SECTIONS registry (`SECTIONS.map(({id,title}) => ...)`,
-// see e.g. components/docs/conditions/sections.ts), and every section's `id`
-// is the same binding passed to its own <DocsSection id> — one variable, two
-// uses, so TOC/heading id drift is impossible by construction rather than
-// something a test has to keep catching after the fact.
-//
-// What's still worth asserting, per page: ids are unique and non-empty, the
-// TOC really is in SECTIONS order, and — the one thing "single-sourced by
-// construction" doesn't fully rule out (a section could still hardcode a
-// different id string into its own <DocsSection id="...">  instead of using
-// the shared `id` binding) — that each Section, once rendered, actually
-// produces a heading whose real DOM id matches its registry entry.
 import { cleanup, render } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { registerBuiltInFields } from "@/form-builder";
@@ -31,7 +15,6 @@ import { SECTIONS as fieldTypesSections, TOC_ITEMS as fieldTypesToc } from "./fi
 registerBuiltInFields();
 afterEach(cleanup);
 
-// Some field primitives observe size; jsdom has no ResizeObserver.
 class ResizeObserverStub {
   observe() {}
   unobserve() {}
@@ -76,9 +59,3 @@ describe("docs section registries", () => {
     });
   }
 });
-
-// field-types' per-type sections (FieldTypeSection.tsx, one per
-// FIELD_TYPE_ORDER entry) are the runtime mapping logic in the docs
-// (BUILT_IN_FIELD_TYPES × t.fieldTypes) — the "renders a heading with
-// matching id" loop above already renders and asserts on every one of them,
-// so a newly-registered type missing its locale entry still fails here.

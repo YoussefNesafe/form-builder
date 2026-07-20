@@ -6,12 +6,6 @@ import { examples } from "@/locales/en/examples";
 
 type State = { message: string | null };
 
-/**
- * Minimal render-error boundary for example forms. Unlike the builder's
- * BuilderPreviewBoundary, these configs are static (not edited live), so there is
- * no resetKey to recover on — a render error here means the example itself
- * is broken.
- */
 export class StaticExampleBoundary extends Component<{ children: ReactNode }, State> {
   state: State = { message: null };
 

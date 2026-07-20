@@ -10,14 +10,6 @@ export type SegmentedControlOption<T extends string> = {
   label: React.ReactNode
 }
 
-/**
- * Minimal radiogroup-semantics segmented control: a bordered container of
- * buttons, one active at a time. Built on the Radix RadioGroup primitive (the
- * same one `components/ui/radio-group.tsx` wraps, and the engine's own
- * segmented field uses) so it gets roving tabindex + arrow-key selection for
- * free, instead of a hand-rolled `role="radio"` div with no keyboard contract.
- * Flat style — active state is a background fill, not a shadow/ring.
- */
 function SegmentedControl<T extends string>({
   options,
   value,

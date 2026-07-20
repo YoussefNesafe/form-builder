@@ -22,7 +22,6 @@ type FieldWrapperProps = {
   size?: FieldWrapperSize;
   error?: { message?: string };
   className?: string;
-  /** fieldset/legend semantics for option groups (radio, checkbox group) */
   asGroup?: boolean;
   children: ReactNode;
 };

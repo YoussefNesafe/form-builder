@@ -1,8 +1,6 @@
 import { cva } from "class-variance-authority";
 import type { ResponsiveFieldWidth } from "../core/types";
 
-// Error color stays on the message and control border only — labels and
-// input text keep the default foreground.
 export const fieldWrapperVariants = cva(
   "flex flex-col gap-[var(--fb-space-3,1.602vw)] tablet:gap-[var(--fb-space-3-tablet,0.75vw)] desktop:gap-[var(--fb-space-3-desktop,0.312vw)]",
   {
@@ -19,11 +17,6 @@ export const fieldWrapperVariants = cva(
 
 export type FieldWrapperSize = "sm" | "md" | "lg";
 
-// Spans assume the shared 12-column field grid (FLAT_GRID_CLASS and the
-// nested GroupField grid): full=12, half=6, third=4, quarter=3. Static
-// strings only — Tailwind cannot see dynamically built class names. One
-// variant key per breakpoint because cva has no native responsive-variant
-// support.
 export const fieldWidthVariants = cva("", {
   variants: {
     width: {
@@ -48,11 +41,6 @@ export const fieldWidthVariants = cva("", {
   defaultVariants: { width: "full", widthTablet: "full", widthDesktop: "full" },
 });
 
-/**
- * Resolve a field's `width` config to grid classes. A plain string applies
- * to every breakpoint; the object form sets mobile/tablet/desktop
- * independently, with unset breakpoints falling back to full.
- */
 export function fieldWidthClass(width?: ResponsiveFieldWidth): string {
   const resolved =
     typeof width === "string" ? { mobile: width, tablet: width, desktop: width } : (width ?? {});

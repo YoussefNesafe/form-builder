@@ -1,8 +1,4 @@
 // @vitest-environment jsdom
-//
-// jsdom doesn't implement the Clipboard API, so navigator.clipboard is
-// stubbed per test (writeText is the only method CopyButton calls). Style
-// follows CopyPackageFolderSection.test.tsx (jsdom, testing-library).
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { CopyButton } from "./CopyButton";
@@ -58,7 +54,6 @@ describe("CopyButton", () => {
   });
 
   it("does not throw when the Clipboard API is unavailable (e.g. non-secure context)", () => {
-    // navigator.clipboard left undefined — simulates http:// / unsupported browsers.
     render(<CopyButton text="whatever" label="command" />);
     expect(() => fireEvent.click(screen.getByRole("button", { name: "Copy command" }))).not.toThrow();
   });
@@ -70,7 +65,6 @@ describe("CopyButton", () => {
 
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "Copy command" }));
-      // Two microtask flushes: one for the awaited writeText rejection, one for the catch continuation.
       await Promise.resolve();
       await Promise.resolve();
     });
@@ -92,7 +86,6 @@ describe("CopyButton", () => {
       });
       expect(screen.getByRole("button", { name: "Copied" })).toBeTruthy();
 
-      // Second click lands inside the first click's 2s window.
       await act(async () => {
         vi.advanceTimersByTime(1000);
       });
@@ -102,15 +95,11 @@ describe("CopyButton", () => {
       });
       expect(writeText).toHaveBeenCalledTimes(2);
 
-      // 1900ms after the SECOND click == 2900ms after the first — past the first
-      // click's original 2000ms mark. Still "Copied" proves that timer was cleared,
-      // not left to fire independently.
       await act(async () => {
         vi.advanceTimersByTime(1900);
       });
       expect(screen.getByRole("button", { name: "Copied" })).toBeTruthy();
 
-      // The remaining 100ms completes exactly 2000ms since the SECOND click.
       await act(async () => {
         vi.advanceTimersByTime(100);
       });

@@ -3,7 +3,6 @@
 import { Component, type ReactNode } from "react";
 
 type Props = {
-  /** When this changes (e.g. the config was edited), the boundary clears its error and retries. */
   resetKey: string;
   children: ReactNode;
   fallback: (message: string) => ReactNode;
@@ -11,11 +10,6 @@ type Props = {
 
 type State = { message: string | null };
 
-/**
- * Catches render errors from the preview form (a mid-edit config can be invalid
- * in ways `validateFormConfig` doesn't cover) and shows a fallback instead of
- * crashing the whole builder. Recovers automatically when the config changes.
- */
 export class BuilderPreviewBoundary extends Component<Props, State> {
   state: State = { message: null };
 

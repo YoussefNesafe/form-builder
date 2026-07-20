@@ -1,11 +1,5 @@
 import type { FormConfig } from "@/form-builder";
 
-/**
- * Single-step form showing three wiring features: visibleWhen (companyName
- * only shows for accountType "company"), select optionsFrom another select
- * (billingCycle branches on plan), and a phone field synced to a country
- * field via countryFrom.
- */
 export const conditionalProfileConfig: FormConfig = {
   id: "conditional-profile",
   title: "Profile",

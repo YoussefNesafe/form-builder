@@ -9,7 +9,6 @@ describe("renderCodeWithDimmedComments", () => {
   it("preserves every character (screen-reader parity) across multiple lines", () => {
     const code = 'visibleWhen: [\n  { field: "country", equals: "US" }, // note\n]';
     const { container } = render(<pre>{renderCodeWithDimmedComments(code)}</pre>);
-    // textContent must equal the input verbatim — no chars dropped or added.
     expect(container.textContent).toBe(code);
   });
 

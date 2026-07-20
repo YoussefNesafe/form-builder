@@ -4,12 +4,6 @@ import { DocsSection, DocsBody as P, DocsInlineCode as IC, DocsNote } from "@/co
 const id = "prerequisites";
 const title = "Prerequisites";
 
-// Real, installable packages — CommandBlock derives the pnpm/npm/yarn/bun
-// variants from this one string (see components/docs/command.ts). Matches
-// the peer/bundled split ratified in ADR-0003: these six are shared-instance-
-// critical or heavy enough the host almost certainly already has a copy, so
-// the CLI documents them instead of installing them (cli/src/install.mjs's
-// PEER_PACKAGES_MESSAGE).
 const PEER_PACKAGES = `react react-dom react-hook-form zod date-fns lucide-react`;
 
 function Section() {

@@ -31,7 +31,6 @@ describe("PreviewPanel", () => {
     const store = useBuilderStore.getState();
     store.addNode("text");
     store.addNode("text");
-    // Force a duplicate name — validateFormConfig rejects it.
     const ids = useBuilderStore.getState().nodes.map((x) => x._id);
     store.updateProps(ids[0], { name: "dup" });
     store.updateProps(ids[1], { name: "dup" });

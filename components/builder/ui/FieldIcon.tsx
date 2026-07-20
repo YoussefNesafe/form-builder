@@ -30,8 +30,6 @@ import {
 import type { FieldType } from "@/form-builder";
 import { FIELD_META } from "../model/fieldMeta";
 
-// Explicit map (not a barrel import) so only these icons ship to the client.
-// `satisfies` (not `: Record<...>`) keeps the literal key union for FieldIconName below.
 const ICONS = {
   Type,
   Mail,
@@ -59,10 +57,8 @@ const ICONS = {
   Boxes,
 } satisfies Record<string, LucideIcon>;
 
-/** Valid `FieldMeta.icon` values — every key present in the `ICONS` map above. */
 export type FieldIconName = keyof typeof ICONS;
 
-/** Resolve a field type's lucide icon, falling back to a neutral square. */
 export function FieldIcon({ type, ...props }: { type: FieldType } & LucideProps) {
   const Icon = ICONS[FIELD_META[type].icon] ?? Square;
   return <Icon {...props} />;

@@ -28,7 +28,6 @@ function optionLabels(options: Option[], value: unknown): string {
 }
 
 function countryLabel(code: string, locale?: FormLocale): string {
-  // Same chain as CountryField: host labels → Intl.DisplayNames → code.
   try {
     return locale?.countryLabels?.[code] ?? new Intl.DisplayNames(undefined, { type: "region" }).of(code) ?? code;
   } catch {
@@ -36,11 +35,6 @@ function countryLabel(code: string, locale?: FormLocale): string {
   }
 }
 
-/**
- * Human-readable review-step display for a field's current value. Returns a
- * STRING (signatures are handled by the component — they render as an image,
- * not text). Group values are handled by the component too (nested rows).
- */
 export function formatReviewValue(field: AnyFieldConfig, value: unknown, ctx: ReviewValueContext): string {
   const { messages } = ctx;
   if (!isBuiltInField(field)) {
@@ -48,17 +42,11 @@ export function formatReviewValue(field: AnyFieldConfig, value: unknown, ctx: Re
     if (custom) return custom(value, field);
     return isBlank(value) ? messages.notAnswered : String(value);
   }
-  // otp first: the code itself is a credential — show verification state.
-  // Three states: verified / typed-but-unverified / blank ("not answered"
-  // for a typed code would misdescribe the actionable state).
   if (field.type === "otp") {
     if (ctx.verifiedFields?.has(field.name)) return messages.otpVerified;
     return isBlank(value) ? messages.notAnswered : messages.otpNotVerified;
   }
   if (field.type === "password") return isBlank(value) ? messages.notAnswered : "••••••";
-  // A signature value is a base64 data URL — never return it as TEXT (a
-  // group-nested signature or a direct host call would dump thousands of
-  // characters). The component renders top-level signatures as an image.
   if (field.type === "signature") return isBlank(value) ? messages.notAnswered : messages.signed;
   if (isBlank(value)) return messages.notAnswered;
 

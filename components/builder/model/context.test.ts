@@ -39,13 +39,13 @@ describe("findContext", () => {
 describe("eligibleRefs", () => {
   it("otp refKind lists only sibling otp fields, excluding self", () => {
     expect(eligibleRefs(tree, "otp", "email")).toEqual(["otp1"]);
-    expect(eligibleRefs(tree, "otp", "otp1")).toEqual([]); // self excluded
+    expect(eligibleRefs(tree, "otp", "otp1")).toEqual([]);
   });
 
   it("countrySource lists country + single-value selects, not multi-selects", () => {
     const names = eligibleRefs(tree, "countrySource", "phoneX");
-    expect(names).toContain("res"); // country
-    expect(names).not.toContain("sel"); // multiple select excluded
+    expect(names).toContain("res");
+    expect(names).not.toContain("sel");
   });
 
   it("any lists every named sibling except self", () => {

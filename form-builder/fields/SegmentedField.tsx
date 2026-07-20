@@ -31,10 +31,6 @@ export function SegmentedField({ field }: FieldComponentProps) {
           disabled={disabled}
           error={fieldState.error}
         >
-          {/* Radio semantics (not toggle-group): single-select with roving
-              focus and arrow keys handled by the primitive. Option values keep
-              their configured type — the string the primitive reports is
-              mapped back to the matching option value. */}
           <RadioGroupPrimitive.Root
             value={rhf.value === undefined || rhf.value === null ? "" : String(rhf.value)}
             onValueChange={(next) => {
@@ -65,7 +61,6 @@ export function SegmentedField({ field }: FieldComponentProps) {
                   "flex-1 min-w-0 truncate px-[var(--fb-space-5,2.67vw)] tablet:px-[var(--fb-space-5-tablet,1.25vw)] desktop:px-[var(--fb-space-5-desktop,0.52vw)]",
                   "text-[var(--fb-space-8,4.272vw)] tablet:text-[var(--fb-space-7-tablet,1.75vw)] desktop:text-[var(--fb-space-7-desktop,0.728vw)] transition-colors outline-none",
                   "border-s border-input first:border-s-0",
-                  // Flat mandate: selected + focus states via color only.
                   "data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground",
                   "focus-visible:border-ring focus-visible:bg-accent data-[state=checked]:focus-visible:bg-primary/90",
                   "disabled:cursor-not-allowed disabled:opacity-50",

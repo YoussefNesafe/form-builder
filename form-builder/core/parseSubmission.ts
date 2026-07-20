@@ -59,18 +59,6 @@ function hasGroupOtp(fields: AnyFieldConfig[], insideGroup: boolean): boolean {
   return false;
 }
 
-// Hidden field values live on the (module-level, process-lifetime) FormConfig
-// object. Assigning field.value directly aliases that object by reference
-// into the result: two rows (or two separate requests sharing the same
-// config) end up pointing at the SAME object, and a host mutating a returned
-// row's hidden value would silently mutate the config for every subsequent
-// submission in the process. structuredClone breaks that aliasing. Hidden
-// values are JSON-ish by contract (BaseField & { value: unknown }), but
-// "unknown" technically permits something non-cloneable (a function, a
-// symbol) if a host misconfigures it — a config value must never crash the
-// submission path, so we fall back to the original reference rather than
-// throw. That fallback re-introduces the aliasing risk only for that
-// pathological, contract-violating value.
 function cloneHiddenValue(value: unknown): unknown {
   try {
     return structuredClone(value);
@@ -113,17 +101,6 @@ function reassertHiddenFields(fields: AnyFieldConfig[], values: Record<string, u
   return asserted;
 }
 
-// Depth is counted per recursive call over the BODY's structure — each
-// nested array/object encountered while walking the submitted value adds 1 —
-// NOT per level of config (group) nesting; a form with two levels of nested
-// groups is nowhere near this cap. Past the cap we return true (reject)
-// rather than keep searching: continuing to recurse is exactly the unbounded
-// recursion this cap exists to prevent, so "found a violation" is the only
-// safe answer once we can no longer afford to look further. This reuses
-// "input_too_large" deliberately rather than a distinct code — the code is
-// never echoed back to the submitter (see ADR-0004's generic formError), and
-// a body nested 33+ levels deep is abusive by definition regardless of
-// whether a string happened to be too long too.
 const MAX_STRING_LENGTH_CHECK_DEPTH = 32;
 
 function exceedsMaxStringLength(value: unknown, maxLength: number, depth = 0): boolean {
@@ -136,18 +113,6 @@ function exceedsMaxStringLength(value: unknown, maxLength: number, depth = 0): b
   return false;
 }
 
-// Same top-level-only iteration bug class as reinjectHiddenFields/
-// reassertHiddenFields above: file and custom-registered fields must be
-// excluded from the SCHEMA at every group depth, not just the top level, or
-// a JSON body can never satisfy a nested `z.instanceof(File)` row schema.
-// `prefix` accumulates the dotted, index-less group path ("items",
-// "outer.inner", ...) so `unvalidated` reports a config-derived key that
-// does NOT vary with how many rows were actually submitted. Group fields are
-// re-pushed as a shallow clone with a pruned `.fields` list (files dropped,
-// custom types kept — they validate as z.unknown().optional() and only need
-// reporting) so buildFieldsSchema's `case "group"` builds a row schema with
-// no nested file instanceof check, while every other group property (min,
-// max, name) passes through unchanged.
 function partitionValidatable(
   fields: AnyFieldConfig[],
   prefix: string,
@@ -160,10 +125,6 @@ function partitionValidatable(
     if (isFile || !isBuiltInField(field)) unvalidated.push(path);
     if (isFile) continue;
     if (isBuiltInField(field) && field.type === "group") {
-      // Guard `field.fields` like every sibling walker (scrubReservedKeys,
-      // reinjectHiddenFields, reassertHiddenFields, reinjectNestedFileValues)
-      // rather than lean on validateFormConfig having run first — keeps this
-      // walker locally safe if it's ever reused before validation.
       const rowFields = Array.isArray(field.fields) ? field.fields : [];
       const nested = partitionValidatable(rowFields, path);
       unvalidated.push(...nested.unvalidated);
@@ -175,16 +136,6 @@ function partitionValidatable(
   return { schemaFields, unvalidated };
 }
 
-// Mirrors the top-level file pass-through below (`field.name in scrubbed`),
-// but recurses into group rows by INDEX, pairing each `values` row with its
-// RAW `scrubbed` row — never `injected`. buildDefaultValues seeds a group's
-// default rows with `file: undefined`, and `injected` carries those
-// seeded/hidden-merged rows; checking `injected` would synthesize a
-// `receipt: undefined` key the client never sent. `scrubbed` is the raw body
-// (reserved keys stripped, recursively) and is the correct "did the client
-// send it" oracle. Only recurses where both the parsed row and the raw row
-// are plain objects and both arrays exist; indices align because a
-// successful zod array parse preserves order and count.
 function reinjectNestedFileValues(
   fields: AnyFieldConfig[],
   values: Record<string, unknown>,
@@ -256,15 +207,6 @@ export function parseSubmission(
   }
   const injected = reinjectHiddenFields(config.fields, seeded);
 
-  // Deliberately checks `scrubbed`, not `injected`: `scrubbed` is exactly the
-  // attacker-controlled surface (the request body, minus reserved-key
-  // pollution), while `injected` also carries hidden field values pulled
-  // from the config. Checking `injected` would mean a config with a
-  // legitimately large hidden value (a serialized token, a base64 blob)
-  // fails EVERY submission to that form with input_too_large — a bug the
-  // submitter can never fix, since the oversized value isn't theirs. Both
-  // the code-reviewer and security-engineer independently confirmed this is
-  // correct as written — do not "align" it to `injected`.
   const maxStringLength = opts?.maxStringLength ?? DEFAULT_MAX_STRING_LENGTH;
   if (exceedsMaxStringLength(scrubbed, maxStringLength)) {
     return { ok: false, code: "input_too_large", errors: { formError: GENERIC_SUBMISSION_ERROR }, unvalidated: [] };
@@ -274,12 +216,6 @@ export function parseSubmission(
 
   const { schemaFields, unvalidated } = partitionValidatable(visibleFields, "");
 
-  // Top-level only ON PURPOSE, and only safe because of it: a group-nested otp
-  // is rejected upstream (hasGroupOtp -> otp_in_group above, plus the config
-  // validator rejects group-nested otp wiring), so an otp can never reach this
-  // filter from inside a group. If group-nested otp is ever permitted, this
-  // derivation MUST recurse too or nested otp fields silently skip the
-  // verified-code submit gate.
   const otpFieldNames = schemaFields
     .filter((field) => isBuiltInField(field) && field.type === "otp")
     .map((field) => field.name);

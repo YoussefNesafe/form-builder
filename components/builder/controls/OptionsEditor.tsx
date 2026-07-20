@@ -11,7 +11,6 @@ import type { ControlProps } from "./types";
 
 const C = builder.controls.options;
 
-/** Edit an `Option[]` (label / value / disabled), with add, remove, reorder. */
 export function OptionsEditor({ id, value, onChange }: ControlProps<Option[]>) {
   const options = value ?? [];
 

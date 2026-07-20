@@ -1,71 +1,17 @@
 import { BUILT_IN_FIELD_TYPES } from "@/form-builder";
 import type { BaseField, FieldConfig, FieldType } from "@/form-builder";
 
-/**
- * Per-field-type prop reference for the expanded `/docs/field-types` page —
- * every built-in type's OWN props (base props excluded, documented once by
- * BASE_FIELD_PROPS below), plus a runtime value shape and a real, compiling
- * example config per type.
- *
- * Data + prose only — no React here (a frontend-engineer renders this).
- * Sourced from and validated against, at commit 18e9b5e (2026-07-12):
- *   - form-builder/core/types.ts        (FieldConfig union, BaseField, prop optionality)
- *   - form-builder/core/schema.ts       (validateFormConfig — cross-field/edge constraints)
- *   - form-builder/core/messages.ts     (default message copy referenced inline)
- *   - form-builder/fields/*.tsx         (runtime value shapes — several DIFFER from
- *                                        the config type: date range, checkbox+options,
- *                                        select+multiple, file+multiple)
- *   - locales/en/fieldTypes.ts          (existing label/description voice — reused,
- *                                        not duplicated; this file documents PROPS,
- *                                        that one documents the field TYPE as a whole)
- *
- * Import boundary: public API only (`@/form-builder`), never `components/builder/**`,
- * and this does not extend locales/en/fieldTypes.ts (see CLAUDE.md i18n rules).
- */
-
-// ---------------------------------------------------------------------------
-// The exhaustive mapped type
-// ---------------------------------------------------------------------------
-
-/**
- * Distributive helper: picks the FieldConfig union member(s) whose `type`
- * covers T. `FieldConfig extends infer U` smuggles the (non-generic) union
- * into a bindable type parameter U; the inner `U extends {type: infer TT}`
- * is THEN a bare-type-parameter check, so it distributes over U's members.
- * That distribution is what makes grouped literals work: for T = "checkbox",
- * the "checkbox" | "switch" member's TT is "checkbox" | "switch", and
- * "checkbox" extends that union, so the member is picked correctly — and the
- * same single member is picked again for T = "switch".
- */
 type VariantFor<T extends FieldType> =
   FieldConfig extends infer U ? (U extends { type: infer TT } ? (T extends TT ? U : never) : never) : never;
 
-/** Keys a variant adds ON TOP OF BaseField — i.e. the type's own props. */
 type OwnProps<T extends FieldType> = Exclude<keyof VariantFor<T>, keyof BaseField | "type">;
 
 export type PropDoc = {
-  /** Human-readable TS type, e.g. 'Option[]' or '"yyyy-MM-dd" | { from; to }'. */
   type: string;
-  /**
-   * Hand-authored by eyeballing whether the prop has a `?` on its types.ts
-   * union member — not compiler-verified. Flipping a prop's optionality in
-   * types.ts (e.g. `mask` → `mask?`) does not fail this file; re-check this
-   * column by hand whenever a variant's optionality changes.
-   */
   required: boolean;
-  /** One tight sentence; names real defaults inline (there is no default column). */
   description: string;
 };
 
-/**
- * Columns: Name (object key) · Type · Required · Description. No default
- * column — defaults are named inline in `description` where they exist.
- *
- * Exhaustive by construction: `Record<OwnProps<T>, PropDoc>` requires every
- * key OwnProps<T> resolves to. Add, remove, or rename a prop on any
- * FieldConfig variant in types.ts and this object stops compiling until the
- * matching entry here is added/removed/renamed too.
- */
 export const FIELD_PROP_DOCS: { [T in FieldType]: Record<OwnProps<T>, PropDoc> } = {
   text: {
     rules: {
@@ -368,22 +314,8 @@ export const FIELD_PROP_DOCS: { [T in FieldType]: Record<OwnProps<T>, PropDoc> }
   },
 };
 
-// ---------------------------------------------------------------------------
-// Runtime value shape + a real, compiling example per type
-// ---------------------------------------------------------------------------
-
 export type FieldValueInfo<T extends FieldType = FieldType> = {
-  /** Concrete runtime value type — verified against form-builder/fields/*.tsx, not guessed. */
   valueShape: string;
-  /**
-   * A real FieldConfig literal, pinned to T via VariantFor<T> (not the whole
-   * FieldConfig union) — a union change (rename/remove a variant prop, or an
-   * example whose `type` doesn't match its own key) breaks this file. The one
-   * gap VariantFor<T> can't close on its own: the grouped literals ("text" |
-   * "email" | "textarea", "checkbox" | "switch") share one variant object, so
-   * e.g. VariantFor<"text"> still permits `type: "email"`. fieldProps.test.ts
-   * closes that gap at runtime with `example.type === type` per key.
-   */
   example: VariantFor<T>;
 };
 
@@ -544,29 +476,13 @@ export const FIELD_VALUE_INFO: { [T in FieldType]: FieldValueInfo<T> } = {
   },
 };
 
-/**
- * Canonical type order for rendering (H2 sections, etc.) — re-exported here
- * so consumers of this data module don't need a second import from
- * "@/form-builder" alongside it. Source of truth stays BUILT_IN_FIELD_TYPES.
- */
 export const FIELD_TYPE_ORDER: readonly FieldType[] = BUILT_IN_FIELD_TYPES;
-
-// ---------------------------------------------------------------------------
-// Base props (documented ONCE — never repeated per type above)
-// ---------------------------------------------------------------------------
 
 export type BasePropDoc = PropDoc & {
   name: keyof BaseField;
-  /** Per-type exception to the general rule above, when one exists. */
   exceptions?: string;
 };
 
-/**
- * The 12 BaseField props every field type accepts (OwnProps<T> already
- * excludes these from every per-type entry above, so this is the only place
- * they're documented). Order matches BaseField's declaration order in
- * types.ts.
- */
 export const BASE_FIELD_PROPS: BasePropDoc[] = [
   {
     name: "name",
@@ -656,13 +572,8 @@ export const BASE_FIELD_PROPS: BasePropDoc[] = [
   },
 ];
 
-// ---------------------------------------------------------------------------
-// Shared shapes (explained once, referenced by multiple types above)
-// ---------------------------------------------------------------------------
-
 export type SharedShapeDoc = {
   name: string;
-  /** Human-readable TS shape. */
   type: string;
   description: string;
   usedBy: FieldType[];

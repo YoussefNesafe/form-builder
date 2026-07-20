@@ -70,8 +70,6 @@ function ReviewRow({
                   </span>
                   <span className="text-[var(--fb-space-7,3.738vw)] tablet:text-[var(--fb-space-7-tablet,1.75vw)] desktop:text-[var(--fb-space-7-desktop,0.728vw)] text-end break-words">
                     {formatReviewValue(
-                      // The verified-otp registry keys on runtime row-prefixed
-                      // names — the formatter must see the prefixed name.
                       {
                         ...innerField,
                         name: `${field.name}.${index}.${innerField.name}`,
@@ -100,11 +98,6 @@ function ReviewRow({
   );
 }
 
-/**
- * Read-only summary of every visible field from earlier visible steps,
- * grouped by step with per-step edit links. Values read live from form
- * state — arriving back here always reflects current values.
- */
 export function ReviewStep({
   config,
   currentIndex,
@@ -118,8 +111,6 @@ export function ReviewStep({
 }) {
   const { control } = useFormContext();
   const { messages } = useFieldRuntime();
-  // Whole-form subscription: the summary must reflect every value and every
-  // visibility condition — acceptable on a read-only step.
   useWatch({ control });
   const values = useFormContext().getValues();
 
@@ -136,8 +127,6 @@ export function ReviewStep({
       const fields = (step.fieldNames ?? [])
         .map((name) => fieldsByName.get(name))
         .filter((field): field is AnyFieldConfig => field !== undefined)
-        // Effective visibility: own condition AND owning step visible —
-        // same source the resolver validates against.
         .filter(
           (field) =>
             !stepHidden.has(field.name) &&

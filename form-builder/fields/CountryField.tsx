@@ -42,11 +42,6 @@ function buildOptions(
   countryLabels: Record<string, string> | undefined,
 ): { preferred: CountryOption[]; rest: CountryOption[] } {
   const codes = countries ?? (getCountries() as string[]);
-  // Host-provided labels win (same source PhoneField uses); Intl.DisplayNames
-  // fills the rest. Caveat: with no countryLabels and a preset value, the
-  // server (Node ICU default locale) and the browser may name the selected
-  // country differently — a recoverable hydration text mismatch on the
-  // trigger. Hosts that care pass locale.countryLabels.
   const names = new Intl.DisplayNames(undefined, { type: "region" });
   const labeled = codes
     .map((code) => ({ code, label: countryLabels?.[code] ?? names.of(code) ?? code }))
@@ -56,7 +51,6 @@ function buildOptions(
   const byCode = new Map(labeled.map((option) => [option.code, option]));
   const preferredSet = new Set(preferredOrder);
   return {
-    // Preferred keep their configured order, the rest stay name-sorted.
     preferred: preferredOrder.map((code) => byCode.get(code)).filter(Boolean) as CountryOption[],
     rest: labeled.filter((option) => !preferredSet.has(option.code)),
   };
@@ -78,7 +72,6 @@ export function CountryField({ field }: FieldComponentProps) {
   const renderItem = (option: CountryOption, selected: string | undefined, onSelect: (code: string) => void) => (
     <CommandItem
       key={option.code}
-      // Searchable by display name and ISO code.
       value={`${option.label} ${option.code}`}
       onSelect={() => onSelect(option.code)}
     >

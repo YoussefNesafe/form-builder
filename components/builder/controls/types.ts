@@ -9,9 +9,7 @@ export type ControlContext = {
 
 export type ControlProps<T = unknown> = {
   id: string;
-  /** Unset props read back as `undefined`. */
   value: T | undefined;
-  /** Pass `undefined` to clear the prop (pruned on serialize). */
   onChange: (value: T | undefined) => void;
   descriptor: PropDescriptor;
   ctx: ControlContext;

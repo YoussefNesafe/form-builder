@@ -6,9 +6,6 @@ import { DEFAULT_PROPS } from "./defaults";
 import { serialize } from "./serialize";
 import type { BuilderNode, BuilderState } from "./types";
 
-// The type-specific (non-base) props each built-in type must expose an editor
-// for, mirrored from form-builder/core/types.ts. Base props (name/label/etc.)
-// are asserted separately.
 const REQUIRED_TYPE_KEYS: Record<string, string[]> = {
   text: ["rules"],
   email: ["rules"],
@@ -75,7 +72,6 @@ describe("field prop registry", () => {
       "enabledWhen",
       "enabledWhenVerified",
       "copyFrom",
-      // layout-only base props
       "content",
       "value",
     ];

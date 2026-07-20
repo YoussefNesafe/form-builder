@@ -9,7 +9,6 @@ function draw(content: string) {
   return render(<div data-testid="rt">{renderRichText(content)}</div>);
 }
 
-// NUL byte built in code so no invisible control char lives in the source.
 const NUL = String.fromCharCode(0);
 
 describe("renderRichText", () => {

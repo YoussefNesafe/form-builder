@@ -6,32 +6,12 @@ type LinkCardProps = {
   href: string;
   title: string;
   description: string;
-  /** Small uppercase label above the title (showcase cards only). */
   kicker?: string;
-  /** Decorative preview slot rendered above the kicker/title (showcase cards only). */
   children?: ReactNode;
   className?: string;
-  /**
-   * Explicit accessible name for the link, e.g. `${title} — ${description}`.
-   * Set this whenever `children` renders content that shouldn't concatenate
-   * into the link's name (e.g. an `aria-hidden` code peek — `aria-hidden`
-   * descendants are already excluded from accname computation, but an
-   * explicit label makes that not depend on every future `children` staying
-   * `aria-hidden`). Omit to let the name derive from rendered content, as
-   * every non-showcase call site already does.
-   */
   ariaLabel?: string;
 };
 
-/**
- * Shared card-as-link primitive — the common denominator of the showcase
- * (app/(site) home), docs index, and examples index card patterns. Padding
- * and gap differ per site (16px docs/examples vs 20px showcase) so callers
- * override them via `className` (merged with `cn`, which tailwind-merges
- * conflicting utilities); everything else — border, radius, hover/focus
- * states, title/description type — is identical across all three call
- * sites and stays fixed here.
- */
 export function LinkCard({ href, title, description, kicker, children, className, ariaLabel }: LinkCardProps) {
   return (
     <Link

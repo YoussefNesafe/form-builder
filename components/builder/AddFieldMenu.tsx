@@ -18,9 +18,6 @@ import {
 } from "./model/fieldMeta";
 import { FieldIcon } from "./ui/FieldIcon";
 
-// Completeness pin: the dictionary can't reference FieldGroup itself (one-way
-// locales → builder boundary), so anchor Record<FieldGroup, string> here — a
-// renamed/added FieldGroup fails compilation at this line, not silently at render.
 const GROUP_LABELS: Record<FieldGroup, string> = builder.fieldList.groups;
 
 const TYPES_BY_GROUP = FIELD_GROUP_ORDER.map((group) => ({
@@ -30,7 +27,6 @@ const TYPES_BY_GROUP = FIELD_GROUP_ORDER.map((group) => ({
   ),
 }));
 
-/** Grouped field-type picker. Calls `onPick(type)` and closes. */
 export function AddFieldMenu({
   onPick,
   label = builder.fieldList.addField,
@@ -58,9 +54,6 @@ export function AddFieldMenu({
       </PopoverTrigger>
       <PopoverContent
         align="start"
-        // Return focus to the trigger WITHOUT scrolling (Radix's default focus()
-        // would scroll down to reveal the trigger below the list). Dropping focus
-        // entirely strands keyboard users at <body> — a11y finding.
         onCloseAutoFocus={(e) => {
           e.preventDefault();
           triggerRef.current?.focus({ preventScroll: true });

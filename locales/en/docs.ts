@@ -20,7 +20,6 @@ export const docs = {
     label: "Breadcrumb",
     docs: "Docs",
   },
-  /** Sidebar/pagination structural data (lib/docsNav.ts) — titles only; hrefs/grouping stay in docsNav.ts. */
   nav: {
     groups: {
       overview: "Overview",
@@ -38,7 +37,6 @@ export const docs = {
       fieldTypes: "Field types",
     },
   },
-  /** CopyButton (components/docs/CopyButton.tsx) — icon button on copy-enabled CodeBlocks. `copyAriaLabel`'s `{label}` is the noun each call site passes (e.g. "command", "CSS"). */
   codeBlock: {
     defaultLabel: "code",
     copyAriaLabel: "Copy {label}",
@@ -46,11 +44,6 @@ export const docs = {
   },
   index: {
     title: "Docs",
-    /**
-     * The index intro paragraph has two inline `<Link>`s baked mid-sentence
-     * — split into the surrounding plain-text segments so the links stay
-     * real JSX (same treatment as examples.multiStepSignup's demo note).
-     */
     intro: {
       prefix: "The engine is copy-in code you own, not a hosted widget — same model as shadcn/ui. Start with ",
       installationLink: "Installation",
@@ -60,7 +53,6 @@ export const docs = {
       examplesLink: "Examples",
       suffix: ".",
     },
-    /** Index card descriptions, keyed by page slug (not the page's own metadata title). */
     descriptions: {
       installation:
         "Run one CLI command to copy the engine, every field, and the shadcn primitives into a self-contained folder — or copy form-builder/ in by hand.",

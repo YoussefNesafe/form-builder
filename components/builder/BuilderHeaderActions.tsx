@@ -19,7 +19,6 @@ import { useBuilderStore } from "./model/store";
 import { CodeOutputPanel } from "./CodeOutputPanel";
 import { SizingCssDialog } from "./SizingCssDialog";
 
-/** Header cluster: export the config code, and reset the builder (with confirm). */
 export function BuilderHeaderActions() {
   const reset = useBuilderStore((s) => s.reset);
   const [resetOpen, setResetOpen] = useState(false);

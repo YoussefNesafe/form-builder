@@ -10,7 +10,6 @@ describe("id counter", () => {
   });
 
   it("advances past restored ids so it never re-issues a live one", () => {
-    // Simulates rehydration from persisted nodes n1..n5 into a fresh module.
     syncCounterFromIds(["n1", "n3", "n5", "not-an-id"]);
     expect(newId()).toBe("n6");
   });

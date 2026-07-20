@@ -1,10 +1,5 @@
 import type { FormConfig } from "@/form-builder";
 
-/**
- * Minimal visibleWhen showcase for the Conditions doc page: companyName only
- * appears once accountType is "company". The fuller demo (optionsFrom,
- * phone countryFrom) lives at /examples/conditional-profile.
- */
 export const conditionsDemoConfig: FormConfig = {
   id: "conditions-demo",
   fields: [

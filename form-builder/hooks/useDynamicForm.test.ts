@@ -133,7 +133,6 @@ describe("useDynamicForm", () => {
     expect(onSubmit).toHaveBeenCalled();
     expect("extra" in onSubmit.mock.calls[0][0]).toBe(false);
 
-    // Step visible → its required field blocks again.
     onSubmit.mockClear();
     await act(async () => {
       result.current.form.setValue("wantsExtras", true);
@@ -163,8 +162,6 @@ describe("useDynamicForm", () => {
     await act(async () => {
       await result.current.form.handleSubmit(onSubmit)();
     });
-    // Documented v1 limitation — inner conditions are not skipped by validation.
-    // When row-scoped condition support lands, flip this assertion.
     expect(onSubmit).not.toHaveBeenCalled();
   });
 
@@ -186,13 +183,11 @@ describe("useDynamicForm", () => {
       defaultMessages.matches("Password"),
     );
 
-    // Fixing the SOURCE must clear the confirm error without touching confirm.
     await act(async () => {
       result.current.form.setValue("password", "secret2");
     });
     await waitFor(() => expect(result.current.form.getFieldState("confirm").error).toBeUndefined());
 
-    // Breaking it from the source side must surface the error again.
     await act(async () => {
       result.current.form.setValue("password", "different");
     });
@@ -215,7 +210,6 @@ describe("useDynamicForm", () => {
     await act(async () => {
       result.current.form.setValue("password", "secret1");
     });
-    // onTouched semantics preserved: confirm never validated, no error appears.
     expect(result.current.form.getFieldState("confirm").isTouched).toBe(false);
     expect(result.current.form.getFieldState("confirm").error).toBeUndefined();
   });
@@ -241,7 +235,6 @@ describe("useDynamicForm", () => {
     const second = renderHook(() => useDynamicForm(draftConfig, { autosave: { debounceMs: 0 } }));
     await waitFor(() => expect(second.result.current.form.getValues("name")).toBe("Ada"));
 
-    // clear() drops the entry.
     act(() => second.result.current.draft!.clear());
     expect(window.localStorage.getItem("form-builder:draft:draft-form")).toBeNull();
   });
@@ -267,12 +260,10 @@ describe("useDynamicForm", () => {
       const { result } = renderHook(() =>
         useDynamicForm(draftConfig, { autosave: { debounceMs: 60_000 } }),
       );
-      // Flush the restore effect so noteStep/clear guards are armed.
       await act(async () => {});
       act(() => {
         result.current.form.setValue("name", "typed just before submit");
       });
-      // Clean submit path: clear while the save is still pending.
       act(() => result.current.draft!.clear());
       act(() => {
         vi.advanceTimersByTime(120_000);

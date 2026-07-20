@@ -17,20 +17,16 @@ function optionValueSchema(options: Option[], requiredMessage?: string): z.ZodTy
 }
 
 function optionalEmptyable(schema: z.ZodType): z.ZodType {
-  // Optional text-like fields default to "" — treat empty string as absent.
   return z.preprocess((value) => (value === "" ? undefined : value), schema.optional());
 }
 
 function optionalClearable(schema: z.ZodType): z.ZodType {
-  // Cleared number inputs yield NaN, clearable selects/radios yield null.
   return z.preprocess(
     (value) => (value === null || value === "" || (typeof value === "number" && Number.isNaN(value)) ? undefined : value),
     schema.optional(),
   );
 }
 
-// Outermost so every check (including required min(1)) sees the trimmed
-// value — "   " fails required, and the parsed payload comes out trimmed.
 function withTrim(rules: TextRules | undefined, schema: z.ZodType): z.ZodType {
   if (!rules?.trim) return schema;
   return z.preprocess((value) => (typeof value === "string" ? value.trim() : value), schema);
@@ -41,22 +37,14 @@ function applyTextRules(schema: z.ZodString, rules: TextRules | undefined, messa
   if (rules?.minLength !== undefined) result = result.min(rules.minLength, messages.minLength(rules.minLength));
   if (rules?.maxLength !== undefined) result = result.max(rules.maxLength, messages.maxLength(rules.maxLength));
   if (rules?.pattern !== undefined) {
-    // Config validation rejects invalid patterns, but direct useDynamicForm
-    // callers can skip it — a bad pattern must not throw inside the resolver
-    // and brick the form. Skip the rule instead.
     try {
       result = result.regex(new RegExp(rules.pattern), rules.message ?? messages.pattern);
     } catch {
-      // skip unparseable pattern
     }
   }
   return result;
 }
 
-// Date values are calendar dates ("yyyy-MM-dd"). Boundary checks compare the
-// date part lexicographically (valid for ISO dates) — comparing epoch instants
-// would mix local-midnight picks with UTC-midnight config bounds and reject
-// legal boundary days in any non-UTC timezone.
 function datePart(value: string): string {
   return value.slice(0, 10);
 }
@@ -126,8 +114,6 @@ export function toZodSchema(
     }
 
     case "masked": {
-      // Completeness = raw length equals the mask's token count; the raw value
-      // itself is char-class-filtered at input time by the component.
       const tokenCount = [...field.mask].filter((char) => char === "#" || char === "A" || char === "*").length;
       const base = field.required ? z.string({ error: messages.required }).min(1, messages.required) : z.string();
       const schema = base.refine(
@@ -146,8 +132,6 @@ export function toZodSchema(
 
     case "otp": {
       let schema = z.string().length(field.length, messages.otpLength(field.length));
-      // Checker present only when the host wires onVerifyOtp — then the code
-      // must match the server-verified one, not merely have the right length.
       if (otpVerified) {
         schema = schema.refine((code) => otpVerified(field.name, code), messages.otpNotVerified);
       }
@@ -161,10 +145,6 @@ export function toZodSchema(
     }
 
     case "select": {
-      // optionsFrom: the field schema validates against the union of ALL
-      // branches (shape + required); membership in the CURRENT source
-      // branch needs the sibling's value, so it lives in the form-level
-      // refine (same layer as cross-field rules — isValid oracle constraint).
       const options = field.optionsFrom ? Object.values(field.optionsFrom.map).flat() : (field.options ?? []);
       if (field.multiple) {
         const schema = z.array(optionValueSchema(options));
@@ -201,8 +181,6 @@ export function toZodSchema(
     case "date": {
       if (field.range) {
         const iso = isoDateSchema(field, messages);
-        // Root-pathed refines: Controller reads fieldState.error at the field
-        // name, so nested from/to issues would render as empty error text.
         const schema = z
           .object({ from: iso, to: iso.optional() }, { error: messages.required })
           .refine((range) => range.to !== undefined, messages.required)
@@ -217,8 +195,6 @@ export function toZodSchema(
     }
 
     case "time": {
-      // Zero-padded "HH:mm" strings order lexicographically — same convention
-      // as calendar dates, no Date math.
       const base = field.required ? z.string({ error: messages.required }).min(1, messages.required) : z.string();
       let schema: z.ZodType = base.refine(
         (value) => /^([01]\d|2[0-3]):[0-5]\d$/.test(value as string),
@@ -246,15 +222,12 @@ export function toZodSchema(
     }
 
     case "slider": {
-      // Always required: the slider always has a value (defaults to min).
       let schema = z.number({ error: messages.required });
       schema = schema.min(field.min, messages.min(field.min)).max(field.max, messages.max(field.max));
       return schema;
     }
 
     case "signature": {
-      // The component only ever writes "" or a canvas data URL; the prefix
-      // check guards CMS/programmatic values. Empty = not signed = required.
       const base = field.required ? z.string({ error: messages.required }).min(1, messages.required) : z.string();
       const schema = base.refine((value) => (value as string).startsWith("data:image/"), messages.required);
       return field.required ? schema : optionalEmptyable(schema);
@@ -262,8 +235,6 @@ export function toZodSchema(
 
     case "file": {
       if (field.multiple) {
-        // Size check refines at the ARRAY root: a per-item refine would land
-        // the issue at `name.0`, where fieldState.error has no message.
         const base = z.array(z.instanceof(File, { error: messages.required }));
         const withMin = field.required ? base.min(1, messages.required) : base;
         const maxBytes = field.maxSizeMB !== undefined ? field.maxSizeMB * 1024 * 1024 : undefined;
@@ -281,8 +252,6 @@ export function toZodSchema(
     }
 
     case "group": {
-      // No otp checker inside rows: runtime names are row-prefixed, so the
-      // verified registry could never match — group otps stay length-only.
       const row = buildFieldsSchema(field.fields, messages);
       let schema = z.array(row);
       if (field.min !== undefined) schema = schema.min(field.min, messages.min(field.min));
@@ -295,7 +264,7 @@ export function toZodSchema(
 type CrossRuleKind = "matches" | "minDate" | "maxDate" | "minTime" | "maxTime";
 
 export type CrossRulePair = {
-  field: string; // declaring field — the refine issue lands here
+  field: string;
   source: string;
   kind: CrossRuleKind;
   matchesMessage?: string;
@@ -307,7 +276,6 @@ const TEXT_FAMILY = new Set(["text", "email", "password", "textarea"]);
 const DATE_FORMAT = /^\d{4}-\d{2}-\d{2}(T|$)/;
 const TIME_FORMAT = /^([01]\d|2[0-3]):[0-5]\d$/;
 
-/** Every declared cross-field rule, regardless of source visibility. */
 export function collectCrossRulePairs(fields: AnyFieldConfig[]): CrossRulePair[] {
   const pairs: CrossRulePair[] = [];
   for (const field of fields) {
@@ -330,12 +298,6 @@ export function collectCrossRulePairs(fields: AnyFieldConfig[]): CrossRulePair[]
   return pairs;
 }
 
-/**
- * Cross-field rules resolved against the SAME field list — a rule whose
- * source is not in the list (condition-hidden in the resolver path) is
- * dropped: its value is stripped, and comparing against undefined would
- * raise an unfixable error.
- */
 function collectCrossRules(fields: AnyFieldConfig[], messages: Messages): CrossRule[] {
   const byName = new Map(fields.map((field) => [field.name, field]));
   const label = (name: string) => byName.get(name)?.label || name;
@@ -362,8 +324,6 @@ function crossRulePasses(rule: CrossRule, target: unknown, source: unknown): boo
   if (rule.kind === "matches") return target === source;
   if (typeof target !== "string" || typeof source !== "string") return true;
   switch (rule.kind) {
-    // Skip when either side fails the basic format — the field's own schema
-    // reports that; a garbage lexicographic compare would stack a bogus error.
     case "minDate":
       return !DATE_FORMAT.test(target) || !DATE_FORMAT.test(source) || datePart(target) >= datePart(source);
     case "maxDate":
@@ -386,10 +346,6 @@ type OptionsFromRule = {
   multiple: boolean;
 };
 
-/**
- * optionsFrom branch-membership rules — like cross rules, resolved against
- * the SAME field list so a condition-hidden source drops the rule.
- */
 function collectOptionsFromRules(fields: AnyFieldConfig[]): OptionsFromRule[] {
   const names = new Set(fields.map((field) => field.name));
   const rules: OptionsFromRule[] = [];
@@ -413,15 +369,11 @@ export function buildFieldsSchema(
 ): z.ZodObject {
   const shape: Record<string, z.ZodType> = {};
   for (const field of fields) {
-    // Custom registered types pass through — their component owns validation.
     const schema = isBuiltInField(field) ? toZodSchema(field, messages, otpVerified) : z.unknown().optional();
     if (schema) shape[field.name] = schema;
   }
   const objectSchema = z.object(shape);
 
-  // Cross-field rules live at the form level, never inside a field's own
-  // schema — the isValid condition oracle safeParses field schemas in
-  // isolation and must stay ignorant of siblings.
   const crossRules = collectCrossRules(fields, messages);
   const optionsFromRules = collectOptionsFromRules(fields);
   if (crossRules.length === 0 && optionsFromRules.length === 0) return objectSchema;
@@ -429,8 +381,6 @@ export function buildFieldsSchema(
     for (const rule of crossRules) {
       const target = (values as Record<string, unknown>)[rule.field];
       const source = (values as Record<string, unknown>)[rule.source];
-      // Blank target: `required` owns emptiness — no double error. Blank
-      // source: nothing to compare against yet.
       if (isBlank(target) || isBlank(source)) continue;
       if (!crossRulePasses(rule, target, source)) {
         ctx.addIssue({ code: "custom", path: [rule.field], message: rule.message });
@@ -440,9 +390,6 @@ export function buildFieldsSchema(
       const target = (values as Record<string, unknown>)[rule.field];
       if (isBlank(target)) continue;
       const sourceValue = (values as Record<string, unknown>)[rule.source];
-      // Blank source explicitly allows NOTHING (a stale pre-filled value must
-      // not submit) — and never aliases into a branch literally keyed
-      // "undefined" via String().
       const allowed = isBlank(sourceValue)
         ? new Set<Option["value"]>()
         : new Set((rule.map[String(sourceValue)] ?? []).map((option) => option.value));

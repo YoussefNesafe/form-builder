@@ -50,7 +50,7 @@ describe("docsSearchIndex (derived, real data)", () => {
       acc[entry.group] = (acc[entry.group] ?? 0) + 1;
       return acc;
     }, {});
-    expect(groups.page).toBe(7); // /docs + 6 content pages
+    expect(groups.page).toBe(7);
     expect(groups.fieldType).toBe(24);
     expect(groups.heading).toBeGreaterThan(0);
   });

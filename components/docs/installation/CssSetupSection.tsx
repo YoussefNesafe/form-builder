@@ -10,20 +10,6 @@ import { SizingCssDialog } from "@/components/builder/SizingCssDialog";
 const id = "css-setup";
 const title = "Set up the required CSS";
 
-// Trimmed, verbatim excerpt of this repo's own app/globals.css — same
-// values, reordered/filtered down to what the copied engine + the shadcn
-// primitives from step 2 actually reference (see the prose below for how
-// that set was derived). The full file also carries --color-card,
-// --color-chart-*, --color-sidebar-*, and the brand-accent/interactive-
-// border tokens — those are landing-page/builder-only, nothing under
-// form-builder/ or the shadcn add-list reads them, so they're left out here
-// on purpose rather than pasted in as noise. `body`/`html`'s rules inside
-// the trailing @layer base (font-sans, scroll-padding-top) are the same
-// kind of site-chrome-only exclusion; the `*` rule stays because bare
-// `border`/`outline` utilities the adopter may add later depend on it.
-// Optional sizing-token override. The engine bakes every vw size as a
-// var(--fb-space-*, <default>) fallback, so this block is additive — undefined
-// tokens render the built-in default, and any unit is accepted.
 const SIZING_TOKENS_OVERRIDE = `:root {
   /* Retheme any step in any unit — every field that uses it follows.
      step = tablet-vw / 0.25; three independent tiers per step. */

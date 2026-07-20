@@ -40,8 +40,6 @@ function OtpControl({
 
   const verified = flow.status === "verified";
 
-  // Action errors (send/verify outcome) outrank the schema's generic
-  // "verify first" — the user needs to know the attempt failed.
   const error = flow.error
     ? ({ type: "otp", message: flow.error } as FieldError)
     : fieldState.error;
@@ -61,8 +59,6 @@ function OtpControl({
       disabled={disabled}
       error={error}
     >
-      {/* Reference layout: send button leads (fills the start half), detached
-          rounded code boxes follow. Mobile stacks button above the boxes. */}
       <div className="flex flex-col gap-[var(--fb-space-4,2.136vw)] tablet:gap-[var(--fb-space-4-tablet,1vw)] desktop:gap-[var(--fb-space-4-desktop,0.416vw)] tablet:flex-row desktop:flex-row tablet:items-start desktop:items-start">
         {flow.showSend && (
           <div className="flex w-full flex-col items-stretch gap-[var(--fb-space-2,1.068vw)] tablet:gap-[var(--fb-space-2-tablet,0.5vw)] desktop:gap-[var(--fb-space-2-desktop,0.208vw)] tablet:flex-1 desktop:flex-1">

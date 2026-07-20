@@ -36,8 +36,8 @@ describe("builder store", () => {
 
   it("moves a node within the top level", () => {
     const s = createBuilderStore();
-    s.getState().addNode("text"); // n1
-    s.getState().addNode("email"); // n2
+    s.getState().addNode("text");
+    s.getState().addNode("email");
     const first = s.getState().nodes[0]._id;
     s.getState().moveNode(first, 1);
     expect(s.getState().nodes.map((n) => n.type)).toEqual(["email", "text"]);
@@ -71,7 +71,7 @@ describe("builder store", () => {
     const s = createBuilderStore();
     s.getState().addNode("group");
     const group = s.getState().nodes[0];
-    expect(group.children).toHaveLength(1); // default child
+    expect(group.children).toHaveLength(1);
     s.getState().addNode("email", group._id);
     expect(s.getState().nodes[0].children).toHaveLength(2);
   });
@@ -80,7 +80,7 @@ describe("builder store", () => {
     const s = createBuilderStore();
     s.getState().addNode("group");
     const group = s.getState().nodes[0]._id;
-    s.getState().addNode("email", group); // group now has [text(default), email]
+    s.getState().addNode("email", group);
     const kids = () => s.getState().nodes[0].children!;
     const firstChild = kids()[0]._id;
 
@@ -89,7 +89,6 @@ describe("builder store", () => {
 
     s.getState().duplicateNode(kids()[0]._id);
     expect(kids()).toHaveLength(3);
-    // duplicated child name stays unique across the whole tree
     const allNames = kids().map((n) => n.props.name);
     expect(new Set(allNames).size).toBe(allNames.length);
 
@@ -143,10 +142,7 @@ describe("builder store", () => {
 
     const email = s.getState().nodes.find((n) => n._id === emailId)!;
     const orNode = s.getState().nodes.find((n) => n._id === orId)!;
-    // Remaining leaf collapses to the minimal single-condition shape.
     expect(email.props.enabledWhen).toEqual({ field: "lastName", isValid: true });
-    // The group that only referenced the deleted field is dropped, not left
-    // empty (an empty AND-group would match everything).
     expect(orNode.props.disabledWhen).toEqual({ field: "lastName", equals: "y" });
   });
 
@@ -163,15 +159,12 @@ describe("builder store", () => {
     s.getState().setStepCondition(1, { field: "extras", equals: true });
     expect(s.getState().steps[1].visibleWhen).toEqual({ field: "extras", equals: true });
 
-    // Serializes onto the step config.
     const config = serialize(s.getState());
     expect(config.steps?.[1].visibleWhen).toEqual({ field: "extras", equals: true });
 
-    // Deleting the source scrubs the step condition.
     s.getState().removeNode(checkboxId);
     expect(s.getState().steps[1].visibleWhen).toBeUndefined();
 
-    // Clearing removes the key entirely.
     s.getState().setStepCondition(0, { field: "detail", equals: "x" });
     s.getState().setStepCondition(0, undefined);
     expect("visibleWhen" in s.getState().steps[0]).toBe(false);
@@ -190,7 +183,6 @@ describe("builder store", () => {
     expect(s.getState().steps[1].review).toBe(true);
     expect(s.getState().steps[1].nodeIds).toEqual([]);
 
-    // Field must live on a regular step for the config to serialize validly.
     s.getState().assignNodeToStep(textId, 0);
     const config = serialize(s.getState());
     expect(config.steps).toEqual([
@@ -224,7 +216,6 @@ describe("builder store", () => {
 
     const confirm = s.getState().nodes.find((n) => n._id === confirmId)!;
     const end = s.getState().nodes.find((n) => n._id === endId)!;
-    // Other rules survive; matches + its message go together.
     expect(confirm.props.rules).toEqual({ minLength: 8 });
     expect(end.props.minDateField).toBeUndefined();
   });
@@ -260,11 +251,11 @@ describe("builder store", () => {
   it("seeds a first step from eligible fields when multiStep turns on", () => {
     const s = createBuilderStore();
     s.getState().addNode("text");
-    s.getState().addNode("submit"); // ineligible — must not be assigned
+    s.getState().addNode("submit");
     s.getState().toggleMultiStep(true);
     const { steps, nodes } = s.getState();
     expect(steps).toHaveLength(1);
-    expect(steps[0].nodeIds).toEqual([nodes[0]._id]); // text only, not submit
+    expect(steps[0].nodeIds).toEqual([nodes[0]._id]);
   });
 
   it("assigns a node to exactly one step", () => {
@@ -275,7 +266,7 @@ describe("builder store", () => {
     s.getState().assignNodeToStep(id, 1);
     expect(s.getState().steps[0].nodeIds).toEqual([]);
     expect(s.getState().steps[1].nodeIds).toEqual([id]);
-    s.getState().assignNodeToStep(id, null); // unassign
+    s.getState().assignNodeToStep(id, null);
     expect(s.getState().steps.every((st) => !st.nodeIds.includes(id))).toBe(true);
   });
 

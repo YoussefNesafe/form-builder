@@ -24,7 +24,6 @@ import type { ControlProps } from "./types";
 
 const C = builder.controls.country;
 
-/** Shared Popover>Command scaffold behind both country pickers below. */
 function CountryPickerShell({
   id,
   triggerLabel,
@@ -65,7 +64,6 @@ function CountryPickerShell({
   );
 }
 
-/** Single ISO alpha-2 country picker (searchable). */
 export function CountryCodeControl({
   id,
   value,
@@ -110,7 +108,6 @@ export function CountryCodeControl({
   );
 }
 
-/** Multi ISO alpha-2 country picker; stores a string[]. */
 export function CountryListControl({
   id,
   value,

@@ -24,9 +24,6 @@ const C = builder.controls.optionsFrom;
 type OptionsFrom = { field: string; map: Record<string, Option[]> };
 type BranchPair = [string, Option[]];
 
-// FIRST key wins on commit: a transient rename collision ("ab" passing
-// through "a" while an "a" branch exists) must never destroy the older
-// branch. Later duplicates stay editable locally and are flagged in the UI.
 function toRecord(pairs: BranchPair[]): Record<string, Option[]> {
   const record: Record<string, Option[]> = {};
   for (const [key, options] of pairs) {
@@ -35,14 +32,6 @@ function toRecord(pairs: BranchPair[]): Record<string, Option[]> {
   return record;
 }
 
-/**
- * Edit `optionsFrom` (source field + per-source-value option branches).
- * Branches are edited as an ordered pair LIST, not the record itself — a
- * record collapses duplicate keys per keystroke (data loss on rename
- * collisions) and reorders integer-like keys. Choosing a static-select
- * source seeds one branch per source option value; country sources start
- * empty (193 branches would be noise).
- */
 export function OptionsFromEditor({
   id,
   value,
@@ -54,8 +43,6 @@ export function OptionsFromEditor({
   const [pairs, setPairs] = useState<BranchPair[]>(() =>
     Object.entries(value?.map ?? {}),
   );
-  // Re-init local pair order only when the editor moves to another node —
-  // our own commits must not round-trip through the collapsed record.
   const nodeRef = useRef(ctx.node._id);
   useEffect(() => {
     if (nodeRef.current !== ctx.node._id) {
@@ -106,8 +93,6 @@ export function OptionsFromEditor({
       <div className="flex items-center gap-[1.602vw] tablet:gap-[0.75vw] desktop:gap-[0.312vw]">
         <Select
           value={value.field}
-          // Old branch keys belong to the old source's value domain —
-          // wholesale reseed is more predictable than stale keys.
           onValueChange={(source) => commit(source, seedPairs(source))}
         >
           <SelectTrigger aria-label={C.sourceFieldAriaLabel} className="flex-1">

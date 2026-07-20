@@ -1,6 +1,3 @@
-// Pins the per-PM command mapping ported from shadcn/ui's own transformer
-// (see command.ts's COMMAND_PREFIXES doc comment) — a wrong prefix here would
-// silently ship an incorrect copy-pasteable command to every CommandBlock.
 import { describe, expect, it } from "vitest";
 import { DEFAULT_PACKAGE_MANAGER, PACKAGE_MANAGERS, deriveCommand, type PackageManager } from "./command";
 

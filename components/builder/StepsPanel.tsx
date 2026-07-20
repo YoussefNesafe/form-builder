@@ -13,16 +13,12 @@ import { ConditionEditor } from "./controls/ConditionEditor";
 import type { PropDescriptor } from "./model/fieldProps";
 import type { BuilderNode } from "./model/types";
 
-// Step conditions are value-only (the engine rejects isValid on steps).
-// Reuses the shared "Visible when" copy from the props descriptor table —
-// it's the same field-level concept applied to a step instead of a field.
 const STEP_CONDITION_DESCRIPTOR: PropDescriptor = {
   key: "stepVisibleWhen",
   label: builder.props.fields.visibleWhen.label,
   control: "condition",
 };
 
-/** Multi-step toggle and step management (add / rename / reorder / remove). */
 export function StepsPanel() {
   const multiStep = useBuilderStore((s) => s.multiStep);
   const steps = useBuilderStore((s) => s.steps);
@@ -34,8 +30,6 @@ export function StepsPanel() {
   const setStepCondition = useBuilderStore((s) => s.setStepCondition);
   const setStepReview = useBuilderStore((s) => s.setStepReview);
   const moveStep = useBuilderStore((s) => s.moveStep);
-  // Pseudo node: ConditionEditor only uses ctx.node._id for self-exclusion,
-  // and a step is not a field — nothing to exclude.
   const stepCtxNode: BuilderNode = {
     _id: "__step__",
     type: "static",

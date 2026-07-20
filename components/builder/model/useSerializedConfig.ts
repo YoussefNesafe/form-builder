@@ -5,14 +5,6 @@ import { validateFormConfig, type FormConfig } from "@/form-builder";
 import { useBuilderStore } from "./store";
 import { serialize } from "./serialize";
 
-/**
- * Builder state → serialized `FormConfig` plus its validity, shared by the
- * PreviewPanel and CodeOutputPanel panes (same 5 store selectors + `serialize()` +
- * validate-on-change). Validation is skipped (`error: null`) while there are
- * no fields yet — each consumer decides what, if anything, to show for that
- * empty case (PreviewPanel shows an empty-state illustration; CodeOutputPanel shows its
- * own "Add at least one field." message).
- */
 export function useSerializedConfig(): { config: FormConfig; error: string | null } {
   const title = useBuilderStore((s) => s.title);
   const description = useBuilderStore((s) => s.description);

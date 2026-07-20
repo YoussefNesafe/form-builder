@@ -1,11 +1,4 @@
 // @vitest-environment jsdom
-//
-// Pins the one hard link between the docs page and the build-time zip
-// script (scripts/zip-form-builder.mjs): the download button must point at
-// exactly the public path that script writes. Both sides import the same
-// scripts/zipConfig.mjs constant (see zip-form-builder.test.mjs for the
-// script-side pin), so renaming the zip in one place fails here instead of
-// silently 404ing the button.
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { CopyPackageFolderSection } from "./CopyPackageFolderSection";

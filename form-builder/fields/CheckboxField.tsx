@@ -43,8 +43,6 @@ export function CheckboxField({ field }: FieldComponentProps) {
               disabled={disabled}
               error={fieldState.error}
             >
-              {/* Group-level description/error association, mirroring RadioField —
-                  per-item describedby would re-announce on every checkbox. */}
               <div
                 role="group"
                 aria-describedby={fieldAriaDescribedBy(id, {

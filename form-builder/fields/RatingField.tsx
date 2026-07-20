@@ -29,7 +29,6 @@ export function RatingField({ field }: FieldComponentProps) {
 
         const select = (next: number) => {
           if (disabled) return;
-          // Re-clicking the current value clears an optional rating.
           if (next === value && !config.required) rhf.onChange(undefined);
           else rhf.onChange(next);
         };
@@ -44,13 +43,8 @@ export function RatingField({ field }: FieldComponentProps) {
                 : 0;
           if (step === 0) return;
           event.preventDefault();
-          // From no selection any arrow lands on 1 star — intentional (native
-          // radios would pick last on Left/Up, but "first press = 1 star" is
-          // the less surprising rating behavior).
           const next = Math.min(max, Math.max(1, value + step));
           rhf.onChange(next);
-          // Roving tabindex: focus follows selection, so the focus border and
-          // aria-checked announcement stay on the same star.
           starRefs.current[next - 1]?.focus();
         };
 
@@ -89,11 +83,8 @@ export function RatingField({ field }: FieldComponentProps) {
                     aria-checked={checked}
                     aria-label={messages.ratingValue(starValue, max)}
                     disabled={disabled}
-                    // Roving tabindex: the selected star is the tab stop; with
-                    // no selection the first star is.
                     tabIndex={checked || (value === 0 && starValue === 1) ? 0 : -1}
                     onClick={() => select(starValue)}
-                    // Flat mandate: focus state via border color only.
                     className={cn(
                       "border border-transparent focus-visible:outline-none focus-visible:border-primary disabled:opacity-50",
                       "p-[var(--fb-space-1,0.534vw)] tablet:p-[var(--fb-space-1-tablet,0.25vw)] desktop:p-[var(--fb-space-1-desktop,0.104vw)]",

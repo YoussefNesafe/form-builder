@@ -17,7 +17,6 @@ import type { ControlProps } from "./types";
 
 const C = builder.controls.primitives;
 
-/** Empty string clears the prop. */
 export function TextControl({ id, value, onChange }: ControlProps<string>) {
   return (
     <Input
@@ -125,7 +124,6 @@ export function PenColorControl({ id, value, onChange }: ControlProps<string>) {
   );
 }
 
-/** Optional single-choice from descriptor.options. `NONE_VALUE` clears. */
 export function SelectControl({
   id,
   value,
@@ -153,7 +151,6 @@ export function SelectControl({
   );
 }
 
-/** Reference a sibling field by name; eligible set depends on descriptor.refKind. */
 export function FieldRefControl({
   id,
   value,
@@ -186,12 +183,10 @@ export function FieldRefControl({
   );
 }
 
-/** Mask string ("#" digit, "A" letter, "*" alphanumeric, others literal). */
 export function MaskControl(props: ControlProps<string>) {
   return <TextControl {...props} />;
 }
 
-/** Arbitrary JSON value (hidden fields). Falls back to a plain string when unparseable. */
 export function JsonControl({ id, value, onChange }: ControlProps<unknown>) {
   const text =
     value === undefined
@@ -206,12 +201,11 @@ export function JsonControl({ id, value, onChange }: ControlProps<unknown>) {
       placeholder={C.jsonPlaceholder}
       onChange={(e) => {
         const raw = e.target.value;
-        // Empty → "" (not undefined): a hidden field must keep its `value` key.
         if (raw === "") return onChange("");
         try {
           onChange(JSON.parse(raw));
         } catch {
-          onChange(raw); // treat as a plain string until it parses
+          onChange(raw);
         }
       }}
     />

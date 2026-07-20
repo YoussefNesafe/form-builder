@@ -9,7 +9,6 @@ const countryCodeSchema = z.string().refine(
   { message: "not a valid ISO 3166-1 alpha-2 country code (e.g. \"AE\")" },
 );
 
-// Zero-padded 24h "HH:mm" — required for lexicographic boundary compares.
 const timeStringSchema = z
   .string()
   .regex(/^([01]\d|2[0-3]):[0-5]\d$/, { message: "must be a zero-padded HH:mm time (e.g. \"09:30\")" });
@@ -27,8 +26,6 @@ const conditionSchema = conditionObjectSchema.refine(
   { message: "condition needs at least one operator (equals, notEquals, in, isValid)" },
 );
 
-// visibleWhen leaf: visibility drives the validation schema, so validity-driven
-// visibility would feed back into itself — value operators only.
 const valueConditionSchema = conditionObjectSchema
   .refine((cond) => cond.isValid === undefined, {
     message: "isValid conditions are only supported in disabledWhen/enabledWhen, not visibleWhen",
@@ -37,9 +34,6 @@ const valueConditionSchema = conditionObjectSchema
     message: "condition needs at least one operator (equals, notEquals, in)",
   });
 
-// Condition | Condition[] (AND) | { anyOf: Condition[][] } (OR of AND-groups).
-// Empty arrays are rejected: an empty spec evaluates as "matches" (like an
-// absent one), which for disabledWhen would silently brick the field.
 function conditionSpecSchema(leaf: z.ZodType): z.ZodType {
   return z.union([leaf, z.array(leaf).min(1), z.strictObject({ anyOf: z.array(z.array(leaf).min(1)).min(1) })]);
 }
@@ -63,13 +57,10 @@ const fieldWidthSchema = z.union([
 
 const baseFieldSchema = z.strictObject({
   type: z.string(),
-  // Dots would be read as nested paths by RHF and the condition engine.
   name: z
     .string()
     .min(1)
     .refine((name) => !name.includes("."), { message: "field names must not contain dots" })
-    // Reserved object keys become value-object / schema-shape keys downstream;
-    // reject them so an untrusted config can't use one as a field name.
     .refine((name) => !["__proto__", "constructor", "prototype"].includes(name), {
       message: "field name must not be a reserved object key (__proto__, constructor, prototype)",
     }),
@@ -86,14 +77,8 @@ const baseFieldSchema = z.strictObject({
   width: fieldWidthSchema.optional(),
 });
 
-// Quantified group itself quantified — the classic catastrophic-backtracking
-// shape ((a+)+, (a*)+, (a{2,})*). Heuristic, not a proof: configs are expected
-// to come from trusted authors; this catches the common footgun.
 const NESTED_QUANTIFIER = /\([^)]*[+*}][^)]*\)[+*{]/;
 
-// The allow body is interpolated into [^...] — restrict it to plain
-// characters, ranges, and a short escape whitelist so a crafted body cannot
-// close the class or change its semantics.
 function isSafeCharClassBody(body: string): boolean {
   if (body.startsWith("^")) return false;
   for (let i = 0; i < body.length; i += 1) {
@@ -152,7 +137,6 @@ const textRulesSchema = z.strictObject({
 
 const textFieldSchema = baseFieldSchema.extend({ rules: textRulesSchema.optional() });
 
-// Group fields are validated shallowly here; validateFields recurses per level.
 const fieldSchemasByType: Record<FieldConfig["type"], z.ZodType> = {
   text: textFieldSchema,
   email: textFieldSchema,
@@ -197,8 +181,6 @@ const fieldSchemasByType: Record<FieldConfig["type"], z.ZodType> = {
       optionsFrom: z
         .strictObject({
           field: z.string().min(1),
-          // Empty branch arrays are legal: an intentionally empty branch
-          // renders a disabled select.
           map: z.record(z.string(), z.array(optionSchema)),
         })
         .optional(),
@@ -227,8 +209,6 @@ const fieldSchemasByType: Record<FieldConfig["type"], z.ZodType> = {
   date: baseFieldSchema
     .extend({
       range: z.boolean().optional(),
-      // Strict yyyy-MM-dd: lexicographic boundary compare and the calendar
-      // matchers both require zero-padded date-only strings.
       minDate: z.iso.date().optional(),
       maxDate: z.iso.date().optional(),
       minDateField: z.string().min(1).optional(),
@@ -296,8 +276,6 @@ const formConfigShellSchema = z.object({
           title: z.string(),
           fieldNames: z.array(z.string()).min(1).optional(),
           review: z.boolean().optional(),
-          // Value operators only — a hidden step hides its fields from the
-          // validation schema, so validity-driven step visibility would loop.
           visibleWhen: conditionSpecSchema(valueConditionSchema).optional(),
         })
         .refine((step) => (step.review === true) !== (step.fieldNames !== undefined), {
@@ -311,13 +289,8 @@ function formatIssues(issues: z.core.$ZodIssue[], path: string): string {
   return issues.map((issue) => `${path}${issue.path.length ? "." + issue.path.join(".") : ""}: ${issue.message}`).join("; ");
 }
 
-// Types whose validity is constant (no user input / unknown value schema) —
-// an isValid condition against them would silently always (or never) match.
 const VACUOUS_VALIDITY_TYPES = new Set<string>(["static", "submit", "hidden"]);
 
-// copyFrom targets a plain mirrored value. Excluded: phone (has countryFrom),
-// otp/password (credentials), file/signature (object/canvas state), group
-// (row arrays), and the no-input types.
 const COPY_FROM_UNSUPPORTED_TYPES = new Set<string>([
   "phone",
   "otp",
@@ -333,8 +306,6 @@ const COPY_FROM_UNSUPPORTED_TYPES = new Set<string>([
 const TEXT_FAMILY_TYPES = new Set<string>(["text", "email", "password", "textarea"]);
 const CROSS_BOUND_KEYS = ["minDateField", "maxDateField", "minTimeField", "maxTimeField"] as const;
 
-// Cross-field rule wiring on a field: rules.matches + date/time sibling
-// bounds. Call only on validated fields.
 function crossRuleSources(raw: unknown): { source: string; rule: string }[] {
   const field = raw as {
     type?: unknown;
@@ -354,8 +325,6 @@ function crossRuleSources(raw: unknown): { source: string; rule: string }[] {
   return out;
 }
 
-// Source field names of isValid conditions in a field's disabled/enabled
-// specs. Call only on validated fields — raw specs may not normalize.
 function isValidConditionTargets(raw: unknown): string[] {
   const field = raw as { disabledWhen?: ConditionSpec; enabledWhen?: ConditionSpec };
   return [...toConditionGroups(field.disabledWhen), ...toConditionGroups(field.enabledWhen)]
@@ -376,9 +345,6 @@ function validateFields(fields: unknown[], path: string, insideGroup = false): v
       throw new Error(`Invalid form config at ${fieldPath}: unknown field type "${String(type)}"`);
     }
 
-    // Group rows get runtime-prefixed names; verification wiring (registry
-    // keys, dependsOn watches) cannot resolve there — reject instead of
-    // silently misbehaving.
     if (insideGroup) {
       const wiring = raw as { dependsOn?: unknown; enabledWhenVerified?: unknown; countryFrom?: unknown };
       if (type === "otp" && wiring.dependsOn !== undefined) {
@@ -394,8 +360,6 @@ function validateFields(fields: unknown[], path: string, insideGroup = false): v
       }
     }
 
-    // Custom registered types: validate the BaseField contract only — their
-    // extra props belong to the consuming component.
     const schema = isBuiltIn ? fieldSchemasByType[type as FieldConfig["type"]] : customFieldSchema;
     if (!isBuiltIn && (raw as { required?: unknown }).required === true && process.env.NODE_ENV !== "production") {
       console.warn(
@@ -414,14 +378,10 @@ function validateFields(fields: unknown[], path: string, insideGroup = false): v
       );
     }
 
-    // Per-field zod schemas (the isValid oracle) exist for top-level fields
-    // only; group rows get runtime-prefixed names the oracle cannot resolve.
     if (insideGroup && isValidConditionTargets(raw).length > 0) {
       throw new Error(`Invalid form config at ${fieldPath}: isValid conditions are not supported inside groups`);
     }
 
-    // Cross-field rules resolve same-level names; group rows are runtime-
-    // prefixed, so like the rest of the wiring family they are rejected.
     if (insideGroup) {
       const crossRule = crossRuleSources(raw)[0];
       if (crossRule) {
@@ -452,8 +412,6 @@ function validateFields(fields: unknown[], path: string, insideGroup = false): v
     }
   });
 
-  // Same-level checks only: group rows get runtime-prefixed names, so
-  // cross-level references could never resolve anyway.
   const typeByName = new Map(
     fields.map((raw) => [(raw as { name: string }).name, (raw as { type?: unknown }).type]),
   );
@@ -486,10 +444,6 @@ function validateFields(fields: unknown[], path: string, insideGroup = false): v
       }
     }
 
-    // isValid needs the target's zod schema: it must be a sibling built-in
-    // input field (custom field values validate as unknown and static/submit/
-    // hidden have no user input — all vacuously "valid"), and not the field
-    // itself (invalid + disabled-by-own-invalidity = deadlock).
     for (const target of isValidConditionTargets(raw)) {
       const targetType = typeByName.get(target);
       const isValidatable =
@@ -509,8 +463,6 @@ function validateFields(fields: unknown[], path: string, insideGroup = false): v
       const sourceRaw = fields.find((f) => (f as { name: string }).name === source) as
         | { type?: unknown; multiple?: unknown; options?: { value: unknown }[] }
         | undefined;
-      // Same source rule as phone countryFrom: a country field, or a single-
-      // value select (map keys are String(source value)).
       const validSource =
         sourceRaw !== undefined &&
         (sourceRaw.type === "country" || (sourceRaw.type === "select" && sourceRaw.multiple !== true));
@@ -519,9 +471,6 @@ function validateFields(fields: unknown[], path: string, insideGroup = false): v
           `Invalid form config at ${path}[${index}]: optionsFrom must reference a sibling single-value select or country field, got "${source}"`,
         );
       }
-      // An optionsFrom cycle converges to a dead pair — every pick on one
-      // side clears the other (blank source allows nothing) — meaningless
-      // config; reject like copyFrom cycles. Chains stay legal.
       const optionsFromOf = new Map(
         fields
           .map((f) => f as { name: string; optionsFrom?: { field?: unknown } })
@@ -538,8 +487,6 @@ function validateFields(fields: unknown[], path: string, insideGroup = false): v
         cursor = optionsFromOf.get(cursor);
       }
 
-      // A source option value with no map key yields an empty, disabled
-      // dependent select — legal, but usually an oversight.
       if (process.env.NODE_ENV !== "production" && sourceRaw.type === "select") {
         for (const option of sourceRaw.options ?? []) {
           if (!(String(option.value) in optionsFrom.map)) {
@@ -561,8 +508,6 @@ function validateFields(fields: unknown[], path: string, insideGroup = false): v
       const sourceRaw = fields.find((f) => (f as { name: string }).name === source) as
         | { type?: unknown; multiple?: unknown; range?: unknown }
         | undefined;
-      // Same type AND same value shape: a multi-select cannot mirror a single
-      // select (array vs scalar), a range date cannot mirror a plain one.
       const sameShape =
         sourceRaw !== undefined &&
         sourceRaw.type === field.type &&
@@ -573,9 +518,6 @@ function validateFields(fields: unknown[], path: string, insideGroup = false): v
           `Invalid form config at ${path}[${index}]: copyFrom must reference a same-type sibling field, got "${source}"`,
         );
       }
-      // Cycles (A↔B, or longer loops) would ping-pong forever on array/object
-      // values: each write is a fresh clone, so the identity no-op guard
-      // never terminates the loop. Chains (A←B←C) are fine.
       const copyFromOf = new Map(
         fields
           .map((f) => f as { name: string; copyFrom?: unknown })
@@ -593,8 +535,6 @@ function validateFields(fields: unknown[], path: string, insideGroup = false): v
       }
     }
 
-    // Cross-field rules: source must be a same-level sibling of a compatible
-    // type — matches → text family; date/time bounds → non-range date / time.
     for (const { source, rule } of crossRuleSources(raw)) {
       const sourceType = typeByName.get(source);
       const compatible =
@@ -624,14 +564,12 @@ function validateFields(fields: unknown[], path: string, insideGroup = false): v
         options?: { value: unknown }[];
         optionsFrom?: unknown;
       };
-      // A country field is ISO by construction — no option checks needed.
       if (sourceRaw.type !== "country") {
         if (sourceRaw.type !== "select" || sourceRaw.multiple === true) {
           throw new Error(
             `Invalid form config at ${path}[${index}]: phone countryFrom must reference a single-value select or country field, got "${source}"`,
           );
         }
-        // Dynamic options cannot be statically verified as ISO codes.
         if (sourceRaw.optionsFrom !== undefined) {
           throw new Error(
             `Invalid form config at ${path}[${index}]: phone countryFrom source "${source}" uses optionsFrom — its values cannot be verified as country codes; use a static select or a country field`,
@@ -664,14 +602,9 @@ function validateSteps(config: FormConfig): void {
     }
   }
 
-  // An otp field on a different step than its dependsOn source can be edited
-  // while the otp field is unmounted; the stale-snapshot reconcile only runs
-  // on remount, so keep the pair on one step unless that is understood.
   if (process.env.NODE_ENV !== "production") {
     const stepOf = new Map<string, number>();
     config.steps.forEach((step, index) => (step.fieldNames ?? []).forEach((name) => stepOf.set(name, index)));
-    // Step visibility decided by fields the user has not reached yet is
-    // legal (defaults decide) but usually a config smell.
     config.steps.forEach((step, index) => {
       for (const source of conditionFieldNames(step.visibleWhen)) {
         const sourceStep = stepOf.get(source);
@@ -698,9 +631,6 @@ function validateSteps(config: FormConfig): void {
         );
       }
     }
-    // The sync effect treats the first render after remount as baseline (drafts
-    // must not be clobbered), so a source change made while the phone field is
-    // unmounted is skipped by design.
     for (const field of config.fields) {
       const countryFrom = field.type === "phone" ? (field as { countryFrom?: string }).countryFrom : undefined;
       if (countryFrom === undefined) continue;
@@ -712,8 +642,6 @@ function validateSteps(config: FormConfig): void {
         );
       }
     }
-    // Same remount-baseline semantics as phone countryFrom: source changes
-    // made while the mirroring field is unmounted are skipped on remount.
     for (const field of config.fields) {
       const copyFrom = (field as { copyFrom?: string }).copyFrom;
       if (copyFrom === undefined) continue;
@@ -725,10 +653,6 @@ function validateSteps(config: FormConfig): void {
         );
       }
     }
-    // Options derive from a value picked on another step: works (values
-    // persist), but stale-value RESET only runs while the dependent select
-    // is mounted — a source edit on another step defers cleanup to the
-    // form-level membership refine at submit.
     for (const field of config.fields) {
       const optionsFrom =
         field.type === "select" ? (field as { optionsFrom?: { field: string } }).optionsFrom : undefined;
@@ -741,8 +665,6 @@ function validateSteps(config: FormConfig): void {
         );
       }
     }
-    // A cross-field rule against a source on another step: the error shows
-    // on a step where its cause is invisible. Legal, usually a config smell.
     for (const field of config.fields) {
       for (const { source, rule } of crossRuleSources(field)) {
         const fieldStep = stepOf.get(field.name);
@@ -754,9 +676,6 @@ function validateSteps(config: FormConfig): void {
         }
       }
     }
-    // Works (values persist under shouldUnregister: false), but the user
-    // cannot see WHY the field is disabled — the invalid source is on
-    // another step. Usually a config smell.
     for (const field of config.fields) {
       for (const target of isValidConditionTargets(field)) {
         const fieldStep = stepOf.get(field.name);
@@ -770,8 +689,6 @@ function validateSteps(config: FormConfig): void {
     }
   }
 
-  // A validated field missing from every step can never be corrected by the
-  // user — the form becomes permanently unsubmittable with invisible errors.
   for (const field of config.fields) {
     const exemptFromSteps = field.type === "hidden" || field.type === "submit";
     if (!exemptFromSteps && !stepped.has(field.name)) {
@@ -785,9 +702,6 @@ function validateSteps(config: FormConfig): void {
   }
 }
 
-// Runs in production too: configs may arrive from a CMS at runtime, and an
-// unvalidated pattern/allow string reaching new RegExp() inside the resolver
-// would brick the whole form. One-time cost per config (memoized by callers).
 export function validateFormConfig(config: FormConfig): void {
   const shell = formConfigShellSchema.safeParse(config);
   if (!shell.success) {

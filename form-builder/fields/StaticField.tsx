@@ -9,7 +9,6 @@ type StaticFieldConfig = Extract<FieldConfig, { type: "static" }>;
 
 export function StaticField({ field }: FieldComponentProps) {
   const config = field as StaticFieldConfig;
-  // content may carry an allowlisted inline <a href>/<br> (safe schemes only).
   const content = renderRichText(config.content);
 
   switch (config.as) {

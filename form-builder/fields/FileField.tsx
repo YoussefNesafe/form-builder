@@ -24,7 +24,6 @@ export function FileField({ field }: FieldComponentProps) {
   const id = useId();
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // File values are not JSON-serializable — consumers handle upload in onSubmit.
   return (
     <Controller
       name={config.name}
@@ -38,8 +37,6 @@ export function FileField({ field }: FieldComponentProps) {
             ? [rhf.value]
             : [];
 
-        // Oversize files go INTO form state and the schema reports them — a
-        // manual setError would be wiped by the next resolver run.
         const acceptFiles = (incoming: File[]) => {
           rhf.onChange(config.multiple ? [...files, ...incoming] : (incoming[0] ?? undefined));
           void trigger(config.name);
@@ -52,8 +49,6 @@ export function FileField({ field }: FieldComponentProps) {
             rhf.onChange(undefined);
           }
           if (inputRef.current) inputRef.current.value = "";
-          // Clears a stale size error immediately — onTouched only
-          // revalidates on change after the field was blurred once.
           void trigger(config.name);
         };
 
@@ -77,7 +72,6 @@ export function FileField({ field }: FieldComponentProps) {
               onChange={(event) => {
                 const incoming = Array.from(event.target.files ?? []);
                 if (incoming.length) acceptFiles(incoming);
-                // Reset so re-selecting the same file fires change again.
                 event.target.value = "";
               }}
               onBlur={rhf.onBlur}

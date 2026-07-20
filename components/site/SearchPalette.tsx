@@ -23,20 +23,12 @@ type Props = {
   onOpenChange: (open: boolean) => void;
 };
 
-// Scroll an anchor target into view AND move focus to it, so a keyboard/SR
-// user's reading position follows the jump (the target is made programmatically
-// focusable). Radix otherwise restores focus to the trigger on close.
 function focusAnchor(el: HTMLElement, behavior: ScrollBehavior) {
   el.scrollIntoView({ behavior });
   el.setAttribute("tabindex", "-1");
   el.focus({ preventScroll: true });
 }
 
-// Cross-page deep-link: after a route push the target element doesn't exist
-// yet, and App Router's programmatic hash scroll isn't guaranteed — so poll a
-// bounded number of animation frames for the element, then scroll to it. Safe
-// if Next also scrolls (same target). Gives up silently if the user navigates
-// elsewhere first.
 function scrollToHashAfterNav(id: string, framesLeft = 30) {
   const el = document.getElementById(id);
   if (el) {
@@ -48,18 +40,12 @@ function scrollToHashAfterNav(id: string, framesLeft = 30) {
   }
 }
 
-// Fixed display order + heading per group; empty buckets are dropped below.
 const GROUP_ORDER: { group: SearchGroup; heading: string }[] = [
   { group: "page", heading: nav.search.groups.pages },
   { group: "fieldType", heading: nav.search.groups.fieldTypes },
   { group: "heading", heading: nav.search.groups.sections },
 ];
 
-/**
- * The Cmd+K palette. cmdk's own text filtering is turned OFF
- * (`shouldFilter={false}`) — we score/sort with searchDocs and hand cmdk
- * exactly the items to show, so it only drives keyboard nav + selection.
- */
 export function SearchPalette({ index, open, onOpenChange }: Props) {
   const router = useRouter();
   const pathname = usePathname();
@@ -75,8 +61,6 @@ export function SearchPalette({ index, open, onOpenChange }: Props) {
     [results],
   );
 
-  // Log queries that found nothing — the deferred-full-text signal. Debounced
-  // so a word typed one keystroke at a time logs once, not per character.
   useEffect(() => {
     if (!query.trim() || results.length > 0) return;
     const id = window.setTimeout(() => logEmptyQuery(query), 500);
@@ -87,7 +71,6 @@ export function SearchPalette({ index, open, onOpenChange }: Props) {
     onOpenChange(false);
     const action = resolveNav(href, pathname);
     if (action.kind === "scroll") {
-      // In-page anchor: the target already exists — scroll now, sync the URL.
       const el = document.getElementById(action.id);
       if (el) focusAnchor(el, "smooth");
       window.history.replaceState(null, "", action.href);

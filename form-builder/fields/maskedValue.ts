@@ -1,7 +1,3 @@
-// Mask tokens: # = digit, A = letter, * = alphanumeric; every other mask
-// char is a literal inserted automatically. The stored (raw) value contains
-// only the user's token characters — literals are presentation.
-
 const TOKENS = new Set(["#", "A", "*"]);
 
 function matchesToken(token: string, char: string): boolean {
@@ -16,7 +12,6 @@ export function maskTokenCount(mask: string): number {
   return count;
 }
 
-/** "4111111111111111" + "#### #### #### ####" → "4111 1111 1111 1111" (partial raw → partial display, no trailing literals) */
 export function formatMasked(raw: string, mask: string): string {
   let out = "";
   let index = 0;
@@ -32,13 +27,6 @@ export function formatMasked(raw: string, mask: string): string {
   return out;
 }
 
-/**
- * Inverse of formatMasked. Walks mask and display in tandem so a literal that
- * happens to match a token class (e.g. the "1" in "+1 ###") is consumed as a
- * literal, never absorbed into the raw value — extractRaw(formatMasked(raw))
- * === raw for every raw that fits the mask. Display chars that fit no slot
- * are dropped; raw is capped by the mask's token count by construction.
- */
 export function extractRaw(display: string, mask: string): string {
   let raw = "";
   let maskIndex = 0;
@@ -51,14 +39,11 @@ export function extractRaw(display: string, mask: string): string {
         raw += displayChar;
         maskIndex += 1;
       }
-      // Non-matching char is garbage for this slot — drop it, stay on the slot.
       displayIndex += 1;
     } else if (displayChar === maskChar) {
-      // Literal present in the display (formatted input) — consume both.
       maskIndex += 1;
       displayIndex += 1;
     } else {
-      // Literal absent (raw input, e.g. pasted digits) — skip the mask literal.
       maskIndex += 1;
     }
   }
