@@ -37,6 +37,29 @@ publishable package appears in this repo (multi-package versioning is where
 changesets earns its keep) or if this changelog becomes a bottleneck in
 practice.
 
+## [0.1.4] - 2026-07-20
+
+### Fixed
+
+- **`parseSubmission` failed every submission containing a `file` (or
+  custom-registered) field nested inside a `group` row.** The schema-
+  exclusion pass for `file`/custom-type fields walked only the top-level
+  field list, so a nested `file`/custom field was left in the generated zod
+  schema, which then rejected the raw (non-`File`) wire value with
+  `validation_failed` — even though the identical field at the top level was
+  correctly excluded and passed through. The nested field's name also never
+  appeared in `unvalidated`, so a host had no way to know the value was
+  intentionally unvalidated rather than silently dropped. Both the schema
+  exclusion and the `unvalidated` reporting/pass-through now recurse into
+  every `group` row at any nesting depth, mirroring the existing group-
+  nested `hidden`-field handling; a group-nested file or custom field is now
+  reported in `unvalidated` under a dotted, index-less path
+  (`"items.receipt"`, `"outer.inner.receipt"`). No config change is
+  required to receive the fix. This is a correctness/over-rejection bug,
+  not a security issue — nested file/custom values were never trusted
+  incorrectly, they were simply unreachable and rejected the entire
+  submission.
+
 ## [0.1.3] - 2026-07-19
 
 ### Security
@@ -211,6 +234,8 @@ rendering-layer coupling (`core/boundary.test.ts` at the source level;
   reserved as an empty placeholder (a reserved-but-broken entry was cut in
   review as a footgun).
 
-[Unreleased]: https://github.com/YoussefNesafe/form-builder/compare/engine-v0.1.2...HEAD
+[Unreleased]: https://github.com/YoussefNesafe/form-builder/compare/engine-v0.1.4...HEAD
+[0.1.4]: https://github.com/YoussefNesafe/form-builder/compare/engine-v0.1.3...engine-v0.1.4
+[0.1.3]: https://github.com/YoussefNesafe/form-builder/compare/engine-v0.1.2...engine-v0.1.3
 [0.1.2]: https://github.com/YoussefNesafe/form-builder/compare/engine-v0.1.0...engine-v0.1.2
 [0.1.0]: https://github.com/YoussefNesafe/form-builder/releases/tag/engine-v0.1.0
