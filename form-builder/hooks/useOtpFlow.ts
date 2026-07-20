@@ -2,6 +2,7 @@
 
 import { useEffect, useReducer, useRef } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
+import { assertNever } from "../core/assertNever";
 import { useFieldRuntime } from "../components/FieldRuntime";
 
 export type OtpFlowStatus = "idle" | "sending" | "sent" | "verifying" | "verified";
@@ -26,6 +27,9 @@ type FlowEvent =
 
 const initialState: FlowState = { status: "idle", seconds: 0, error: null, resend: false };
 
+const TICK_INTERVAL_MS = 1000;
+const DEFAULT_RESEND_DELAY_SECONDS = 30;
+
 function reducer(state: FlowState, event: FlowEvent): FlowState {
   switch (event.type) {
     case "SEND":
@@ -46,6 +50,8 @@ function reducer(state: FlowState, event: FlowEvent): FlowState {
       return state.error ? { ...state, error: null } : state;
     case "RESET":
       return initialState;
+    default:
+      return assertNever(event);
   }
 }
 
@@ -106,7 +112,7 @@ export function useOtpFlow(config: OtpFlowConfig) {
   const counting = state.seconds > 0;
   useEffect(() => {
     if (!counting) return;
-    const timer = setInterval(() => dispatch({ type: "TICK" }), 1000);
+    const timer = setInterval(() => dispatch({ type: "TICK" }), TICK_INTERVAL_MS);
     return () => clearInterval(timer);
   }, [counting]);
 
@@ -148,7 +154,7 @@ export function useOtpFlow(config: OtpFlowConfig) {
     try {
       await otp.send(config.name, getValues());
       if (stamp !== generation.current) return;
-      dispatch({ type: "SENT", seconds: config.resendDelaySeconds ?? 30 });
+      dispatch({ type: "SENT", seconds: config.resendDelaySeconds ?? DEFAULT_RESEND_DELAY_SECONDS });
     } catch {
       if (stamp !== generation.current) return;
       dispatch({ type: "SEND_FAILED", message: messages.otpSendFailed });

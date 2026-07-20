@@ -1,11 +1,5 @@
 import type { FormConfig } from "@/form-builder";
 
-/**
- * Three-step wizard: account details (confirm-password via rules.matches),
- * email OTP verification (otp field dependsOn the account step's email —
- * cross-step by design, form-builder dev-warns but supports it), then a
- * read-only review step.
- */
 export const multiStepSignupConfig: FormConfig = {
   id: "multi-step-signup",
   title: "Create your account",

@@ -1,12 +1,18 @@
 import { z } from "zod";
 import { getCountries, isValidPhoneNumber } from "libphonenumber-js";
+import { assertNever } from "./assertNever";
 import { visibleFieldsFor } from "./conditions";
 import type { Messages } from "./messages";
 import { getPasswordChecks } from "./password";
 import { isBuiltInField } from "./types";
 import type { AnyFieldConfig, FieldConfig, FormConfig, FormValues, Option, TextRules } from "./types";
+import { BYTES_PER_MB } from "./units";
 
 type FieldSchema = z.ZodType | null;
+
+const ISO_DATE_LENGTH = 10;
+const MIN_RATING = 1;
+const DEFAULT_RATING_MAX = 5;
 
 function optionValueSchema(options: Option[], requiredMessage?: string): z.ZodType {
   const error = requiredMessage;
@@ -46,7 +52,7 @@ function applyTextRules(schema: z.ZodString, rules: TextRules | undefined, messa
 }
 
 function datePart(value: string): string {
-  return value.slice(0, 10);
+  return value.slice(0, ISO_DATE_LENGTH);
 }
 
 function isoDateSchema(field: Extract<FieldConfig, { type: "date" }>, messages: Messages): z.ZodType<string> {
@@ -70,7 +76,7 @@ function isoDateSchema(field: Extract<FieldConfig, { type: "date" }>, messages: 
 function fileSchema(field: Extract<FieldConfig, { type: "file" }>, messages: Messages): z.ZodType {
   let schema: z.ZodType = z.instanceof(File, { error: messages.required });
   if (field.maxSizeMB !== undefined) {
-    const maxBytes = field.maxSizeMB * 1024 * 1024;
+    const maxBytes = field.maxSizeMB * BYTES_PER_MB;
     schema = schema.refine((file) => (file as File).size <= maxBytes, messages.fileSize(field.maxSizeMB));
   }
   return schema;
@@ -212,11 +218,11 @@ export function toZodSchema(
     }
 
     case "rating": {
-      const max = field.max ?? 5;
+      const max = field.max ?? DEFAULT_RATING_MAX;
       const schema = z
         .number({ error: messages.required })
         .int(messages.required)
-        .min(1, messages.min(1))
+        .min(MIN_RATING, messages.min(MIN_RATING))
         .max(max, messages.max(max));
       return field.required ? schema : optionalClearable(schema);
     }
@@ -237,7 +243,7 @@ export function toZodSchema(
       if (field.multiple) {
         const base = z.array(z.instanceof(File, { error: messages.required }));
         const withMin = field.required ? base.min(1, messages.required) : base;
-        const maxBytes = field.maxSizeMB !== undefined ? field.maxSizeMB * 1024 * 1024 : undefined;
+        const maxBytes = field.maxSizeMB !== undefined ? field.maxSizeMB * BYTES_PER_MB : undefined;
         const schema =
           maxBytes === undefined
             ? withMin
@@ -258,6 +264,9 @@ export function toZodSchema(
       if (field.max !== undefined) schema = schema.max(field.max, messages.max(field.max));
       return schema;
     }
+
+    default:
+      return assertNever(field);
   }
 }
 
@@ -313,6 +322,8 @@ function collectCrossRules(fields: AnyFieldConfig[], messages: Messages): CrossR
         return messages.timeAfter(label(pair.source));
       case "maxTime":
         return messages.timeBefore(label(pair.source));
+      default:
+        return assertNever(pair.kind);
     }
   };
   return collectCrossRulePairs(fields)
@@ -332,6 +343,8 @@ function crossRulePasses(rule: CrossRule, target: unknown, source: unknown): boo
       return !TIME_FORMAT.test(target) || !TIME_FORMAT.test(source) || target >= source;
     case "maxTime":
       return !TIME_FORMAT.test(target) || !TIME_FORMAT.test(source) || target <= source;
+    default:
+      return assertNever(rule.kind);
   }
 }
 

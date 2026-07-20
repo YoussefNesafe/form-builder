@@ -11,6 +11,8 @@ import { FieldWrapper, fieldAriaDescribedBy } from "../ui/FieldWrapper";
 
 type RatingFieldConfig = Extract<FieldConfig, { type: "rating" }>;
 
+const MIN_RATING = 1;
+
 export function RatingField({ field }: FieldComponentProps) {
   const config = field as RatingFieldConfig;
   const { control } = useFormContext();
@@ -43,7 +45,7 @@ export function RatingField({ field }: FieldComponentProps) {
                 : 0;
           if (step === 0) return;
           event.preventDefault();
-          const next = Math.min(max, Math.max(1, value + step));
+          const next = Math.min(max, Math.max(MIN_RATING, value + step));
           rhf.onChange(next);
           starRefs.current[next - 1]?.focus();
         };

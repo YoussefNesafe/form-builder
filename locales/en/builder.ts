@@ -1,18 +1,3 @@
-/**
- * Visual builder chrome copy (components/builder/**). The builder is a
- * client island — its components import this slice directly
- * (`@/locales/en/builder`), never the aggregate `t`, so unrelated locale
- * data doesn't ride along into the client bundle (same pattern as
- * NavLinks/LandingDemoForm). Structural data — field `name`s/ids, cmdk
- * filter `value`s, sentinels, icon names, serialized output, seed/default
- * data a user immediately overwrites (e.g. "Untitled Form", "Option 1",
- * "Step 1") — stays out of this file; it isn't display copy.
- *
- * `fields.<type>.label`/`description` for the add-field menu and row
- * captions come from `@/locales/en/fieldTypes`, not from here — this file
- * only owns the builder's own chrome (panel headings, buttons, dialogs,
- * control labels/help, aria-labels).
- */
 export const builder = {
   header: {
     kicker: "Form Builder",

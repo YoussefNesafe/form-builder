@@ -10,6 +10,8 @@ import { FieldWrapper, fieldAriaDescribedBy } from "../ui/FieldWrapper";
 
 type TimeFieldConfig = Extract<FieldConfig, { type: "time" }>;
 
+const SECONDS_PER_MINUTE = 60;
+
 export function TimeField({ field }: FieldComponentProps) {
   const config = field as TimeFieldConfig;
   const { control } = useFormContext();
@@ -33,7 +35,7 @@ export function TimeField({ field }: FieldComponentProps) {
             type="time"
             min={config.minTime}
             max={config.maxTime}
-            step={config.stepMinutes !== undefined ? config.stepMinutes * 60 : undefined}
+            step={config.stepMinutes !== undefined ? config.stepMinutes * SECONDS_PER_MINUTE : undefined}
             {...rhf}
             id={id}
             disabled={disabled}
