@@ -1,15 +1,4 @@
-/**
- * Landing page chrome copy (app/(site)/page.tsx and its components/home/*
- * sections). Structural data (hrefs, icon refs, the demo FormConfig, real
- * config objects the showcase/flagship code peeks are generated from) stays
- * in components/home/content.ts — this file is strings only.
- *
- * Section rhythm: hero (split) -> showcase (grid) -> flagship (split) ->
- * capabilities (panel) -> comparison (table). Every section closes with the
- * shared CTA pair (`ctas`, rendered by components/home/SectionCtas.tsx).
- */
 export const home = {
-  /** Shared CTA pair — hero renders it large, SectionCtas repeats it at the end of every other section. */
   ctas: {
     openBuilder: "Open the builder",
     readDocs: "Read the docs",
@@ -24,7 +13,6 @@ export const home = {
     titleAccent: "owns",
     subtitle:
       "A visual builder that exports real, Zod- and React Hook Form–validated React — you own the code, not a hosted widget.",
-    /** sr-only heading over the live demo panel — the mono tab carries the visual label. */
     panelHeading: "Live demo",
     submittedMessage: "Submitted.",
     tryAgain: "Try again",
@@ -50,17 +38,13 @@ export const home = {
     },
   },
   flagship: {
-    /** Visible, left-aligned section heading — the mono tabs below name the two panes, this names the section. */
     title: "One config. Two views.",
     intro: "This form. That code. No translation layer.",
     codeTabLabel: "signup.config.ts",
     previewTabLabel: "preview",
     codeAriaLabel: "Multi-step signup config source",
-    /** sr-only h3 over the code pane, parallel to previewHeading — lets heading-nav reach both panes under the section h2. */
     codeHeading: "Config source",
-    /** sr-only h3 over the live preview pane — the mono tab carries the visual label. */
     previewHeading: "Live preview",
-    /** next/dynamic loading fallback for the preview pane — only visible on a client-side chunk fetch, since it SSRs by default. */
     previewLoading: "Loading the live form…",
     submittedMessage: "Submitted.",
     tryAgain: "Try again",

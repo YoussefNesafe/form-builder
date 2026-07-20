@@ -55,9 +55,7 @@ describe("text", () => {
     const parsed = schema.safeParse("  John Doe  ");
     expect(parsed.success).toBe(true);
     if (parsed.success) expect(parsed.data).toBe("John Doe");
-    // Whitespace-only trims to empty → fails required.
     expect(schema.safeParse("   ").success).toBe(false);
-    // Trimmed length below minimum.
     expect(schema.safeParse("  J  ").success).toBe(false);
     expect(schema.safeParse("John1").success).toBe(false);
   });
@@ -309,12 +307,10 @@ describe("date", () => {
       minDate: "2026-01-01",
       maxDate: "2026-12-31",
     });
-    // Picks are stored as plain dates; boundaries must be inclusive.
     expect(schema.safeParse("2026-01-01").success).toBe(true);
     expect(schema.safeParse("2026-12-31").success).toBe(true);
     expect(schema.safeParse("2025-12-31").success).toBe(false);
     expect(schema.safeParse("2027-01-01").success).toBe(false);
-    // Legacy full-ISO values still compare by date part.
     expect(schema.safeParse("2026-12-31T20:00:00.000Z").success).toBe(true);
   });
 
@@ -662,8 +658,6 @@ describe("cross-field rules", () => {
       ],
       messages,
     );
-    // zod object-level checks receive parse OUTPUT, so both sides are
-    // trimmed before the compare — exactly what would be submitted.
     expect(schema.safeParse({ a: "abc ", b: " abc" }).success).toBe(true);
     expect(schema.safeParse({ a: "abc", b: "abd" }).success).toBe(false);
   });
@@ -721,7 +715,6 @@ describe("cross-field rules", () => {
     const result = schema.safeParse({ start: "garbage", end: "2026-07-10" });
     expect(result.success).toBe(false);
     if (!result.success) {
-      // Only the source field's own invalid-date issue — no stacked cross error.
       expect(result.error.issues).toHaveLength(1);
       expect(result.error.issues[0].path).toEqual(["start"]);
     }

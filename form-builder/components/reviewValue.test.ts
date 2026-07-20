@@ -48,7 +48,6 @@ describe("formatReviewValue", () => {
   it("masked values re-format for display; passwords mask; otp is three-state", () => {
     expect(formatReviewValue({ type: "masked", name: "card", mask: "## ##" }, "1234", ctx)).toBe("12 34");
     expect(formatReviewValue({ type: "password", name: "p" }, "hunter2", ctx)).toBe("••••••");
-    // Blank → not answered; typed-but-unverified → not verified; verified.
     expect(formatReviewValue({ type: "otp", name: "code", length: 6 }, "", ctx)).toBe(
       defaultMessages.notAnswered,
     );

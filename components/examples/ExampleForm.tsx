@@ -5,9 +5,6 @@ import { FormRenderer, registerBuiltInFields, type FormConfig, type FormValues }
 import { examples } from "@/locales/en/examples";
 import { StaticExampleBoundary } from "./StaticExampleBoundary";
 
-// Field runtime must be registered before any FormRenderer mounts. Safe to
-// call more than once (registerField just overwrites the same map entry) —
-// every /examples page importing this module re-runs it harmlessly.
 registerBuiltInFields();
 
 type ExampleFormProps = {
@@ -16,11 +13,6 @@ type ExampleFormProps = {
   onVerifyOtp?: (fieldName: string, code: string) => Promise<boolean>;
 };
 
-/**
- * Live form + submitted-payload readout + collapsible config source, shared
- * by every /examples page: the actual engine (`FormRenderer` from the
- * package's public API), not a mock.
- */
 export function ExampleForm({ config, onSendOtp, onVerifyOtp }: ExampleFormProps) {
   const [submitted, setSubmitted] = useState<FormValues | null>(null);
 

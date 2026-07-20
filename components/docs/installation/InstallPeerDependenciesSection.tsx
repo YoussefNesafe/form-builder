@@ -4,9 +4,6 @@ import { DocsSection, DocsBody as P, DocsInlineCode as IC } from "@/components/d
 const id = "install-peer-dependencies";
 const title = "Install peer dependencies";
 
-// Canonical package list — CommandBlock derives the pnpm/npm/yarn/bun
-// install-command tab variants from this single string (see
-// components/docs/command.ts), so it deliberately omits any PM-specific verb.
 const PEER_DEPENDENCIES = `react-hook-form @hookform/resolvers zod zustand \\
   class-variance-authority clsx tailwind-merge cmdk date-fns \\
   react-day-picker input-otp libphonenumber-js react-phone-number-input \\

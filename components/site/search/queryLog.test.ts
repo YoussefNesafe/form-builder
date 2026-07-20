@@ -3,9 +3,6 @@ import { logEmptyQuery } from "./queryLog";
 
 const STORAGE_KEY = "fb:search:empty-queries";
 
-// This jsdom setup doesn't expose a working localStorage to plain .ts test
-// files, so install a Map-backed stub — makes the test deterministic and
-// independent of the environment's storage support.
 beforeAll(() => {
   const store = new Map<string, string>();
   Object.defineProperty(window, "localStorage", {

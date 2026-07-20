@@ -12,14 +12,8 @@ import { PreviewPanel } from "./PreviewPanel";
 import { PropEditorPanel } from "./PropEditor";
 import { BuilderHeaderActions } from "./BuilderHeaderActions";
 
-// Field runtime must be registered before the preview renders any field.
 registerBuiltInFields();
 
-/**
- * Root of the form builder: a dark, three-pane workspace (field list · live
- * preview · prop editor). Forces dark mode on <html> because Radix portals
- * (selects, popovers) escape any wrapper and would otherwise render light.
- */
 export function FormBuilder() {
   const title = useBuilderStore((s) => s.title);
   const description = useBuilderStore((s) => s.description);
@@ -34,8 +28,6 @@ export function FormBuilder() {
     };
   }, []);
 
-  // Gate on persist rehydration so localStorage state doesn't mismatch the
-  // server-rendered INITIAL state during hydration (server snapshot = false).
   const hydrated = useSyncExternalStore(
     (cb) => useBuilderStore.persist.onFinishHydration(cb),
     () => useBuilderStore.persist.hasHydrated(),
@@ -47,7 +39,6 @@ export function FormBuilder() {
     <div className="dark flex min-h-dvh flex-col bg-background text-foreground">
       <header className="flex flex-col gap-[3.204vw] tablet:gap-[1.5vw] desktop:gap-[0.624vw] border-b border-border px-[4.272vw] tablet:px-[2.5vw] desktop:px-[1.248vw] py-[3.738vw] tablet:py-[1.75vw] desktop:py-[0.728vw] tablet:flex-row tablet:items-end tablet:justify-between">
         <div className="flex flex-col gap-[0.534vw] tablet:gap-[0.25vw] desktop:gap-[0.104vw] tablet:flex-1">
-          {/* The route's only h1 (a11y heading outline) — styled as the small kicker on purpose. */}
           <h1 className="text-[3.204vw] tablet:text-[1.5vw] desktop:text-[0.624vw] font-medium uppercase tracking-wide text-muted-foreground">
             {builder.header.kicker}
           </h1>

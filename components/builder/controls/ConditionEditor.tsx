@@ -58,10 +58,6 @@ function build(field: string, op: Op, text: string): Condition {
   return { field, [op]: coerceScalar(text) };
 }
 
-/**
- * Edit a `ConditionSpec` as OR-groups of AND-rows. Absent = no conditions.
- * Emits the minimal shape (single condition / one array / anyOf).
- */
 export function ConditionEditor({
   id,
   value,
@@ -70,8 +66,6 @@ export function ConditionEditor({
   ctx,
 }: ControlProps<ConditionSpec>) {
   const names = eligibleRefs(ctx.siblings, "any", ctx.node._id);
-  // isValid needs the target's zod schema: built-in siblings only, and the
-  // engine rejects isValid conditions inside groups entirely.
   const builtinNames = eligibleRefs(ctx.siblings, "builtin", ctx.node._id);
   const validityOps =
     !!descriptor.validityOps && !ctx.isNested && builtinNames.length > 0;
@@ -173,8 +167,6 @@ export function ConditionEditor({
                       value={op}
                       onValueChange={(next) => {
                         const nextOp = next as Op;
-                        // Switching to a validity op with a non-built-in
-                        // source selected: fall back to the first valid target.
                         const field =
                           isValidityOp(nextOp) &&
                           !builtinNames.includes(cond.field)

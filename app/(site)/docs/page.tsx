@@ -11,8 +11,6 @@ import { t } from "@/locales";
 
 export const metadata: Metadata = { title: t.docs.index.title };
 
-// Descriptions are index-page-only; hrefs/titles/order come from the shared
-// nav source so this list can't drift from the sidebar and pagination.
 const DESCRIPTIONS: Record<string, string> = {
   "/docs/installation": t.docs.index.descriptions.installation,
   "/docs/your-first-form": t.docs.index.descriptions.yourFirstForm,
@@ -29,11 +27,6 @@ const PAGES = DOCS_PAGES.filter((page) => page.href !== "/docs").map(
   }),
 );
 
-/**
- * Docs hub. The engine (form-builder/) is the product; these three pages
- * cover adopting it in your own app. Conditions, wizards, and cross-field
- * wiring are demonstrated live under /examples rather than duplicated here.
- */
 export default function DocsIndexPage() {
   return (
     <div className="min-w-0 w-full  flex flex-col gap-[6.408vw] tablet:gap-[3vw] desktop:gap-[1.248vw]">

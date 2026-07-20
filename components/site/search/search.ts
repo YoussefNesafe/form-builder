@@ -1,16 +1,5 @@
 import type { SearchEntry, SearchGroup } from "./types";
 
-/**
- * Pure, synchronous search over the in-memory index (tens of entries — no
- * async, no network, no debounce, no race to guard). Case-insensitive
- * substring match, scored by where the query hits:
- *   exact title > title prefix > title substring > excerpt > keywords.
- *
- * An empty query returns the docs pages as a default "browse" list rather than
- * a blank panel. Ordering within the returned flat list is score-desc, then a
- * stable group order, then title — the palette buckets by group for display.
- */
-
 const GROUP_RANK: Record<SearchGroup, number> = {
   page: 0,
   fieldType: 1,

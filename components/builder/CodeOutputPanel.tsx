@@ -16,7 +16,6 @@ const MODES: { value: OutputMode; label: string }[] = [
   { value: "json", label: builder.output.modeJson },
 ];
 
-/** Generated config output with a TS/JSON toggle, copy button, and validity note. */
 export function CodeOutputPanel() {
   const nodes = useBuilderStore((s) => s.nodes);
   const outputMode = useBuilderStore((s) => s.outputMode);
@@ -25,8 +24,6 @@ export function CodeOutputPanel() {
 
   const { config, error: validationError } = useSerializedConfig();
   const code = useMemo(() => toCode(config, outputMode), [config, outputMode]);
-  // useSerializedConfig skips validation (error: null) while there are no
-  // fields yet — this pane, unlike PreviewPanel, still needs a message for that case.
   const error =
     nodes.length === 0 ? builder.output.addAtLeastOneField : validationError;
 
@@ -36,7 +33,6 @@ export function CodeOutputPanel() {
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
     } catch {
-      // clipboard blocked (e.g. insecure context) — no-op
     }
   };
 
@@ -55,12 +51,6 @@ export function CodeOutputPanel() {
         </Button>
       </div>
 
-      {/* Deliberately NOT the shared `Alert` primitive (components/ui/alert.tsx):
-          this note is a single-line, structurally distinct callout (no
-          title/description split) that sits between rounded-[2.67vw] neighbors
-          (the format toggle above, the code block below) — Alert's normalized
-          rounded-[3.204vw] would clash with that 10px context. Staff-approved
-          call site exemption; see the Slice 4 review. */}
       {error && (
         <p
           role="status"

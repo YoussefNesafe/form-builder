@@ -13,8 +13,6 @@ export function SubmitField({ field }: FieldComponentProps) {
   const { formState } = useFormContext();
   const disabled = useFieldDisabled(config);
 
-  // isValid comes from the condition-aware resolver, so it spans exactly the
-  // currently visible fields — including OTP verified-registry refines.
   return (
     <Button
       type="submit"

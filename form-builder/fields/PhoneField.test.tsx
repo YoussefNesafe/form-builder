@@ -40,8 +40,6 @@ function setup(field: PhoneConfig, defaultValues: Record<string, unknown>, resol
   return () => form;
 }
 
-// Flags "mobile" invalid on every run — lets tests observe WHETHER the sync
-// effect triggered validation (an error appears only if the resolver ran).
 const alwaysInvalidMobile: Resolver = async () => ({
   values: {},
   errors: { mobile: { type: "always", message: "invalid" } },
@@ -94,8 +92,6 @@ describe("PhoneField countryFrom sync", () => {
         <Harness field={synced} defaultValues={{ residence: "AE", mobile: "" }} onForm={(f) => (form = f)} />
       </StrictMode>,
     );
-    // Double-invoked effects must not turn the seed into a "change" — the
-    // value is exactly the seeded prefix, not a re-applied/normalized one.
     expect(form.getValues("mobile")).toBe("+971");
     await act(async () => form.setValue("residence", "EG"));
     expect(form.getValues("mobile")).toBe("+20");

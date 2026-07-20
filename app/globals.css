@@ -47,18 +47,11 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
-  /* Brand accent (indigo/violet) — NEW tokens, additive only. Never used by
-     --primary/--accent/--ring so the builder workspace and form fields stay
-     visually neutral; accent is opt-in per the landing-page spec. */
   --color-accent-brand: var(--accent-brand);
   --color-accent-brand-hover: var(--accent-brand-hover);
   --color-accent-brand-solid: var(--accent-brand-solid);
   --color-accent-brand-solid-hover: var(--accent-brand-solid-hover);
   --color-accent-brand-foreground: var(--accent-brand-foreground);
-  /* Interactive-border tint — for card-shaped links whose only affordance is
-     their border (docs index, pagination, hub-style link grids). Kept
-     separate from --border (below) so hairline dividers/inputs/the builder
-     canvas are untouched. */
   --color-border-interactive: var(--border-interactive);
   --color-border-interactive-hover: var(--border-interactive-hover);
   --radius-sm: calc(var(--radius) * 0.6);
@@ -103,9 +96,6 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
-  /* Site is dark-only (html carries .dark unconditionally — see
-     app/layout.tsx); :root is never actually painted, but these mirror the
-     .dark values below for structural parity with every other token pair. */
   --accent-brand: oklch(0.7 0.14 271);
   --accent-brand-hover: oklch(0.77 0.1 271);
   --accent-brand-solid: oklch(0.5 0.18 271);
@@ -160,34 +150,12 @@
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
 
-  /* Brand accent — indigo/violet, hue 271. Contrast verified against
-     --background #0a0a0a and --card #171717 (WCAG 2.2 relative-luminance
-     math, see PR description for the script):
-       accent-brand         oklch(0.7  0.14 271) #7f98f5
-         text-on-bg   7.25:1 | text-on-card 6.56:1   (need >=4.5:1)  PASS
-       accent-brand-hover   oklch(0.77 0.10 271) #9cb1f5
-         text-on-bg   9.44:1 | text-on-card 8.55:1                  PASS
-       accent-brand-solid   oklch(0.5  0.18 271) #4054c8  (CTA fill)
-         white-text-on-fill  6.04:1  (need >=4.5:1)                 PASS
-         fill-vs-background  3.14:1  (need >=3:1 boundary)          PASS
-       accent-brand-solid-hover oklch(0.55 0.18 271) #4d64d9
-         white-text-on-fill  4.86:1 | fill-vs-background 3.90:1     PASS
-     All four sRGB-in-gamut (no clipping) at these L/C/H combinations. */
   --accent-brand: oklch(0.7 0.14 271);
   --accent-brand-hover: oklch(0.77 0.1 271);
   --accent-brand-solid: oklch(0.5 0.18 271);
   --accent-brand-solid-hover: oklch(0.55 0.18 271);
   --accent-brand-foreground: var(--foreground);
 
-  /* Interactive-border tint — fixes the parked review finding that
-     --border (10% white, ~1.3:1) is under 3:1 as the sole boundary of
-     link-shaped cards (docs index, pagination, hub cards). Scoped to a new
-     token, NOT a change to --border itself — see globals.css comment above
-     and the design-system report for the blast-radius reasoning.
-       border-interactive        oklch(0.985 0 0 / 40%)
-         vs background 3.66:1 | vs card 3.71:1   (need >=3:1)  PASS
-       border-interactive-hover  oklch(0.985 0 0 / 60%)
-         vs background 7.03:1 | vs card 6.79:1                 PASS */
   --border-interactive: oklch(0.985 0 0 / 40%);
   --border-interactive-hover: oklch(0.985 0 0 / 60%);
 }
@@ -201,14 +169,8 @@
   }
   html {
     @apply font-sans;
-    /* Sticky site header is ~61px tall — keep hash/anchor targets visible
-       below it instead of scrolled underneath. */
     scroll-padding-top: 80px;
   }
-  /* Modern UA/Tailwind reset leaves <button> at cursor:default — restore the
-     pointer cursor for every enabled clickable (native buttons and Radix
-     triggers rendered as <button>, plus role="button" elements). Disabled
-     controls keep the default arrow. */
   button:not(:disabled),
   [role="button"]:not([aria-disabled="true"]) {
     cursor: pointer;

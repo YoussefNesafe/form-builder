@@ -16,7 +16,6 @@ const FLAGS: { key: keyof PasswordComplexity; label: string }[] = [
   { key: "special", label: C.specialChar },
 ];
 
-/** Edit `PasswordComplexity` (character-class flags + min length). */
 export function ComplexityEditor({
   id,
   value,

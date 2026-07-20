@@ -18,33 +18,13 @@ import {
 } from "./packageManagerStore";
 
 type CommandBlockProps = {
-  /** "execute" for a CLI runner command (npx/dlx/bunx-style, e.g. the shadcn CLI); "install" for a plain dependency install. */
   kind: CommandKind;
-  /** Canonical argument string appended after each PM's prefix — the single source every tab variant derives from (see command.ts). May be multi-line/backslash-continued. */
   args: string;
-  /** Accessible name for the tab list — defaults to "Package manager". */
   label?: string;
-  /** Noun for the copy button's accessible name, e.g. "command" — defaults to "command". */
   copyLabel?: string;
   className?: string;
 };
 
-/**
- * Tabbed terminal command block — pnpm/npm/yarn/bun variants of ONE command,
- * mirroring shadcn/ui's own docs (github.com/shadcn-ui/ui,
- * apps/v4/components/code-block-command.tsx: tab order pnpm/npm/yarn/bun,
- * default pnpm, selection persisted). The four command strings come from
- * command.ts's `deriveCommand`, so they can't drift independently; the
- * active tab is shared across every CommandBlock on the page and persisted
- * to localStorage via packageManagerStore (see that file for the SSR-safe
- * hydration contract). Built on the already-installed `radix-ui` Tabs
- * primitive directly (same pattern as components/ui/segmented-control.tsx)
- * rather than a new components/ui/tabs.tsx wrapper — gets tablist/tab/
- * tabpanel roles, roving tabindex, and arrow-key navigation for free.
- *
- * Client leaf: the surrounding docs section (DocsSection) stays a Server
- * Component; only this component ships JS.
- */
 export function CommandBlock({
   kind,
   args,
@@ -54,9 +34,6 @@ export function CommandBlock({
 }: CommandBlockProps) {
   const [packageManager, setPackageManagerSelection] = usePackageManager();
 
-  // Adopt any previously stored choice after mount — first paint stays the
-  // deterministic default (see packageManagerStore.ts) so there's no
-  // server/client hydration mismatch.
   useEffect(() => {
     hydratePackageManagerFromStorage();
   }, []);
@@ -67,9 +44,6 @@ export function CommandBlock({
     <TabsPrimitive.Root
       value={packageManager}
       onValueChange={(value) => {
-        // Radix only ever passes one of the values we handed its Triggers
-        // below, but this keeps the setter's input honestly narrowed instead
-        // of casting past it — an invalid value is silently ignored.
         if (isPackageManager(value)) setPackageManagerSelection(value);
       }}
       className={cn(
@@ -104,9 +78,6 @@ export function CommandBlock({
             "block",
           )}
         >
-          {/* Long commands wrap onto the next line instead of scrolling.
-              `break-word` (not `anywhere`) so a package spec like `shadcn@latest`
-              wraps at the space, not mid-token — matches CodeBlock. */}
           <pre className="whitespace-pre-wrap [overflow-wrap:break-word]">
             <code>{variants[pm]}</code>
           </pre>

@@ -18,9 +18,6 @@ type DateFieldConfig = Extract<FieldConfig, { type: "date" }>;
 
 type IsoRange = { from?: string; to?: string };
 
-// Values are calendar dates ("yyyy-MM-dd"), never instants. Parsing via
-// Date.parse would read them as UTC midnight and shift the day in any
-// non-UTC timezone — construct local dates from the parts instead.
 function parseIso(value: string | undefined): Date | undefined {
   if (!value) return undefined;
   const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(value);
@@ -39,10 +36,6 @@ function dayMatcher(config: DateFieldConfig): Matcher[] | undefined {
   return matchers.length ? matchers : undefined;
 }
 
-/**
- * Month/year dropdowns instead of endless prev/next clicks — a birthday field
- * with maxDate would otherwise need hundreds of navigation clicks.
- */
 function calendarNavigation(config: DateFieldConfig) {
   const min = parseIso(config.minDate);
   const max = parseIso(config.maxDate);

@@ -5,15 +5,9 @@ export type FieldGroup = "Text" | "Choice" | "Date & Time" | "Advanced" | "Layou
 
 export type FieldMeta = {
   group: FieldGroup;
-  /** Key into FieldIcon's ICONS map — typo'd names are now a compile error. */
   icon: FieldIconName;
 };
 
-/**
- * Add-menu grouping and icon for every built-in field type. Display labels
- * live in `@/locales/en/fieldTypes` (`fieldTypes[type].label`) — this file
- * is structure only.
- */
 export const FIELD_META: Record<FieldType, FieldMeta> = {
   text: { group: "Text", icon: "Type" },
   email: { group: "Text", icon: "Mail" },
@@ -45,5 +39,4 @@ export const FIELD_META: Record<FieldType, FieldMeta> = {
   group: { group: "Layout", icon: "Boxes" },
 };
 
-/** Add-menu groups in display order. */
 export const FIELD_GROUP_ORDER: FieldGroup[] = ["Text", "Choice", "Date & Time", "Advanced", "Layout"];

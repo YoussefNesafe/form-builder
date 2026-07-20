@@ -10,7 +10,6 @@ type FlowState = {
   status: OtpFlowStatus;
   seconds: number;
   error: string | null;
-  // Where a failed send returns to: a failed resend keeps the inputs open.
   resend: boolean;
 };
 
@@ -57,28 +56,15 @@ export type OtpFlowConfig = {
   resendDelaySeconds?: number;
 };
 
-/**
- * Headless OTP flow: send/verify state machine, resend countdown, and
- * dependency reset. IO comes from FieldRuntimeContext (FormRenderer wires
- * onSendOtp/onVerifyOtp), so the same hook drives any OTP presentation.
- */
 export function useOtpFlow(config: OtpFlowConfig) {
   const { messages, otp, isFieldValid, verifiedFields } = useFieldRuntime();
   const { control, resetField, trigger, getValues } = useFormContext();
-  // The verified registry outlives this component (wizard steps and
-  // visibleWhen toggles unmount fields) — rehydrate instead of restarting at
-  // idle, or the UI would show a locked "Send OTP" for an already-verified code.
   const [state, dispatch] = useReducer(reducer, initialState, (initial) =>
     verifiedFields?.has(config.name) ? { ...initial, status: "verified" as const } : initial,
   );
 
-  // Stamps async operations; a bumped generation orphans in-flight results.
   const generation = useRef(0);
-  // Last code handed to verify — stops the effect re-verifying a rejected code.
   const attempted = useRef<string | null>(null);
-  // Set when a reset dispatches: the auto-verify effect runs in the SAME
-  // commit with a stale closure (status still "sent", old code, attempted
-  // just nulled) and would verify the old code against the new dependency.
   const resetPending = useRef(false);
 
   const code = (useWatch({ control, name: config.name }) as string) ?? "";
@@ -90,9 +76,6 @@ export function useOtpFlow(config: OtpFlowConfig) {
   const canSend =
     !config.dependsOn || (isFieldValid ? isFieldValid(config.dependsOn, depValue) : true);
 
-  // Rehydrated as verified, but the dependency changed while this field was
-  // unmounted (wizard step, visibleWhen toggle) — the registry snapshot no
-  // longer matches, so the old code must not stand for the new value.
   const reconciled = useRef(false);
   useEffect(() => {
     if (reconciled.current) return;
@@ -107,8 +90,6 @@ export function useOtpFlow(config: OtpFlowConfig) {
     }
   }, [state.status, otp, config.name, depValue, resetField]);
 
-  // Dependency changed after the flow started → everything about the sent
-  // code is stale: clear inputs, drop the verified registry entry, start over.
   const prevDep = useRef(depValue);
   useEffect(() => {
     if (Object.is(prevDep.current, depValue)) return;
@@ -130,13 +111,10 @@ export function useOtpFlow(config: OtpFlowConfig) {
   }, [counting]);
 
   useEffect(() => {
-    // Consumed exactly once: the RESET status change re-runs this effect in
-    // the same cycle, so the flag never leaks into later user actions.
     if (resetPending.current) {
       resetPending.current = false;
       return;
     }
-    // Verify-only wiring (no send handler) has no "sent" phase — verify from idle.
     const eligible = state.status === "sent" || (!otp?.send && state.status === "idle");
     if (!otp?.verify || !eligible) return;
     if (code.length !== config.length || attempted.current === code) return;
@@ -149,7 +127,6 @@ export function useOtpFlow(config: OtpFlowConfig) {
         if (stamp !== generation.current) return;
         if (ok) {
           dispatch({ type: "VERIFIED" });
-          // Re-run validation so a pending "verify the code first" error clears.
           void trigger(config.name);
         } else {
           dispatch({ type: "VERIFY_FAILED", message: messages.otpVerifyFailed });
@@ -165,8 +142,6 @@ export function useOtpFlow(config: OtpFlowConfig) {
     if (!otp?.send || !canSend || state.status === "sending" || state.status === "verified") return;
     const resend = state.status !== "idle";
     attempted.current = null;
-    // A resend issues a fresh code — stale digits would only auto-verify
-    // against the old one, so clear them (also clears the field error).
     if (resend) resetField(config.name, { defaultValue: "" });
     const stamp = ++generation.current;
     dispatch({ type: "SEND", resend });
@@ -186,8 +161,6 @@ export function useOtpFlow(config: OtpFlowConfig) {
     seconds: state.seconds,
     error: state.error,
     canSend,
-    // Gated flows lock the inputs until a code is out; ungated (no send
-    // handler) fields stay editable except once verified.
     inputsDisabled: gated ? state.status !== "sent" : state.status === "verified",
     showSend: gated,
     showResend: gated && (state.status === "sent" || state.status === "verifying"),

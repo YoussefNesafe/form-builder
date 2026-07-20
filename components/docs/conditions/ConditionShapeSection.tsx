@@ -26,9 +26,6 @@ function Section() {
         complete operator list (the validator rejects a condition with none of them set). A{" "}
         <IC>ConditionSpec</IC> is one of three shapes, all evaluating to the same normalized form internally:
       </P>
-      {/* Definition list, not a bullet list: this is a closed set of type-shape
-          variants (term → what it means → example), so each shape sits next to
-          its own code block instead of stacking both examples after the list. */}
       <dl className="flex flex-col gap-[2.67vw] tablet:gap-[1.25vw] desktop:gap-[0.52vw]">
         <div className="flex flex-col gap-[1.068vw] tablet:gap-[0.5vw] desktop:gap-[0.208vw]">
           <dt>

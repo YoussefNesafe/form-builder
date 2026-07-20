@@ -6,8 +6,6 @@ import { defaultMessages } from "../core/messages";
 import { FieldRuntimeContext } from "../components/FieldRuntime";
 import type { FieldConfig } from "../core/types";
 
-// jsdom has no real canvas — mock the pad entirely; real strokes are verified
-// live in the browser (Phase 7).
 const { listeners, padMock, padConstructor } = vi.hoisted(() => {
   const listeners = new Map<string, () => void>();
   const padMock = {
@@ -127,7 +125,6 @@ describe("SignatureField", () => {
 
   it("resize path uses redraw (restored ink survives), not toData/fromData", () => {
     setup();
-    // resize() runs once on mount.
     expect(padMock.redraw).toHaveBeenCalled();
     expect(padMock.fromData).not.toHaveBeenCalled();
   });
@@ -151,7 +148,6 @@ describe("SignatureField", () => {
     await act(async () => form().setError("sign", { type: "manual", message: "boom" }));
     expect(screen.getByText("boom")).toBeTruthy();
     const canvas = screen.getByRole("img", { name: "Signature" });
-    // aria-invalid is unsupported on role="img"; error shows as border color.
     expect(canvas.className).toContain("border-destructive");
     const describedBy = canvas.getAttribute("aria-describedby");
     expect(describedBy).toBeTruthy();

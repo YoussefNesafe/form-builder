@@ -170,7 +170,6 @@ describe("conditional steps", () => {
     const names = (values: Record<string, unknown>) => visibleFieldsFor(config, values).map((f) => f.name);
     expect(names({ wantsExtras: false, basic: "show" })).toEqual(["wantsExtras", "basic"]);
     expect(names({ wantsExtras: true, basic: "show" })).toEqual(["wantsExtras", "basic", "extra1", "extra2"]);
-    // Step visible but the field's own condition hides extra2.
     expect(names({ wantsExtras: true, basic: "" })).toEqual(["wantsExtras", "basic", "extra1"]);
   });
 

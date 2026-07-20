@@ -22,11 +22,6 @@ export const builder = {
     exportButton: "Export code",
     exportDialogTitle: "Form config",
     exportDialogDescription: "Copy this into a page or your CMS.",
-    /**
-     * Second dialog line pointing the export moment at the copy-in setup
-     * docs — segmented around the inline <Link> (prefix/linkText/suffix
-     * pattern, same as docs.index.intro).
-     */
     exportInstallPrefix: "New to the engine? See ",
     exportInstallLinkText: "Installation",
     exportInstallSuffix: " for the copy-in setup.",
@@ -45,9 +40,7 @@ export const builder = {
     unnamed: "(unnamed)",
     assignToStep: "Assign to step…",
     unassigned: "Unassigned",
-    /** Fallback shown for a step with no title, e.g. "Step 1". */
     stepFallback: "Step {n}",
-    /** SelectTrigger aria-label, e.g. "Step for email". */
     stepAriaLabel: "Step for {name}",
     actions: {
       moveUp: "Move up",
@@ -55,7 +48,6 @@ export const builder = {
       duplicate: "Duplicate",
       delete: "Delete",
     },
-    /** Add-field-menu group headings — display text for FIELD_META's FieldGroup keys. */
     groups: {
       Text: "Text",
       Choice: "Choice",
@@ -67,7 +59,6 @@ export const builder = {
 
   preview: {
     heading: "Preview",
-    /** e.g. "Demo OTP code: 123456". */
     demoOtpCode: "Demo OTP code: {code}",
     submittedValues: "Submitted values",
     empty: "Add a field to see the live preview.",
@@ -79,7 +70,6 @@ export const builder = {
     modeJson: "JSON",
     copy: "Copy",
     copied: "Copied",
-    /** e.g. "Not valid yet: duplicate field name". */
     notValidYet: "Not valid yet: {error}",
     addAtLeastOneField: "Add at least one field.",
     formatAriaLabel: "Output format",
@@ -91,12 +81,10 @@ export const builder = {
     dialogDescription:
       "Generate the engine's sizing stylesheet in your unit. Drop it into your copied form-builder/theme/, or skip it and keep the fluid vw defaults.",
     unitAriaLabel: "Unit",
-    /** Label for the rem/em base input, e.g. "px per 1rem". */
     baseSuffix: "px per 1{unit}",
     refMobile: "Mobile (px)",
     refTablet: "Tablet (px)",
     refDesktop: "Desktop (px)",
-    /** Shown under the controls to explain the unit's behavior. */
     fluidNote: "Fluid — sizes scale within each breakpoint band (engine default).",
     fixedNote:
       "Fixed — sizes stay constant within a band and jump at the breakpoint; the vw scale is resolved at the reference widths above.",
@@ -111,15 +99,10 @@ export const builder = {
     noFieldsAssignedWarning: "No fields assigned — assign each field to a step below, or the export drops the steps.",
     addStep: "Add step",
     reviewLabel: "Review step (summary of earlier steps; owns no fields)",
-    /** e.g. "Step 1 title". */
     titleAriaLabel: "Step {n} title",
-    /** e.g. "Move step 1 up". */
     moveUpAriaLabel: "Move step {n} up",
-    /** e.g. "Move step 1 down". */
     moveDownAriaLabel: "Move step {n} down",
-    /** e.g. "Remove step 1". */
     removeAriaLabel: "Remove step {n}",
-    /** e.g. "Step 1 review step". */
     reviewAriaLabel: "Step {n} review step",
   },
 
@@ -127,16 +110,6 @@ export const builder = {
     heading: "Properties",
     selectPrompt: "Select a field to edit its properties.",
     deleteFieldAriaLabel: "Delete field",
-    /**
-     * Descriptor-table copy from model/fieldProps.ts, keyed by the
-     * descriptor's `key` (stable). Most keys have a single label/help pair
-     * shared by every field type that uses them. Where the SAME propKey
-     * renders a different label depending on field-type context — "min"/
-     * "max" on number/slider vs. rating's "Max stars" vs. group's "Min/Max
-     * rows" — a variant sub-key disambiguates. "options" keeps one label
-     * ("Options") but three help variants (none / checkbox / switch), so
-     * only its help is split by variant.
-     */
     fields: {
       name: { label: "Name", help: "Unique key in the submitted values. No dots." },
       label: { label: "Label" },
@@ -318,7 +291,6 @@ export const builder = {
       noResults: "No country found.",
       selectCountry: "Select country",
       clear: "Clear",
-      /** e.g. "3 selected". */
       selectedCount: "{n} selected",
       addCountries: "Add countries",
     },

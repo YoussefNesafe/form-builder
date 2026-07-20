@@ -13,9 +13,6 @@ describe("peekFields", () => {
     expect(peekFields(config, ["a", "nope"])).toBe('{ type: "text", name: "a" }');
   });
 
-  // Every showcase card's peekFieldNames must resolve — a typo would
-  // silently render fewer peek lines than intended (fieldPeek.ts skips
-  // misses rather than throwing), so pin the count here instead.
   it.each(SHOWCASE_CARDS)("$slug's peekFieldNames all resolve against its real config", (card) => {
     const peek = peekFields(card.config, card.peekFieldNames);
     const lineCount = peek.split("\n").filter(Boolean).length;

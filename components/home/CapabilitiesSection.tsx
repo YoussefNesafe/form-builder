@@ -3,15 +3,6 @@ import { CAPABILITY_ROWS } from "./content";
 import { SectionCtas } from "./SectionCtas";
 import { SectionHeading } from "./SectionHeading";
 
-/**
- * Spec-sheet restyle of the old FeatureGrid: one bordered panel (not a card
- * grid — no per-row borders/shadows) holding a dense 2-column row list. Mono
- * keys name the real config/implementation mechanism behind each capability
- * (visibleWhen, steps:, superRefine:, ...) instead of generic marketing
- * icons-on-cards. Divider rules only apply in the single-column mobile
- * stack — the 2-column grid at tablet+ relies on gap alone, since a plain
- * `divide-*` utility can't express "divide between row-pairs" on a grid.
- */
 export function CapabilitiesSection() {
   return (
     <section

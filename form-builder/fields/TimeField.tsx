@@ -33,7 +33,6 @@ export function TimeField({ field }: FieldComponentProps) {
             type="time"
             min={config.minTime}
             max={config.maxTime}
-            // The native attribute is in seconds.
             step={config.stepMinutes !== undefined ? config.stepMinutes * 60 : undefined}
             {...rhf}
             id={id}

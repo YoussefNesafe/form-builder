@@ -14,8 +14,6 @@ import { buildDefaultValues } from "../core/defaults";
 
 type GroupFieldConfig = Extract<FieldConfig, { type: "group" }>;
 
-// Normalized to anyOf-groups on the way through — evaluation treats all
-// spec shapes alike, so the shape change is invisible downstream.
 function prefixConditionSpec(spec: ConditionSpec | undefined, prefix: string): ConditionSpec | undefined {
   if (!spec) return undefined;
   return {
@@ -25,7 +23,6 @@ function prefixConditionSpec(spec: ConditionSpec | undefined, prefix: string): C
   };
 }
 
-/** Row-scoped names and conditions: inner "role" becomes "team.0.role". */
 export function withNamePrefix(field: AnyFieldConfig, prefix: string): AnyFieldConfig {
   return {
     ...field,

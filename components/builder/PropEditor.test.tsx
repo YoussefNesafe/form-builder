@@ -38,7 +38,6 @@ describe("PropEditorPanel", () => {
     store.selectNode(otpChild._id);
 
     render(<PropEditorPanel />);
-    // otp still shows Length, but dependsOn / enabledWhenVerified are suppressed inside a group
     expect(screen.getByLabelText("Length")).toBeTruthy();
     expect(screen.queryByText("Depends on")).toBeNull();
     expect(screen.queryByText("Enabled when verified")).toBeNull();

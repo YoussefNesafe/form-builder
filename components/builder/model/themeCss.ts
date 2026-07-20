@@ -1,22 +1,8 @@
-/**
- * Generator for the engine's sizing-token stylesheet
- * (`form-builder/theme/tokens.css`). The builder's "Sizing CSS" export lets a
- * host regenerate that file in the unit of their choice; this module is the
- * pure, framework-free core behind it (unit-tested in `themeCss.test.ts`,
- * which also pins the `vw` output against the shipped `tokens.css`).
- *
- * The engine bakes every size as `var(--fb-space-N[-tier], <vw default>)`, so
- * this file is never required — it only lets a consumer RETHEME the scale.
- * See AGENTS.md "Portable-package sizing tokens".
- */
-
 export type ThemeUnit = "vw" | "px" | "rem" | "em";
 
 export type ThemeGenOptions = {
   unit: ThemeUnit;
-  /** px per 1rem/em — only used for rem/em. */
   base?: number;
-  /** Reference viewport widths (px) used to convert vw -> fixed units, per tier. */
   refMobile?: number;
   refTablet?: number;
   refDesktop?: number;
@@ -29,13 +15,6 @@ export const THEME_DEFAULTS = {
   refDesktop: 1920,
 } as const;
 
-// The sizing scale: the union of steps the engine actually uses. Per tier the
-// value is `step * VW_PER_STEP[tier]` in vw (mobile = base / no suffix).
-// `tokens.css` is generated from this (vw mode), and `themeCss.test.ts` pins
-// BOTH sides that must agree with it: the shipped `tokens.css` AND the ~324
-// inline `var(--fb-space-N[-tier], <vw>)` fallbacks the engine actually renders
-// from. Retuning a factor here without updating those fallbacks fails that test
-// (they are the real render path — this module only mirrors them).
 const STEPS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 15, 16, 18, 20, 24, 144] as const;
 
 const TIERS = [
@@ -44,19 +23,10 @@ const TIERS = [
   { suffix: "-desktop", vwPerStep: 0.104, refKey: "refDesktop" },
 ] as const;
 
-/** Trim floating-point noise and trailing zeros: 1.6019999 -> "1.602", 16 -> "16". */
 function num(n: number): string {
   return parseFloat(n.toFixed(4)).toString();
 }
 
-/**
- * Render one token's value in the requested unit.
- * - vw: the fluid default, emitted verbatim.
- * - px/rem/em: FIXED — vw resolved at the tier's reference width, so a form
- *   themed in these units jumps between breakpoints instead of scaling within
- *   a band. px is rounded to whole pixels (the scale is designed on integers);
- *   rem/em divide by `base`.
- */
 function value(vw: number, unit: ThemeUnit, ref: number, base: number): string {
   if (unit === "vw") return `${num(vw)}vw`;
   const px = Math.round((vw / 100) * ref);
@@ -94,7 +64,6 @@ ${common}
  */`;
 }
 
-/** Generate the full `tokens.css` contents for the given unit + reference widths. */
 export function generateThemeCss(options: ThemeGenOptions): string {
   const o: Required<ThemeGenOptions> = {
     unit: options.unit,

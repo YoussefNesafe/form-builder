@@ -18,24 +18,14 @@ import { FLAT_GRID_CLASS } from "../ui/layout";
 
 type FormRendererProps = {
   config: FormConfig;
-  // Returning (or resolving) a ServerErrorResult maps API errors onto fields:
-  // fieldErrors → setError per field (unknown names fold into the form-level
-  // error), formError → the root error slot at the end of the form.
   onSubmit: (values: FormValues) => void | ServerErrorResult | Promise<void | ServerErrorResult>;
-  // Convenience wiring: one pair of handlers for every otp field, branched by
-  // fieldName. Throwing from send signals failure to the field.
   onSendOtp?: (fieldName: string, values: FormValues) => Promise<void>;
   onVerifyOtp?: (fieldName: string, code: string) => Promise<boolean>;
-  // Advanced wiring: bring your own controller (per-field handler map via
-  // useOtpController). Takes precedence over onSendOtp/onVerifyOtp.
   otp?: OtpController;
   messages?: Partial<Messages>;
   locale?: FormLocale;
   className?: string;
-  // Opt-in localStorage drafts: silent restore on mount, cleared after a
-  // submit that reports no server errors.
   autosave?: AutosaveOptions;
-  // Review-step display for custom field types (fallback: String(value)).
   reviewFormatters?: ReviewFormatters;
 };
 
@@ -55,8 +45,6 @@ export function FormRenderer({
     () => (onSendOtp || onVerifyOtp ? { send: onSendOtp, verify: onVerifyOtp } : undefined),
     [onSendOtp, onVerifyOtp],
   );
-  // Called unconditionally (rules of hooks); inert when an external
-  // controller is supplied or no legacy handlers exist.
   const internalController = useOtpController({ fallback: legacyFallback });
   const controller = otpProp ?? internalController;
   if (otpProp && legacyFallback && process.env.NODE_ENV !== "production") {
@@ -67,13 +55,10 @@ export function FormRenderer({
 
   const { form, messages: mergedMessages, draft, restoreGeneration } = useDynamicForm(config, {
     messages,
-    // Without a verify capability the checker would block every otp field.
     otpVerified: controller.hasVerify ? controller.otpVerified : undefined,
     autosave,
   });
 
-  // Standalone per-field validity, independent of form error state — lets a
-  // field gate its own behavior on a sibling (otp dependsOn).
   const fieldSchemas = useMemo(() => {
     const schemas = new Map<string, ReturnType<typeof toZodSchema>>();
     for (const field of config.fields) {
@@ -104,34 +89,22 @@ export function FormRenderer({
   );
 
   const [formError, setFormError] = useState<string | null>(null);
-  // FormStepper registers a fieldName → step jump here, so a server error on
-  // another step's field can bring its step into view.
   const stepJumpRef = useRef<((fieldName: string) => void) | null>(null);
 
-  // handleSubmit is invoked inside the event (not during render) so the
-  // step-jump ref is only read post-render.
   const submitHandler = (event: React.FormEvent<HTMLFormElement>) => {
-    // Per ATTEMPT, not per valid submit — a resubmit blocked by client
-    // validation must not keep showing the previous server formError.
     setFormError(null);
     return form.handleSubmit(async (values) => {
       const result = await onSubmit(values);
       if (!result || (!result.fieldErrors && !result.formError)) {
-        // Submitted clean — the draft has served its purpose.
         draft?.clear();
         return;
       }
       const outcome = applyServerErrors(form.setError, result, config.fields);
       if (outcome.formError) setFormError(outcome.formError);
       const first = outcome.applied[0];
-      // A host may address a field on a step that is currently hidden — the
-      // jump would just bounce back and the focus is a no-op; skip the noise
-      // (documented limitation: that error stays invisible until cleared).
       const stepHidden = hiddenStepFieldNames(config, values).has(first?.split(".")[0] ?? "");
       if (first !== undefined && !stepHidden) {
         stepJumpRef.current?.(first);
-        // After a step jump the field mounts on the next paint; setFocus on
-        // an unmounted field is a no-op, so defer one tick either way.
         setTimeout(() => form.setFocus(first), 0);
       }
     })(event);

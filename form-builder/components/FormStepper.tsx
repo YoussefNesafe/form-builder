@@ -13,9 +13,6 @@ import { useFieldRuntime } from "./FieldRuntime";
 import { renderField } from "./renderField";
 import { ReviewStep } from "./ReviewStep";
 
-// Where to land when `step` is not visible: next visible preferred, else
-// previous. Shared by the render guard and the fallback effect so the
-// transient painted frame shows the SAME step the effect commits to.
 function nearestVisible(step: number, visibleIndices: number[]): number | undefined {
   return (
     visibleIndices.find((index) => index > step) ??
@@ -30,10 +27,7 @@ export function FormStepper({
   onStepChange,
 }: {
   config: FormConfig;
-  // FormRenderer-owned slot: jump to the step containing a field (server
-  // errors land on fields the current step may not show).
   stepJumpRef?: React.MutableRefObject<((fieldName: string) => void) | null>;
-  // Draft-restored step — arrives once, after the restore effect runs.
   initialStep?: number;
   onStepChange?: (step: number) => void;
 }) {
@@ -43,8 +37,6 @@ export function FormStepper({
   const [store] = useState(() => createStepperStore(steps.length));
   const step = useStore(store, (state) => state.step);
 
-  // Conditional steps: one subscription over every step-condition source.
-  // Store indices stay CONFIG indices; visibility filters display/navigation.
   const stepConditionNames = useMemo(
     () => [...new Set(steps.flatMap((s) => conditionFieldNames(s.visibleWhen)))],
     [steps],
@@ -59,19 +51,14 @@ export function FormStepper({
     .map((s, index) => (conditionSpecMatches(s.visibleWhen, stepValueOf) ? index : -1))
     .filter((index) => index >= 0);
 
-  // The current step can become hidden under the user (its condition source
-  // changed) — move to the nearest visible step (next preferred, else prev).
   const currentHidden = steps.length > 0 && !visibleIndices.includes(step);
   useEffect(() => {
     if (!currentHidden || visibleIndices.length === 0) return;
     const fallback = nearestVisible(step, visibleIndices);
     if (fallback !== undefined) store.getState().goTo(fallback);
-    // visibleIndices is re-derived per render; step/currentHidden carry the signal.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentHidden, step, store]);
 
-  // Draft-restored step: fires when the value arrives (undefined → number);
-  // goTo clamps, and the hidden-step effect above resolves an invisible target.
   useEffect(() => {
     if (initialStep !== undefined) store.getState().goTo(initialStep);
   }, [initialStep, store]);
@@ -83,7 +70,6 @@ export function FormStepper({
   useEffect(() => {
     if (!stepJumpRef) return;
     stepJumpRef.current = (fieldName) => {
-      // Group rows come in as "team.0.role"; steps list root names only.
       const root = fieldName.split(".")[0];
       const index = steps.findIndex((s) => (s.fieldNames ?? []).includes(root));
       if (index >= 0) store.getState().goTo(index);
@@ -93,8 +79,6 @@ export function FormStepper({
     };
   }, [stepJumpRef, steps, store]);
 
-  // Focus the step list on navigation so keyboard/SR users land at the new
-  // step instead of staying on the Next/Back button.
   const stepListRef = useRef<HTMLOListElement>(null);
   const mounted = useRef(false);
   useEffect(() => {
@@ -112,15 +96,11 @@ export function FormStepper({
 
   if (!steps.length) return null;
   if (visibleIndices.length === 0) {
-    // Every step hidden — nothing to render; almost certainly a config bug.
     if (process.env.NODE_ENV !== "production") {
       console.warn("form-builder: every wizard step is hidden by its visibleWhen — nothing to render");
     }
     return null;
   }
-  // Transient frame between a step turning hidden and the fallback effect —
-  // same destination as the effect, so no flash of a different step (and no
-  // spurious mount/baseline pass for its fields).
   const effectiveStep = visibleIndices.includes(step)
     ? step
     : (nearestVisible(step, visibleIndices) ?? visibleIndices[0]);
@@ -130,27 +110,18 @@ export function FormStepper({
   const currentFields = currentFieldNames
     .map((name) => fieldsByName.get(name))
     .filter((field) => field !== undefined);
-  // Hidden fields carry values via defaults regardless of step; render them
-  // always so nothing depends on which step lists them.
   const hiddenFields = config.fields.filter((field) => field.type === "hidden");
   const submitField = config.fields.find((field) => field.type === "submit");
   const position = visibleIndices.indexOf(effectiveStep);
   const isLast = position === visibleIndices.length - 1;
 
   const handleNext = async () => {
-    // Gate on trigger(), never formState.isValid — the condition-aware
-    // resolver computes isValid across ALL steps. A review step owns no
-    // fields: RHF's trigger([]) runs the full resolver but applies errors to
-    // ZERO fields (vacuously true) — skip the wasted run and be explicit.
     const valid = currentFieldNames.length === 0 ? true : await form.trigger(currentFieldNames);
     if (valid) {
       const next = visibleIndices[position + 1];
       if (next !== undefined) store.getState().goTo(next);
       return;
     }
-    // Move focus to the first field that failed so the error is announced.
-    // getFieldState reads live state — formState from render is a stale
-    // snapshot inside this handler.
     const firstInvalid = currentFieldNames.find((name) => form.getFieldState(name).invalid);
     if (firstInvalid) form.setFocus(firstInvalid);
   };
@@ -199,7 +170,6 @@ export function FormStepper({
             visibleIndices={visibleIndices}
             goTo={(index) => store.getState().goTo(index)}
           />
-          {/* Hidden fields still carry values on the review step. */}
           <div className={FLAT_GRID_CLASS}>{hiddenFields.map(renderField)}</div>
         </>
       ) : (
@@ -214,8 +184,6 @@ export function FormStepper({
           {messages.back}
         </Button>
         {isLast ? (
-          // Fallback submit reuses SubmitField so validity gating never
-          // diverges between the two render paths.
           renderField(submitField ?? { type: "submit", name: "__submit", text: messages.submit })
         ) : (
           <Button type="button" onClick={handleNext}>

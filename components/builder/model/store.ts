@@ -23,7 +23,6 @@ export type BuilderActions = {
   setStepCondition: (index: number, visibleWhen: ConditionSpec | undefined) => void;
   setStepReview: (index: number, review: boolean) => void;
   moveStep: (index: number, dir: -1 | 1) => void;
-  /** Assign a node to a step (or `null` to unassign); removes it from every other step. */
   assignNodeToStep: (nodeId: string, stepIndex: number | null) => void;
   reset: () => void;
 };
@@ -40,9 +39,6 @@ const INITIAL: BuilderState = {
   outputMode: "ts",
 };
 
-// ---- pure tree helpers (immutable) ----------------------------------------
-
-/** Every `name` prop across the tree — used to keep generated names unique. */
 function collectNames(nodes: BuilderNode[], into: Set<string> = new Set()): Set<string> {
   for (const node of nodes) {
     const name = node.props.name;
@@ -75,7 +71,6 @@ function makeNode(type: FieldType, taken: Set<string>): BuilderNode {
   return node;
 }
 
-/** Map every node in the tree (top-down), rebuilding arrays immutably. */
 function mapTree(nodes: BuilderNode[], fn: (n: BuilderNode) => BuilderNode): BuilderNode[] {
   return nodes.map((node) => {
     const mapped = fn(node);
@@ -83,7 +78,6 @@ function mapTree(nodes: BuilderNode[], fn: (n: BuilderNode) => BuilderNode): Bui
   });
 }
 
-/** Rebuild the tree with `updater` applied to whichever array holds `id`. */
 function updateSiblings(
   nodes: BuilderNode[],
   id: string,
@@ -106,7 +100,6 @@ function findNode(nodes: BuilderNode[], id: string): BuilderNode | null {
   return null;
 }
 
-/** Deep-clone a subtree with fresh ids and names kept globally unique via `taken`. */
 function cloneSubtree(node: BuilderNode, taken: Set<string>): BuilderNode {
   const name = uniqueName(node.type, taken);
   taken.add(name);
@@ -119,19 +112,6 @@ function cloneSubtree(node: BuilderNode, taken: Set<string>): BuilderNode {
   return clone;
 }
 
-/**
- * Clear any prop on `node` that references the deleted field `name` (same level only).
- *
- * This key list (plus the optionsFrom/rules/condition handling below it) is a
- * DIFFERENT concept from `GROUP_FORBIDDEN_KEYS` in `./context.ts`: this one is
- * "sibling-name-valued props to scrub when the field they point at is
- * renamed/deleted", that one is "wiring props the engine hard-rejects inside a
- * group". They mostly overlap but are not the same set — `optionsFrom` is
- * object-shaped here (checked via `.field`) but a flat key there; the
- * `rules.matches`/condition-spec scrubbing below has no equivalent entry in
- * `GROUP_FORBIDDEN_KEYS` at all. When adding a new wiring prop, consider
- * whether it belongs in EACH list independently.
- */
 function scrubRefs(node: BuilderNode, name: string): BuilderNode {
   const props = { ...node.props };
   let changed = false;
@@ -174,8 +154,6 @@ function scrubRefs(node: BuilderNode, name: string): BuilderNode {
   return changed ? { ...node, props } : node;
 }
 
-// Drop only the leaves referencing the deleted field; a group emptied this
-// way is dropped too (an empty AND-group would match everything).
 function scrubSpec(
   spec: ConditionSpec | undefined,
   name: string,
@@ -189,7 +167,6 @@ function scrubSpec(
   return { spec: fromConditionGroups(groups), changed: true };
 }
 
-/** Every `_id` in the tree — used to advance the id counter after rehydration. */
 function collectIds(nodes: BuilderNode[], into: string[] = []): string[] {
   for (const node of nodes) {
     into.push(node._id);
@@ -197,8 +174,6 @@ function collectIds(nodes: BuilderNode[], into: string[] = []): string[] {
   }
   return into;
 }
-
-// ---- state creator ---------------------------------------------------------
 
 const creator: StateCreator<BuilderStore> = (set, get) => ({
   ...INITIAL,
@@ -249,8 +224,6 @@ const creator: StateCreator<BuilderStore> = (set, get) => ({
         return next;
       }),
       selectedId: clone._id,
-      // The clone inherits the original's step membership (top-level fields
-      // only; group children are never in steps).
       steps: state.steps.map((step) =>
         step.nodeIds.includes(id) ? { ...step, nodeIds: [...step.nodeIds, clone._id] } : step,
       ),
@@ -267,17 +240,14 @@ const creator: StateCreator<BuilderStore> = (set, get) => ({
         let next = nodes
           .filter((n) => n._id !== id)
           .map((n) => (n.children ? { ...n, children: prune(n.children) } : n));
-        // Scrub sibling references to the deleted field so the config stays valid.
         if (hadTarget && name) next = next.map((n) => scrubRefs(n, name));
         return next;
       };
       return {
         nodes: prune(state.nodes),
-        // Clear selection if the selected node was anywhere in the removed subtree.
         selectedId: state.selectedId && removedIds.has(state.selectedId) ? null : state.selectedId,
         steps: state.steps.map((step) => {
           const next = { ...step, nodeIds: step.nodeIds.filter((nid) => !removedIds.has(nid)) };
-          // Step conditions reference fields by NAME — scrub like sibling refs.
           if (name) {
             const scrubbed = scrubSpec(step.visibleWhen, name);
             if (scrubbed.changed) {
@@ -298,8 +268,6 @@ const creator: StateCreator<BuilderStore> = (set, get) => ({
   toggleMultiStep: (on) =>
     set((state) => {
       if (!on || state.steps.length > 0) return { multiStep: on };
-      // Seed a first step containing every step-eligible top-level field
-      // (hidden/submit render automatically and must not be assigned).
       const nodeIds = state.nodes.filter((n) => isStepEligible(n.type)).map((n) => n._id);
       return { multiStep: on, steps: [{ title: "Step 1", nodeIds }] };
     }),
@@ -318,7 +286,6 @@ const creator: StateCreator<BuilderStore> = (set, get) => ({
     set((state) => ({
       steps: state.steps.map((s, i) => {
         if (i !== index) return s;
-        // A review step owns no fields; turning it on unassigns them.
         if (review) return { ...s, review: true, nodeIds: [] };
         const next = { ...s, nodeIds: s.nodeIds };
         delete next.review;
@@ -353,7 +320,6 @@ const creator: StateCreator<BuilderStore> = (set, get) => ({
   reset: () => set({ ...INITIAL }),
 });
 
-/** Fresh isolated store — used in tests. */
 export const createBuilderStore = () => createStore<BuilderStore>()(creator);
 
 const noopStorage = {
@@ -362,7 +328,6 @@ const noopStorage = {
   removeItem: () => undefined,
 };
 
-/** App singleton, persisted to localStorage (selection is intentionally not persisted). */
 export const useBuilderStore = create<BuilderStore>()(
   persist(creator, {
     name: "form-builder-draft",
@@ -375,8 +340,6 @@ export const useBuilderStore = create<BuilderStore>()(
       steps: state.steps,
       outputMode: state.outputMode,
     }),
-    // A fresh module starts the id counter at 0; advance it past every restored
-    // id so newly-added nodes never collide with rehydrated ones.
     onRehydrateStorage: () => (state) => {
       if (state) syncCounterFromIds(collectIds(state.nodes));
     },

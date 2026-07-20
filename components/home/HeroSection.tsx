@@ -4,19 +4,7 @@ import { t } from "@/locales";
 import { landingDemoConfig } from "./demoConfig";
 import { LandingDemoForm } from "./LandingDemoForm";
 
-/**
- * Asymmetric split hero: copy + CTAs on the left, the live demo panel on the
- * right. Merges the old Hero + DemoSection — one live FormRenderer is the
- * whole proof, it doesn't need its own section below the fold. Stacks to a
- * single column below desktop (copy first in DOM order, so mobile reads copy
- * above the form without any reordering trick). The panel's mono tab shows
- * `landingDemoConfig.id` — a real value off the config actually rendering
- * inside it, not a made-up label.
- */
 export function HeroSection() {
-  // hero.title carries a "{accent}" marker where hero.titleAccent (the
-  // accent-colored word) is spliced in, so the colored span stays a rendering
-  // concern, not a copy concern — the dictionary owns both halves.
   const parts = t.home.hero.title.split("{accent}");
   if (process.env.NODE_ENV !== "production" && parts.length !== 2) {
     console.warn("home.hero.title must contain exactly one {accent} marker");

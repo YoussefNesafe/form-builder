@@ -5,12 +5,6 @@ import { usePathname } from "next/navigation";
 import { getDocsPagination } from "@/lib/docsNav";
 import { docs } from "@/locales/en/docs";
 
-/**
- * nextjs.org-docs-style prev/next cards, driven entirely by DOCS_PAGES (see
- * lib/docsNav.ts) so the order can't drift from the sidebar. Client-only for
- * usePathname; rendered once in app/(site)/docs/layout.tsx after `{children}` so
- * every docs page gets it without editing each page file.
- */
 export function DocsPagination() {
   const pathname = usePathname();
   const { prev, next } = getDocsPagination(pathname);

@@ -9,7 +9,6 @@ import { SelectField } from "./SelectField";
 
 afterEach(cleanup);
 
-// cmdk (combobox list) needs ResizeObserver; jsdom has none.
 class ResizeObserverStub {
   observe() {}
   unobserve() {}
@@ -57,7 +56,6 @@ describe("select optionsFrom", () => {
       />,
     );
     await act(async () => {});
-    // Mount is baseline — the existing valid value stays.
     expect(form!.getValues("city")).toBe("nyc");
 
     await act(async () => form!.setValue("country", "AE"));
@@ -96,7 +94,6 @@ describe("select optionsFrom", () => {
     );
     await act(async () => {});
     await act(async () => form!.setValue("country", "AE"));
-    // Neither nyc nor atx exists in the AE branch.
     expect(form!.getValues("cities")).toEqual([]);
   });
 
@@ -130,7 +127,6 @@ describe("select optionsFrom", () => {
       />,
     );
     await act(async () => {});
-    // Searchable → combobox popover; open it and check branch content.
     const trigger = screen.getByRole("combobox");
     await act(async () => {
       trigger.click();

@@ -4,13 +4,6 @@ import { COMPARISON_ROW_SLUGS } from "./content";
 import { SectionCtas } from "./SectionCtas";
 import { SectionHeading } from "./SectionHeading";
 
-/**
- * Full-width comparison table. The "this engine" column gets its own tinted,
- * bordered treatment on every row — applied to the cell itself rather than a
- * spanning column band, so the accent survives the mobile layout where rows
- * stack into single-column lines (a column band only exists once cells sit
- * in an actual grid row, which mobile doesn't have).
- */
 export function ComparisonStrip() {
   const columns = t.home.comparison.columns;
 
@@ -36,7 +29,6 @@ export function ComparisonStrip() {
             >
               <span className="font-medium text-foreground">{row.capability}</span>
               <span className="text-muted-foreground">
-                {/* sr-only (not hidden) at tablet+ so the column label stays in the a11y tree */}
                 <span className="tablet:sr-only desktop:sr-only font-medium uppercase tracking-wide text-[2.937vw] tablet:text-[1.375vw] desktop:text-[0.572vw] text-muted-foreground">
                   {columns.hosted}:{" "}
                 </span>

@@ -36,8 +36,6 @@ import {
 } from "./controls/CountryControls";
 import type { ControlContext, ControlProps } from "./controls/types";
 
-// Heterogeneous controls (each ControlProps<T>) collapse to one dynamic type
-// for dispatch — the descriptor guarantees the right control gets the right value.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyControl = (props: ControlProps<any>) => React.ReactNode;
 
@@ -63,7 +61,6 @@ const CONTROLS: Record<PropDescriptor["control"], AnyControl> = {
   countryList: CountryListControl,
 };
 
-// Booleans read better with the label on the same row as the switch.
 const INLINE_CONTROLS = new Set<PropDescriptor["control"]>(["boolean"]);
 
 export function PropEditorPanel() {
@@ -122,8 +119,6 @@ export function PropEditorPanel() {
               onChange={(v) =>
                 updateProps(node._id, {
                   [d.key]: v,
-                  // Mutually exclusive props (disabledWhen/enabledWhen) —
-                  // setting one clears the other or the engine rejects.
                   ...(v !== undefined && d.clears
                     ? Object.fromEntries(
                         d.clears.map((key) => [key, undefined]),

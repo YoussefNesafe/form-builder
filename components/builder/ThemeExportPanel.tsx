@@ -14,9 +14,6 @@ import {
   type ThemeUnit,
 } from "./model/themeCss";
 
-// Unit labels are the CSS unit tokens themselves (vw/px/rem/em) — universal
-// technical identifiers, not translatable prose, so they stay out of the
-// builder dictionary (same rationale as excluded field-type `name`s).
 const UNITS: { value: ThemeUnit; label: string }[] = [
   { value: "vw", label: "vw" },
   { value: "px", label: "px" },
@@ -24,7 +21,6 @@ const UNITS: { value: ThemeUnit; label: string }[] = [
   { value: "em", label: "em" },
 ];
 
-/** Parse a text field back to a positive number, falling back to the default. */
 function toNum(text: string, fallback: number): number {
   const n = Number(text);
   return Number.isFinite(n) && n > 0 ? n : fallback;
@@ -36,20 +32,12 @@ function downloadCss(text: string) {
   const a = document.createElement("a");
   a.href = url;
   a.download = "tokens.css";
-  // Firefox requires the anchor in the DOM; revoke on the next tick so the
-  // still-initializing download isn't cancelled.
   document.body.appendChild(a);
   a.click();
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 0);
 }
 
-/**
- * "Sizing CSS" export: regenerate the engine's `tokens.css` in a chosen unit.
- * vw keeps the fluid engine defaults; px/rem/em resolve the vw scale at
- * per-breakpoint reference widths into fixed sizes. Pure generation lives in
- * `model/themeCss.ts`.
- */
 export function ThemeExportPanel() {
   const [unit, setUnit] = useState<ThemeUnit>("vw");
   const [base, setBase] = useState(String(THEME_DEFAULTS.base));
@@ -79,7 +67,6 @@ export function ThemeExportPanel() {
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
     } catch {
-      // clipboard blocked (e.g. insecure context) — no-op
     }
   };
 
@@ -104,7 +91,6 @@ export function ThemeExportPanel() {
         min={1}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        // Show the effective value (used via toNum's fallback) when cleared.
         placeholder={String(fallback)}
         aria-describedby="theme-fixed-note"
         className="w-[25.62vw] tablet:w-[12vw] desktop:w-[4.992vw]"

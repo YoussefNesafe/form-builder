@@ -1,10 +1,5 @@
 import type { ConditionSpec, FieldType } from "@/form-builder";
 
-/**
- * A field in the builder. `_id` is stable across edits; `name` lives in `props`
- * and may be empty or duplicated mid-edit — which is exactly why the builder
- * keys on `_id`, not `name`. `children` is populated for `group` nodes only.
- */
 export type BuilderNode = {
   _id: string;
   type: FieldType;
@@ -12,12 +7,10 @@ export type BuilderNode = {
   children?: BuilderNode[];
 };
 
-/** A wizard step referencing nodes by `_id` (resolved to `fieldNames` on export). */
 export type BuilderStep = {
   title: string;
   nodeIds: string[];
   visibleWhen?: ConditionSpec;
-  /** Review steps own no fields; nodeIds stays empty while set. */
   review?: boolean;
 };
 

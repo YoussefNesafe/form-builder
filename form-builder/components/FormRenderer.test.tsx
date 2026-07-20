@@ -13,7 +13,6 @@ import { FormStepper } from "./FormStepper";
 registerBuiltInFields();
 afterEach(cleanup);
 
-// Some field primitives observe size; jsdom has no ResizeObserver.
 class ResizeObserverStub {
   observe() {}
   unobserve() {}
@@ -21,8 +20,6 @@ class ResizeObserverStub {
 }
 window.ResizeObserver = window.ResizeObserver ?? (ResizeObserverStub as typeof ResizeObserver);
 
-// Submit buttons gate on formState.isValid, which the resolver computes
-// asynchronously after mount — wait for the gate to open before clicking.
 async function clickWhenEnabled(name: string) {
   const button = screen.getByRole("button", { name }) as HTMLButtonElement;
   await waitFor(() => expect(button.disabled).toBe(false));
@@ -52,7 +49,6 @@ describe("FormRenderer server errors", () => {
 
     expect(onSubmit).toHaveBeenCalled();
     await waitFor(() => expect(screen.getByText("Email already registered")).toBeTruthy());
-    // Field errors are alerts too — assert the root slot by its merged text.
     expect(screen.getByText("Fix the errors below; No such field")).toBeTruthy();
     await waitFor(() => expect(document.activeElement).toBe(screen.getByLabelText("Email")));
   });
@@ -67,13 +63,11 @@ describe("FormRenderer server errors", () => {
     await clickWhenEnabled("Go");
     await waitFor(() => expect(screen.getByText("Email already registered")).toBeTruthy());
 
-    // Changing the errored field revalidates it — the server error goes.
     await act(async () => {
       fireEvent.change(screen.getByLabelText("Email"), { target: { value: "new@mail.co" } });
     });
     await waitFor(() => expect(screen.queryByText("Email already registered")).toBeNull());
 
-    // Root error clears on the next submit attempt.
     await clickWhenEnabled("Go");
     await waitFor(() => expect(screen.queryByText("Nope")).toBeNull());
   });
@@ -88,9 +82,6 @@ describe("FormRenderer server errors", () => {
     await clickWhenEnabled("Go");
     await waitFor(() => expect(screen.getByText("Server said no")).toBeTruthy());
 
-    // Break client validation, then resubmit the form directly (the submit
-    // button gates on isValid): the ATTEMPT must clear the stale formError
-    // even though onSubmit never runs.
     await act(async () => {
       fireEvent.change(screen.getByLabelText("Email"), { target: { value: "not-an-email" } });
     });
@@ -127,7 +118,6 @@ describe("FormRenderer server errors", () => {
     const onSubmit = vi.fn().mockResolvedValue(undefined);
     render(<FormRenderer config={steppedConfig} onSubmit={onSubmit} autosave={{ debounceMs: 0 }} />);
 
-    // Restored onto step Two with the drafted value in form state.
     await waitFor(() => expect(screen.getByLabelText("Second")).toBeTruthy());
     expect(document.querySelector('[aria-current="step"]')?.textContent).toContain("Two");
 
@@ -136,7 +126,6 @@ describe("FormRenderer server errors", () => {
     });
     await waitFor(() => expect(onSubmit).toHaveBeenCalled());
     expect(onSubmit.mock.calls[0][0]).toMatchObject({ first: "from draft" });
-    // Clean submit → draft gone.
     await waitFor(() => expect(window.localStorage.getItem("form-builder:draft:draft-wizard")).toBeNull());
   });
 
@@ -151,7 +140,6 @@ describe("FormRenderer server errors", () => {
         { type: "submit", name: "go", text: "Go" },
       ],
     };
-    // The user had overridden billing before the draft was saved.
     window.localStorage.setItem(
       "form-builder:draft:copy-draft",
       JSON.stringify({
@@ -164,11 +152,8 @@ describe("FormRenderer server errors", () => {
     await waitFor(() =>
       expect((screen.getByLabelText("Shipping") as HTMLInputElement).value).toBe("12 Main St"),
     );
-    // Without the restore-generation re-baseline the sync hook would treat
-    // the restore as a source edit and mirror shipping into billing.
     expect((screen.getByLabelText("Billing") as HTMLInputElement).value).toBe("my own address");
 
-    // The sync still works for REAL source edits after the restore.
     await act(async () => {
       fireEvent.change(screen.getByLabelText("Shipping"), { target: { value: "99 New Rd" } });
     });
@@ -212,18 +197,15 @@ describe("FormRenderer server errors", () => {
     };
     render(<FormRenderer config={conditionalConfig} onSubmit={vi.fn()} />);
 
-    // Condition false: the Extras dot is not rendered, numbering compacts.
     expect(screen.queryByText("Extras")).toBeNull();
     expect(screen.getByText("Finish")).toBeTruthy();
 
-    // Next skips straight to Finish.
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "Next" }));
     });
     expect(screen.getByLabelText("Final")).toBeTruthy();
     expect(document.querySelector('[aria-current="step"]')?.textContent).toContain("Finish");
 
-    // Back returns to Base; enabling the condition reveals the step.
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "Back" }));
     });
@@ -263,16 +245,12 @@ describe("FormRenderer server errors", () => {
     });
     expect(document.querySelector('[aria-current="step"]')?.textContent).toContain("Extras");
 
-    // Un-checking from... the source is on step Base; simulate the condition
-    // flipping while standing ON the Extras step via the hidden checkbox not
-    // being rendered — instead navigate back, uncheck, forward:
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "Back" }));
     });
     await act(async () => {
       fireEvent.click(screen.getByRole("checkbox"));
     });
-    // Extras gone again; Next lands on Finish.
     expect(screen.queryByText("Extras")).toBeNull();
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "Next" }));
@@ -308,16 +286,12 @@ describe("FormRenderer server errors", () => {
     }
     render(<StepperHarness />);
 
-    // Walk onto the conditional step.
     await act(async () => form!.setValue("wantsExtras", true));
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "Next" }));
     });
     expect(document.querySelector('[aria-current="step"]')?.textContent).toContain("Extras");
 
-    // Flip the source PROGRAMMATICALLY while standing on it (cross-step
-    // copyFrom / host setValue class) — the stepper must bounce to the
-    // nearest visible step (next preferred: Finish).
     await act(async () => form!.setValue("wantsExtras", false));
     expect(document.querySelector('[aria-current="step"]')?.textContent).toContain("Finish");
     expect(screen.getByLabelText("Final")).toBeTruthy();
@@ -347,24 +321,19 @@ describe("FormRenderer server errors", () => {
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "Next" }));
     });
-    // Extras step is hidden (checkbox off) — landed straight on Review.
     expect(document.querySelector('[aria-current="step"]')?.textContent).toContain("Review");
 
-    // Summary shows About's values; the hidden Extras section and the
-    // condition-hidden nickname row are absent.
     expect(screen.getByText("Grace")).toBeTruthy();
     expect(screen.queryByText("Extra detail")).toBeNull();
     expect(screen.queryByText("Nickname")).toBeNull();
     expect(screen.getByText("Extras?")).toBeTruthy();
     expect(screen.getByText(defaultMessages.no)).toBeTruthy();
 
-    // Edit link jumps back to the owning step.
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "Edit: About" }));
     });
     expect(document.querySelector('[aria-current="step"]')?.textContent).toContain("About");
 
-    // Values edited after the fact show live on return.
     await act(async () => {
       fireEvent.change(screen.getByLabelText("First name"), { target: { value: "Ada" } });
     });
@@ -372,7 +341,6 @@ describe("FormRenderer server errors", () => {
       fireEvent.click(screen.getByRole("button", { name: "Next" }));
     });
     expect(screen.getByText("Ada")).toBeTruthy();
-    // Nickname became visible (own condition) — row appears, unanswered.
     expect(screen.getByText("Nickname")).toBeTruthy();
   });
 
@@ -392,9 +360,6 @@ describe("FormRenderer server errors", () => {
     const onSubmit = vi.fn().mockResolvedValue({ fieldErrors: { first: "Rejected upstream" } });
     render(<FormRenderer config={steppedConfig} onSubmit={onSubmit} />);
 
-    // Walk to the last step, then submit the FORM directly: a late-mounted
-    // submit button's isValid gate lags in jsdom (pre-existing trait, not
-    // under test here) — the subject is the server-error step jump.
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "Next" }));
     });
@@ -402,7 +367,6 @@ describe("FormRenderer server errors", () => {
       fireEvent.submit(screen.getByRole("button", { name: "Go" }).closest("form")!);
     });
 
-    // Back on step One with the server error visible.
     await waitFor(() => expect(screen.getByLabelText("First")).toBeTruthy());
     expect(screen.getByText("Rejected upstream")).toBeTruthy();
     const currentStep = document.querySelector('[aria-current="step"]');

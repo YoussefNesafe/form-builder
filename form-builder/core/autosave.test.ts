@@ -73,7 +73,6 @@ describe("draft persistence", () => {
   it("drops a draft written for a different fields config", () => {
     saveDraft("signup", "old-hash", { name: "Ada" });
     expect(loadDraft("signup", "new-hash")).toBeNull();
-    // Mismatch self-cleans instead of lingering.
     expect(hasDraft("signup")).toBe(false);
   });
 

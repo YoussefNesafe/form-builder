@@ -5,16 +5,6 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { DOCS_NAV_GROUPS, DOCS_PAGES } from "@/lib/docsNav";
 
-/**
- * Docs section nav, same active-link pattern as components/site/NavLinks.tsx
- * (client component just for usePathname). Renders two variants and toggles
- * which is visible with Tailwind display classes rather than branching, so
- * there's one component instead of two kept in sync. Each variant only
- * triplicates px sizes across the breakpoints it's actually shown at (the
- * other is `hidden`, so a size value there would never render):
- *  - below `desktop:`: a horizontal scrollable link row (flat list)
- *  - `desktop:` and up: a sticky, grouped vertical sidebar
- */
 export function DocsSidebar() {
   const pathname = usePathname();
   const isActive = (href: string) => pathname === href;

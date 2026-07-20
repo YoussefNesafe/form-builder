@@ -49,7 +49,6 @@ describe("extractRaw", () => {
 
   it("literals matching a token class are not absorbed (leading digit literal)", () => {
     const phone = "+1 ### ###";
-    // Typing sequence: each change re-extracts from the formatted display.
     expect(extractRaw("5", phone)).toBe("5");
     expect(formatMasked("5", phone)).toBe("+1 5");
     expect(extractRaw("+1 56", phone)).toBe("56");

@@ -22,7 +22,6 @@ export { registerField, getRegisteredTypes, type FieldComponentProps } from "./c
 export { validateFormConfig } from "./core/schema";
 export { FormRenderer } from "./components/FormRenderer";
 export { FormSection } from "./components/FormSection";
-// For custom field authors: match built-in chrome and runtime behavior.
 export { FieldWrapper, fieldAriaDescribedBy } from "./ui/FieldWrapper";
 export { useFieldRuntime, useFieldDisabled, type FormLocale } from "./components/FieldRuntime";
 export {
@@ -59,11 +58,7 @@ export {
   type ParseSubmissionErrorCode,
 } from "./core/parseSubmission";
 export { registerBuiltInFields } from "./fields";
-// Masked payloads carry the RAW value; hosts re-format for display (e.g.
-// review/confirmation screens) with the same helpers the field uses.
 export { formatMasked, extractRaw, maskTokenCount } from "./fields/maskedValue";
-// Review-step value display — exported so hosts can reuse it (e.g. emails,
-// confirmation screens) and type their reviewFormatters.
 export {
   formatReviewValue,
   type ReviewFormatter,

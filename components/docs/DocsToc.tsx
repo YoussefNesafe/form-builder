@@ -7,26 +7,12 @@ import { docs } from "@/locales/en/docs";
 
 export type TocItem = { id: string; title: string };
 
-/**
- * Desktop-only "On this page" rail (spec §5.1). Items come from each page's
- * own static TOC_ITEMS array — no runtime heading extraction, matching this
- * repo's static-source-of-truth convention (cf. lib/docsNav.ts). The one
- * piece of unavoidable DOM interaction is scroll-spy: a single
- * IntersectionObserver instance watches every heading's real element (by
- * id) to track which section is nearest the top of the viewport, purely for
- * the active *visual* state — it never steals focus. Pages with no H2s pass
- * an empty array and this renders null (same null-guard pattern as
- * DocsPagination).
- */
 export function DocsToc({ items }: { items: TocItem[] }) {
   const [activeId, setActiveId] = useState<string | null>(null);
 
   useEffect(() => {
     if (items.length === 0) return;
 
-    // The callback only receives entries whose intersection CHANGED, in no
-    // guaranteed order — track every heading's state across callbacks and
-    // highlight the topmost (in items order) currently-intersecting one.
     const intersecting = new Map<string, boolean>();
     const observer = new IntersectionObserver(
       (entries) => {
@@ -35,8 +21,6 @@ export function DocsToc({ items }: { items: TocItem[] }) {
         }
         const topmost = items.find((item) => intersecting.get(item.id));
         if (topmost) setActiveId(topmost.id);
-        // No heading in the band (e.g. a short last section): keep the
-        // previous active id rather than clearing the highlight.
       },
       { rootMargin: "-80px 0px -70% 0px", threshold: 0 },
     );

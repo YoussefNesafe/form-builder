@@ -76,14 +76,11 @@ function setup(
   return () => form;
 }
 
-// The popover's Command input is itself role="combobox"; the trigger is the
-// one with the field's accessible name.
 const trigger = () => screen.getByRole("combobox", { name: /Residence/ });
 const openCombobox = () => fireEvent.click(trigger());
 
 describe("CountryField", () => {
   beforeAll(() => {
-    // jsdom lacks both; radix popover + cmdk need them.
     globalThis.ResizeObserver = class {
       observe() {}
       unobserve() {}

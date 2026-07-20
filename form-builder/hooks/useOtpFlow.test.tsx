@@ -9,8 +9,6 @@ import { useOtpFlow } from "./useOtpFlow";
 
 type Runtime = React.ContextType<typeof FieldRuntimeContext>;
 
-// resetField only acts on REGISTERED fields — the real OtpField registers
-// "code" through its Controller, so the harness must too.
 function RegisterField({ name }: { name: string }) {
   useController({ name });
   return null;
@@ -51,7 +49,6 @@ describe("useOtpFlow", () => {
     expect(result.current.seconds).toBe(30);
 
     await act(() => vi.advanceTimersByTimeAsync(2000));
-    // shouldAdvanceTime can slip in an extra tick on slow runners.
     expect(result.current.seconds).toBeLessThanOrEqual(28);
     expect(result.current.seconds).toBeGreaterThan(0);
   });
@@ -77,7 +74,7 @@ describe("useOtpFlow", () => {
 
     await act(() => result.current.send());
     await act(() => vi.advanceTimersByTimeAsync(30_000));
-    await act(() => result.current.send()); // resend fails
+    await act(() => result.current.send());
     expect(result.current.status).toBe("sent");
     expect(result.current.error).toBe(defaultMessages.otpSendFailed);
     expect(result.current.inputsDisabled).toBe(false);
@@ -97,8 +94,6 @@ describe("useOtpFlow", () => {
     expect(result.current.status).toBe("sent");
     expect(verify).toHaveBeenCalledTimes(1);
 
-    // Attempted guard: the effect re-fires on verifying→sent with the same
-    // rejected code still present, yet verify is not called again.
     await act(() => vi.advanceTimersByTimeAsync(50));
     expect(verify).toHaveBeenCalledTimes(1);
 
@@ -145,15 +140,12 @@ describe("useOtpFlow", () => {
     await waitFor(() => expect(result.current.error).toBe(defaultMessages.otpVerifyFailed));
     expect(verify).toHaveBeenCalledTimes(1);
 
-    // Dep change while the rejected code is still full: the reset commit's
-    // stale-closure verify pass must NOT fire verify("1111") at the new dep.
     act(() => formRef.current!.setValue("phone", "+971502222222"));
     await waitFor(() => expect(result.current.status).toBe("idle"));
     await act(() => vi.advanceTimersByTimeAsync(50));
     expect(verify).toHaveBeenCalledTimes(1);
     expect(formRef.current!.getValues("code")).toBe("");
 
-    // Flag consumed — the next legitimate flow still verifies.
     await act(() => result.current.send());
     verify.mockResolvedValue(true);
     act(() => formRef.current!.setValue("code", "2222"));

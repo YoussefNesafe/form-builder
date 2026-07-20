@@ -6,17 +6,12 @@ import type { OtpVerifiedChecker } from "../core/validation";
 import type { FormValues } from "../core/types";
 
 export type OtpFieldHandlers = {
-  // Receives the current form values so the handler can read its source
-  // field (email, phone, ...). Throw to signal send failure.
   send?: (values: FormValues) => Promise<void>;
   verify?: (code: string) => Promise<boolean>;
 };
 
 export type UseOtpControllerOptions = {
-  // Per-otp-field handlers, keyed by the otp field's config name — lets one
-  // form mix backends (email OTP vs phone OTP).
   fields?: Record<string, OtpFieldHandlers>;
-  // Used for otp fields without a map entry.
   fallback?: {
     send?: (fieldName: string, values: FormValues) => Promise<void>;
     verify?: (fieldName: string, code: string) => Promise<boolean>;
@@ -24,27 +19,14 @@ export type UseOtpControllerOptions = {
 };
 
 export type OtpController = {
-  // Wire into FieldRuntimeContext (FormRenderer does this automatically).
   otp?: OtpRuntime;
-  // Wire into useDynamicForm so validation requires a verified code. Only
-  // meaningful when some verify handler exists — see hasVerify.
   otpVerified: OtpVerifiedChecker;
   hasVerify: boolean;
   verifiedFields: ReadonlySet<string>;
 };
 
-/**
- * Owns the OTP verified-code registry and its host-API wrappers, decoupled
- * from any form instance: values arrive per send call from the field flow.
- * Invariant: verifiedFields (reactive) always mirrors verifiedCodes (ref)
- * keys — both mutate only inside verify/invalidate below.
- */
 export function useOtpController(options: UseOtpControllerOptions): OtpController {
   const { fields, fallback } = options;
-  // Codes accepted by a verify handler, keyed by field name. Validation
-  // compares the current value against this, so editing a verified code
-  // re-invalidates. dep snapshots what the code was verified for
-  // (stale-dependency detection across unmounts).
   const verifiedCodes = useRef(new Map<string, { code: string; dep: unknown }>());
   const [verifiedFields, setVerifiedFields] = useState<ReadonlySet<string>>(new Set());
 
@@ -77,8 +59,6 @@ export function useOtpController(options: UseOtpControllerOptions): OtpControlle
         ? async (fieldName, values) => {
             const send = resolveSend(fieldName);
             if (!send) {
-              // The flow swallows send failures into a generic message —
-              // surface the real cause for the developer.
               console.error(`useOtpController: no send handler for otp field "${fieldName}"`);
               throw new Error(`useOtpController: no send handler for otp field "${fieldName}"`);
             }

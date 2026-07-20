@@ -30,14 +30,13 @@ export function TextField({ field }: FieldComponentProps) {
     config.type === "password" && config.complexity
       ? getPasswordChecks(config.complexity, messages)
       : null;
-  // rules.allow blocks disallowed characters at input time (typing and paste).
   const allow = "rules" in config ? config.rules?.allow : undefined;
   const blockedChars = useMemo(() => {
     if (!allow) return null;
     try {
       return new RegExp(`[^${allow}]`, "g");
     } catch {
-      return null; // invalid class body: filtering off, zod pattern still validates
+      return null;
     }
   }, [allow]);
   const sanitize = (value: string) => (blockedChars ? value.replace(blockedChars, "") : value);
@@ -47,16 +46,11 @@ export function TextField({ field }: FieldComponentProps) {
       name={config.name}
       control={control}
       render={({ field: rhf, fieldState }) => {
-        // Live checklist (reference behavior): only failing rules render, in
-        // red, while the user types; the checklist replaces the error text so
-        // the same rule is not reported twice.
         const failing = complexityChecks
           ? complexityChecks.filter((check) => !check.test((rhf.value as string) ?? ""))
           : [];
         const showChecklist =
           failing.length > 0 && (fieldState.isDirty || fieldState.isTouched);
-        // The checklist replaces the error element, so describedby must point
-        // at whichever is actually rendered — never at a missing -error id.
         const wrapperError = showChecklist ? undefined : fieldState.error;
         const describedBy =
           [
@@ -66,8 +60,6 @@ export function TextField({ field }: FieldComponentProps) {
             .filter(Boolean)
             .join(" ") || undefined;
 
-        // trim rule also normalizes the visible value on blur, not only the
-        // parsed payload.
         const handleBlur = () => {
           if ("rules" in config && config.rules?.trim && typeof rhf.value === "string") {
             const trimmed = rhf.value.trim();

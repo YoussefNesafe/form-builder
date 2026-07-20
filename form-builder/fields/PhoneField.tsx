@@ -25,8 +25,6 @@ import { applyCountryToPhoneValue } from "./phoneCountrySync";
 
 type PhoneFieldConfig = Extract<FieldConfig, { type: "phone" }>;
 
-// Borderless input: the PhoneInput container carries the input chrome so
-// flag selector and number read as one field.
 function BareInput({ className, ...props }: React.ComponentProps<"input">) {
   return (
     <input
@@ -39,7 +37,6 @@ function BareInput({ className, ...props }: React.ComponentProps<"input">) {
   );
 }
 
-// SVG flags: emoji flags render as plain letters on Windows.
 function CountryFlag({ country }: { country?: string }) {
   const Flag = country ? flags[country as Country] : undefined;
   if (!Flag) return <span aria-hidden>🌐</span>;
@@ -126,14 +123,9 @@ function CountrySelect({ value, onChange, options, disabled, className, emptyMes
   );
 }
 
-// Opt-in countryFrom sync: watch the source select and rewrite this field's
-// calling code on change. The source always wins on change; the user can
-// still override via the country select until the next source change.
-// Baseline/seed/flag semantics live in useSourceSync (shared with copyFrom).
 function useCountryFromSync(config: PhoneFieldConfig) {
   useSourceSync(config.name, config.countryFrom, {
     seed: (sourceValue, currentValue) => {
-      // Only an empty phone gets seeded — a draft value must not be clobbered.
       const iso = typeof sourceValue === "string" && sourceValue ? sourceValue : undefined;
       if (!iso || currentValue) return SKIP_SYNC;
       const next = applyCountryToPhoneValue("", iso);
@@ -141,7 +133,7 @@ function useCountryFromSync(config: PhoneFieldConfig) {
     },
     change: (sourceValue, currentValue) => {
       const iso = typeof sourceValue === "string" && sourceValue ? sourceValue : undefined;
-      if (!iso) return SKIP_SYNC; // source cleared → keep current country
+      if (!iso) return SKIP_SYNC;
       const current = typeof currentValue === "string" ? currentValue : "";
       const next = applyCountryToPhoneValue(current, iso);
       if (next === null) {
@@ -170,8 +162,6 @@ export function PhoneField({ field }: FieldComponentProps) {
       name={config.name}
       control={control}
       render={({ field: rhf, fieldState }) => {
-        // Validation runs on blur (mode onTouched); green confirms a number
-        // that passed the libphonenumber check.
         const isValid = fieldState.isTouched && !fieldState.error && !!rhf.value;
         return (
         <FieldWrapper
@@ -184,10 +174,6 @@ export function PhoneField({ field }: FieldComponentProps) {
         >
           <PhoneInput
             id={id}
-            // RHF's ref must ride the lib's forwarded ref, which it merges
-            // with its internal input ref. A numberInputProps.ref would
-            // clobber that internal ref and break focus-on-country-select —
-            // the resulting crash aborts the country change entirely.
             ref={rhf.ref}
             value={(rhf.value as string) || undefined}
             onChange={(value) => rhf.onChange(value ?? "")}

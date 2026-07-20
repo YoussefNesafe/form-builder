@@ -4,16 +4,6 @@ import { join } from "node:path";
 import { cn as fbCn } from "../internal/cn";
 import { cn as appCn } from "../../lib/utils";
 
-/**
- * Boundary guard: `core/`, `hooks/`, and `store/` are the headless layers of
- * the package — they must stay decoupled from the shadcn/cn/Tailwind
- * rendering stack (react and react-hook-form imports are fine and expected
- * here). This scans their source files for import specifiers that would
- * pull in the rendering layer (shadcn `@/components/ui/*`, either `cn`
- * helper, or raw Tailwind/CSS) and fails if it finds one. It's a regex over
- * import specifiers, not a type-checker — cheap and fast by design.
- */
-
 const HEADLESS_DIRS = ["core", "hooks", "store"];
 
 const FORBIDDEN_SPECIFIER_PATTERNS: { pattern: RegExp; reason: string }[] = [
@@ -26,10 +16,7 @@ const FORBIDDEN_SPECIFIER_PATTERNS: { pattern: RegExp; reason: string }[] = [
   { pattern: /\.css$/, reason: "stylesheet import" },
 ];
 
-// Whole-file-text scan (not line-anchored) so multi-line imports — where the
-// specifier lands on the closing `} from "..."` line — are still caught.
 const FROM_CLAUSE = /\bfrom\s*["']([^"']+)["']/g;
-// Side-effect imports, e.g. `import "./x.css"` (no `from` clause).
 const SIDE_EFFECT_IMPORT = /\bimport\s+["']([^"']+)["']/g;
 const REQUIRE_CALL = /require\(\s*["']([^"']+)["']\s*\)/g;
 
@@ -48,10 +35,6 @@ function walk(dir: string): string[] {
 
 function importSpecifiers(source: string): string[] {
   const specifiers: string[] = [];
-  // `\bfrom\s*["']...["']` matches both `import … from "x"` and
-  // `export … from "x"` (re-exports), and is not line-anchored so it also
-  // catches multi-line imports whose specifier sits on the `} from "..."`
-  // line.
   for (const match of source.matchAll(FROM_CLAUSE)) {
     specifiers.push(match[1]);
   }
@@ -69,8 +52,6 @@ describe("headless layer boundary (core/hooks/store)", () => {
   const files = HEADLESS_DIRS.flatMap((dir) => walk(join(root, dir)));
 
   it("scans a non-empty set of source files", () => {
-    // Guards the guard: if the dirs move/empty out, this test would
-    // otherwise pass vacuously.
     expect(files.length).toBeGreaterThan(0);
   });
 
@@ -89,10 +70,6 @@ describe("headless layer boundary (core/hooks/store)", () => {
 });
 
 describe("vendored cn parity with app cn", () => {
-  // The vendored `internal/cn` is an intentional duplicate of the app's
-  // `lib/utils` `cn` (see internal/cn.ts) so the package stays self-
-  // contained. Pin behavioral parity so a silent drift between the two
-  // implementations is caught by CI instead of shipping unnoticed.
   it("merges classes identically to the app cn helper", () => {
     expect(fbCn("p-2", "p-4")).toBe(appCn("p-2", "p-4"));
   });

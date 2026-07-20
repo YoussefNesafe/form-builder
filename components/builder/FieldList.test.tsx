@@ -25,10 +25,9 @@ describe("FieldList", () => {
 
     render(<FieldList />);
 
-    expect(screen.getByText("Your email")).toBeTruthy(); // label line
-    expect(screen.getByText(/Email · /)).toBeTruthy(); // type · name line
+    expect(screen.getByText("Your email")).toBeTruthy();
+    expect(screen.getByText(/Email · /)).toBeTruthy();
     expect(screen.getByText(/Select · /)).toBeTruthy();
-    // count badge reflects two fields
     expect(screen.getByText("2")).toBeTruthy();
   });
 
@@ -45,19 +44,17 @@ describe("FieldList", () => {
     store.addNode("text");
     store.selectNode(null);
     render(<FieldList />);
-    // Enter aimed at the Delete button must not bubble into a row selection.
     fireEvent.keyDown(screen.getByLabelText("Delete"), { key: "Enter" });
     expect(useBuilderStore.getState().selectedId).toBeNull();
   });
 
   it("renders group children indented under the group", () => {
     const store = useBuilderStore.getState();
-    store.addNode("group"); // creates a default text child
+    store.addNode("group");
     const groupId = useBuilderStore.getState().nodes[0]._id;
     store.addNode("email", groupId);
 
     render(<FieldList />);
-    // default child (text) + added email → the group row plus two children render
     expect(screen.getByText(/Group \(repeatable\) · /)).toBeTruthy();
     expect(screen.getAllByText(/· /).length).toBeGreaterThanOrEqual(3);
   });

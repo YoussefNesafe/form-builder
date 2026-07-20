@@ -2,18 +2,11 @@ import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { DocsToc, type TocItem } from "@/components/docs/DocsToc";
 
-// Static full class strings per gap value — Tailwind can't see built names,
-// same rule as the cva variants (AGENTS.md).
 const GAP_CLASS = {
   "20": "gap-[5.34vw] tablet:gap-[2.5vw] desktop:gap-[1.04vw]",
   "28": "gap-[7.476vw] tablet:gap-[3.5vw] desktop:gap-[1.456vw]",
 } as const;
 
-/**
- * Shared 3-column docs page plumbing: [prose column (720px cap) | TOC rail].
- * Extracted from the five docs content pages (rule of three — same argument
- * as DocsProse.tsx). Pages own their TOC_ITEMS; this owns the layout.
- */
 export function DocsPageShell({
   toc,
   gap = "28",

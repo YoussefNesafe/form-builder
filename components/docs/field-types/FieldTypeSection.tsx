@@ -5,16 +5,6 @@ import { t } from "@/locales";
 import { FIELD_PROP_DOCS, FIELD_VALUE_INFO } from "./fieldProps";
 import { PropsTable } from "./PropsTable";
 
-/**
- * Factory, not a plain component — SECTIONS (./sections.ts) needs one
- * {id, title, Section} entry per built-in FieldType, the same shape every
- * hand-written section file in components/docs/conditions|wizards exports.
- * 24 near-identical files would just re-duplicate what FIELD_PROP_DOCS/
- * FIELD_VALUE_INFO/t.fieldTypes already hold as data (fieldProps.ts is
- * exhaustive-by-construction against FieldConfig — a real drift guard this
- * factory inherits for free); a factory over FIELD_TYPE_ORDER stays
- * data-driven instead of one row component per type.
- */
 export function makeFieldTypeSection(type: FieldType) {
   const id = `field-type-${type}`;
   const info = t.fieldTypes[type];

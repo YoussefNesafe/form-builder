@@ -5,9 +5,6 @@ import { DocsSection, DocsBody as P, DocsInlineCode as IC } from "@/components/d
 const id = "add-shadcn-primitives";
 const title = "Add the shadcn primitives";
 
-// Canonical args for the shadcn CLI's `add` runner command — CommandBlock
-// derives the pnpm/npm/yarn/bun tab variants from this single string (see
-// components/docs/command.ts), so it deliberately omits the npx/dlx prefix.
 const SHADCN_ADD_ARGS = `shadcn@latest add button calendar checkbox command dialog field \\
   input input-group input-otp label popover progress radio-group \\
   select separator slider switch textarea`;

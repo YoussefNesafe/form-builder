@@ -66,16 +66,13 @@ describe("useOtpController", () => {
     });
     expect(result.current.verifiedFields.has("code")).toBe(true);
     expect(result.current.otpVerified("code", "1234")).toBe(true);
-    // Editing the code re-invalidates via value compare.
     expect(result.current.otpVerified("code", "1235")).toBe(false);
-    // Dep snapshot: same dep matches, different dep does not.
     expect(result.current.otp!.isVerifiedFor!("code", "+971A")).toBe(true);
     expect(result.current.otp!.isVerifiedFor!("code", "+971B")).toBe(false);
 
     act(() => result.current.otp!.invalidate!("code"));
     expect(result.current.verifiedFields.has("code")).toBe(false);
     expect(result.current.otpVerified("code", "1234")).toBe(false);
-    // Empty registry counts as matching any dep (nothing stale to protect).
     expect(result.current.otp!.isVerifiedFor!("code", "+971B")).toBe(true);
   });
 });

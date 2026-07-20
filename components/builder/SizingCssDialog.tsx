@@ -14,13 +14,6 @@ import {
 import { builder } from "@/locales/en/builder";
 import { ThemeExportPanel } from "./ThemeExportPanel";
 
-/**
- * "Sizing CSS" trigger + dialog wrapping {@link ThemeExportPanel}. Shared by
- * the builder header and the installation docs so both open the identical
- * modal. `showInstallLink` appends the "New to the engine? See Installation"
- * pointer in the description — on by default for the builder, off in the docs
- * (where it would link to the page you're already on).
- */
 export function SizingCssDialog({
   showInstallLink = true,
 }: {

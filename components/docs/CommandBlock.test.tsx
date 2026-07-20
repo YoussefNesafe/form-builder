@@ -1,11 +1,4 @@
 // @vitest-environment jsdom
-//
-// jsdom implements localStorage natively, so it's exercised directly (not
-// mocked) — mirrors form-builder/core/autosave.test.ts. Clipboard stubbing
-// follows CopyButton.test.tsx. The package-manager selection is shared
-// module state (components/docs/packageManagerStore.ts), so every test
-// resets it via __resetPackageManagerStoreForTests — otherwise the tab
-// clicked in one test would leak into the next.
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { CommandBlock } from "./CommandBlock";
@@ -18,10 +11,6 @@ function stubClipboard(writeText: (text: string) => Promise<void>) {
   });
 }
 
-// Radix's Tabs.Trigger activates on `mousedown` (+ `keydown`/`focus`), not
-// `click` — see @radix-ui/react-tabs/dist/index.js. `fireEvent.click` alone
-// never fires it, so tab selection in tests goes through this helper instead
-// of `fireEvent.click`; @testing-library/user-event isn't a repo dependency.
 function selectTab(name: string) {
   fireEvent.mouseDown(screen.getByRole("tab", { name }));
 }

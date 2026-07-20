@@ -1,11 +1,8 @@
 import type { AnyFieldConfig, FormValues } from "./types";
 
 export type AutosaveOptions = {
-  /** Storage identity — defaults to the config id. */
   key?: string;
-  /** Save debounce, default 500ms. */
   debounceMs?: number;
-  /** Signature data URLs are large (localStorage ~5MB) — off by default. */
   includeSignatures?: boolean;
 };
 
@@ -19,14 +16,8 @@ export function draftStorageKey(idOrKey: string): string {
   return `form-builder:draft:${idOrKey}`;
 }
 
-/**
- * Structural hash over the fields config — a changed form silently drops its
- * stale draft. Stored INSIDE the payload (not the key) so outdated drafts
- * overwrite themselves instead of accumulating.
- */
 export function draftConfigHash(fields: AnyFieldConfig[]): string {
   const json = JSON.stringify(fields);
-  // djb2 — collision risk irrelevant for cache-invalidation use.
   let hash = 5381;
   for (let i = 0; i < json.length; i += 1) {
     hash = ((hash << 5) + hash + json.charCodeAt(i)) | 0;
@@ -38,14 +29,6 @@ const hasFile = (value: unknown): boolean =>
   (typeof File !== "undefined" && value instanceof File) ||
   (Array.isArray(value) && value.some((item) => typeof File !== "undefined" && item instanceof File));
 
-/**
- * Drop what must not (File — not serializable; password/otp — credentials in
- * plaintext at rest, and a restored otp code would just be a stale code the
- * verified-registry refine rejects anyway) or should not (signature data
- * URLs, unless opted in) be persisted. Group rows sanitize against their
- * inner field configs; File instances are dropped wherever they appear, so
- * custom field values cannot smuggle one in either.
- */
 export function sanitizeDraftValues(
   fields: AnyFieldConfig[],
   values: FormValues,
@@ -72,7 +55,6 @@ export function sanitizeDraftValues(
   return out;
 }
 
-/** Null when absent, corrupt, or written for a different fields config. */
 export function loadDraft(idOrKey: string, hash: string): { values: FormValues; step?: number } | null {
   if (typeof window === "undefined") return null;
   const storageKey = draftStorageKey(idOrKey);
@@ -86,11 +68,9 @@ export function loadDraft(idOrKey: string, hash: string): { values: FormValues; 
     }
     return { values: payload.values, step: payload.step };
   } catch {
-    // Corrupt entry — drop it instead of re-parsing it every mount.
     try {
       window.localStorage.removeItem(storageKey);
     } catch {
-      // best effort
     }
     return null;
   }
@@ -102,7 +82,6 @@ export function saveDraft(idOrKey: string, hash: string, values: FormValues, ste
     const payload: DraftPayload = { hash, values, ...(step !== undefined ? { step } : {}) };
     window.localStorage.setItem(draftStorageKey(idOrKey), JSON.stringify(payload));
   } catch {
-    // Quota or serialization failure — autosave is best effort.
   }
 }
 
@@ -120,6 +99,5 @@ export function clearDraft(idOrKey: string): void {
   try {
     window.localStorage.removeItem(draftStorageKey(idOrKey));
   } catch {
-    // best effort
   }
 }

@@ -35,13 +35,10 @@ function optionByString(options: Option[], selected: string): Option["value"] | 
 
 const isBlankSource = (value: unknown): boolean => value === undefined || value === null || value === "";
 
-// Blank source offers nothing — and never aliases into a branch literally
-// keyed "undefined"/"null" via String().
 function branchFor(map: Record<string, Option[]>, sourceValue: unknown): Option[] {
   return isBlankSource(sourceValue) ? [] : (map[String(sourceValue)] ?? []);
 }
 
-/** Static options, or the optionsFrom branch for the source's current value. */
 function useSelectOptions(config: SelectFieldConfig): Option[] {
   const { control } = useFormContext();
   const source = config.optionsFrom?.field;
@@ -50,9 +47,6 @@ function useSelectOptions(config: SelectFieldConfig): Option[] {
   return config.options ?? [];
 }
 
-// Source changed → the current value may belong to the previous branch.
-// Single: reset it; multiple: keep only entries still offered. Blank values
-// and mount/draft-restore baselines are left alone (useSourceSync semantics).
 function useOptionsFromReset(config: SelectFieldConfig) {
   const map = config.optionsFrom?.map;
   const multiple = config.multiple === true;
@@ -80,8 +74,6 @@ export function SelectField({ field }: FieldComponentProps) {
   const [open, setOpen] = useState(false);
   const options = useSelectOptions(config);
   useOptionsFromReset(config);
-  // An empty optionsFrom branch (no map entry for the source value, or the
-  // source is still blank) has nothing to offer — disabled placeholder state.
   const disabled = fieldDisabled || (!!config.optionsFrom && options.length === 0);
 
   const useCombobox = !!config.searchable || !!config.multiple;

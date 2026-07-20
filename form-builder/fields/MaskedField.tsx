@@ -17,7 +17,6 @@ export function MaskedField({ field }: FieldComponentProps) {
   const disabled = useFieldDisabled(config);
   const id = useId();
 
-  // Digit-only masks get the numeric keyboard on touch devices.
   const numericOnly = ![...config.mask].some((char) => char === "A" || char === "*");
 
   return (
@@ -33,15 +32,6 @@ export function MaskedField({ field }: FieldComponentProps) {
           disabled={disabled}
           error={fieldState.error}
         >
-          {/* RHF stores the RAW value; the input shows the formatted one.
-              Known v1 limitations:
-              - re-formatting on change can move the caret to the end on
-                mid-string edits — typing/deleting at the end is fully correct.
-                A caret-preserving mask needs selection tracking (or a lib).
-              - masks whose literal matches the class of the token at the same
-                raw position (e.g. "#1#") swallow a keystroke equal to that
-                literal — ambiguity is resolved toward the literal so a wrong
-                value is never stored. Card/IBAN/plate-style masks unaffected. */}
           <Input
             type="text"
             inputMode={numericOnly ? "numeric" : undefined}

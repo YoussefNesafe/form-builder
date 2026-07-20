@@ -8,7 +8,6 @@ import { FieldListRow } from "./FieldListRow";
 import { AddFieldMenu } from "./AddFieldMenu";
 import { PanelHeading } from "./ui/PanelHeading";
 
-/** Nearest scrollable ancestor, or null (the window scrolls) on mobile. */
 function scrollParent(el: HTMLElement | null): HTMLElement | null {
   let node = el?.parentElement ?? null;
   while (node) {
@@ -23,7 +22,6 @@ function scrollParent(el: HTMLElement | null): HTMLElement | null {
   return null;
 }
 
-/** Left pane: the ordered list of top-level fields plus the add-field menu. */
 export function FieldList() {
   const nodes = useBuilderStore((s) => s.nodes);
   const addNode = useBuilderStore((s) => s.addNode);
@@ -31,7 +29,6 @@ export function FieldList() {
 
   const addAndScrollToTop = (type: FieldType) => {
     addNode(type);
-    // After the row mounts, return the list (desktop pane) or page (mobile) to the top.
     requestAnimationFrame(() => {
       scrollParent(rootRef.current)?.scrollTo({ top: 0 });
       window.scrollTo({ top: 0 });

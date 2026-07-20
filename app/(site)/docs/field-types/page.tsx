@@ -7,15 +7,6 @@ import { t } from "@/locales";
 
 export const metadata: Metadata = { title: t.docs.nav.pages.fieldTypes };
 
-/**
- * Base props + shared shapes + one H2 per built-in field type (props table,
- * runtime value shape, example config) — content and data live in
- * components/docs/field-types/* (fieldProps.ts is the data module; sections
- * come from ./sections.ts, the TOC's single source, same contract as
- * conditions/wizards).
- *
- * Thin composer only.
- */
 export default function FieldTypesPage() {
   return (
     <DocsPageShell toc={TOC_ITEMS}>

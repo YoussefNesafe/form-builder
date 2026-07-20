@@ -1,11 +1,3 @@
-/**
- * Shared Name/Type/Required/Description table — the per-type prop tables
- * (24, one per FieldType, via FieldTypeSection's factory) and the Base props
- * table are the same shape, so this is the second-duplication extraction
- * (AGENTS.md YAGNI rule). `exceptions`, when present on a row, is
- * base-props-only (per-type rows never set it) — rendered as a second,
- * smaller line under the description.
- */
 export type PropRow = {
   name: string;
   type: string;
