@@ -1061,3 +1061,228 @@ describe("parseSubmission — unbounded recursion in exceedsMaxStringLength (BUG
     expect(result.ok).toBe(true);
   });
 });
+
+// ---------------------------------------------------------------------------
+// BUG 3 (Issue #21, RED): the unvalidated-field loop in parseSubmission
+// (parseSubmission.ts:203-207) walks `visibleFields` — a FLAT, top-level-only
+// list — and only ever inspects each field's own `.type`. A `file` (or
+// custom-registered) field nested inside a `group`'s `.fields` is never seen
+// by this loop at all: it isn't excluded from the row schema (still typed
+// `z.instanceof(File)` by buildFieldsSchema), so a JSON body can never
+// satisfy it and EVERY submission to such a form returns
+// `{ ok:false, code:"validation_failed" }`. Its name is also never reported
+// in `unvalidated`.
+//
+// Ruled target behavior: recurse into every group depth, excluding
+// file/custom fields from the row schema at each level, and report their
+// dotted (index-less) path in `unvalidated` — e.g. a file `receipt` inside
+// group `items` is `"items.receipt"`; two levels deep, `"outer.inner.receipt"`.
+// This is config-derived, so it must not vary with submitted row count.
+// These tests pin that target; several fail today because no group recursion
+// of file/custom exclusion happens at all.
+// ---------------------------------------------------------------------------
+describe("parseSubmission — group-nested file/custom fields (BUG 3, Issue #21: excluded fields don't recurse into groups)", () => {
+  const nestedFileConfig: FormConfig = {
+    id: "t",
+    fields: [
+      {
+        type: "group",
+        name: "items",
+        fields: [
+          { type: "text", name: "label", required: true },
+          { type: "file", name: "receipt" },
+        ],
+      },
+    ],
+  };
+
+  it("excludes a group-nested file field from schema validation, returning ok:true instead of validation_failed", () => {
+    const receipt = { key: "uploads/receipt.pdf", size: 123, contentType: "application/pdf" };
+    const result = parseSubmission(nestedFileConfig, { items: [{ label: "row-a", receipt }] });
+    expect(result.ok).toBe(true);
+  });
+
+  it("reports the group-nested file field's dotted, index-less path in unvalidated", () => {
+    const receipt = { key: "uploads/receipt.pdf", size: 123, contentType: "application/pdf" };
+    const result = parseSubmission(nestedFileConfig, { items: [{ label: "row-a", receipt }] });
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.unvalidated).toEqual(["items.receipt"]);
+  });
+
+  it("round-trips a per-row file value the client sent, unchanged, into values", () => {
+    const receipt = { key: "uploads/receipt.pdf", size: 123, contentType: "application/pdf" };
+    const result = parseSubmission(nestedFileConfig, { items: [{ label: "row-a", receipt }] });
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.values.items).toEqual([{ label: "row-a", receipt }]);
+    }
+  });
+
+  it("does not synthesize a receipt key in a row when the client never sent one (sparse row)", () => {
+    const result = parseSubmission(nestedFileConfig, { items: [{ label: "row-a" }] });
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      const rows = result.values.items as Array<Record<string, unknown>>;
+      expect(rows[0]).toEqual({ label: "row-a" });
+      expect(rows[0]).not.toHaveProperty("receipt");
+    }
+  });
+
+  it("excludes a file field nested two levels deep (group inside group) and reports its fully-dotted path", () => {
+    const twoLevelConfig: FormConfig = {
+      id: "t",
+      fields: [
+        {
+          type: "group",
+          name: "outer",
+          fields: [
+            { type: "text", name: "label", required: true },
+            {
+              type: "group",
+              name: "inner",
+              fields: [
+                { type: "text", name: "code", required: true },
+                { type: "file", name: "receipt" },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+    const receipt = { key: "uploads/deep-receipt.pdf", size: 456, contentType: "application/pdf" };
+    const result = parseSubmission(twoLevelConfig, {
+      outer: [{ label: "row-a", inner: [{ code: "x1", receipt }] }],
+    });
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.unvalidated).toEqual(["outer.inner.receipt"]);
+      expect(result.values.outer).toEqual([{ label: "row-a", inner: [{ code: "x1", receipt }] }]);
+    }
+  });
+
+  it("unvalidated's dotted entry is config-derived, not row-count-derived: identical for 0 submitted rows and 2 submitted rows", () => {
+    const zeroRows = parseSubmission(nestedFileConfig, { items: [] });
+    const twoRows = parseSubmission(nestedFileConfig, {
+      items: [
+        { label: "row-a", receipt: { key: "a.pdf" } },
+        { label: "row-b", receipt: { key: "b.pdf" } },
+      ],
+    });
+    expect(zeroRows.ok).toBe(true);
+    expect(twoRows.ok).toBe(true);
+    if (zeroRows.ok && twoRows.ok) {
+      expect(zeroRows.unvalidated).toEqual(["items.receipt"]);
+      expect(twoRows.unvalidated).toEqual(["items.receipt"]);
+    }
+  });
+
+  it("reports a custom-registered field type nested in a group in unvalidated (values already pass through; this pins the missing reporting)", () => {
+    const Widget = ({ field }: FieldComponentProps) => field.name;
+    registerField("my-widget", Widget);
+    const config: FormConfig = {
+      id: "t",
+      fields: [
+        {
+          type: "group",
+          name: "items",
+          fields: [
+            { type: "text", name: "label", required: true },
+            { type: "my-widget", name: "gizmo", anything: "goes" } as never,
+          ],
+        },
+      ],
+    };
+    const result = parseSubmission(config, { items: [{ label: "row-a", gizmo: { whatever: 1 } }] });
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.unvalidated).toEqual(["items.gizmo"]);
+      expect(result.values.items).toEqual([{ label: "row-a", gizmo: { whatever: 1 } }]);
+    }
+  });
+
+  it("regression guard: a group with no file/custom fields still reports an empty unvalidated, unchanged from today", () => {
+    const plainGroupConfig: FormConfig = {
+      id: "t",
+      fields: [
+        {
+          type: "group",
+          name: "items",
+          fields: [
+            { type: "text", name: "label", required: true },
+            { type: "number", name: "qty", required: true },
+          ],
+        },
+      ],
+    };
+    const result = parseSubmission(plainGroupConfig, { items: [{ label: "row-a", qty: 2 }] });
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.unvalidated).toEqual([]);
+  });
+
+  // unvalidated is config-derived, so it must be present on the ok:false branch
+  // too — the top-level analog is pinned at "still lists file + custom … on the
+  // ok:false branch"; this is its nested counterpart (row fails on the missing
+  // required `label`, yet the file's dotted path is still reported).
+  it("reports the nested file's dotted path even on the validation_failed branch", () => {
+    const receipt = { key: "uploads/receipt.pdf", size: 123, contentType: "application/pdf" };
+    const result = parseSubmission(nestedFileConfig, { items: [{ receipt }] });
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.code).toBe("validation_failed");
+      expect(result.unvalidated).toEqual(["items.receipt"]);
+    }
+  });
+
+  // Class-killer (staff-engineer): all three recursive passes — hidden
+  // re-injection, file/custom exclusion+reporting, and file value pass-through
+  // — must behave together at depth >= 2. One test that exercises every pass
+  // at the deepest level guards against any single pass regressing to
+  // top-level-only iteration again.
+  it("handles hidden + file + custom fields together at two levels of group nesting", () => {
+    const Widget = ({ field }: FieldComponentProps) => field.name;
+    registerField("my-widget", Widget);
+    const config: FormConfig = {
+      id: "t",
+      fields: [
+        {
+          type: "group",
+          name: "outer",
+          fields: [
+            { type: "text", name: "label", required: true },
+            {
+              type: "group",
+              name: "inner",
+              fields: [
+                { type: "text", name: "code", required: true },
+                { type: "hidden", name: "secret", value: "server-secret" },
+                { type: "file", name: "receipt" },
+                { type: "my-widget", name: "gizmo" } as never,
+              ],
+            },
+          ],
+        },
+      ],
+    };
+    const receipt = { key: "uploads/deep-receipt.pdf" };
+    const result = parseSubmission(config, {
+      outer: [
+        {
+          label: "row-a",
+          inner: [{ code: "x1", secret: "attacker-value", receipt, gizmo: { whatever: 1 } }],
+        },
+      ],
+    });
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      // file + custom both reported with their fully-dotted, index-less paths
+      expect(result.unvalidated).toEqual(["outer.inner.receipt", "outer.inner.gizmo"]);
+      // hidden constant wins over the attacker value; file + custom round-trip
+      expect(result.values.outer).toEqual([
+        {
+          label: "row-a",
+          inner: [{ code: "x1", secret: "server-secret", receipt, gizmo: { whatever: 1 } }],
+        },
+      ]);
+    }
+  });
+});
