@@ -1,13 +1,3 @@
-/**
- * /examples site chrome: the index page (title/intro/per-slug card copy),
- * each example page's own title (+ description where it's a plain string —
- * multi-step-signup's demo note has an inline `<code>` so it's split into
- * prefix/suffix segments the same way docs.index.intro splits around its
- * links), and shared ExampleForm/StaticExampleBoundary chrome. Note: the showcase
- * cards on the landing page (locales/en/home.ts) intentionally duplicate
- * these descriptions with different wording — left as-is, not
- * cross-referenced, per that file's own comment.
- */
 export const examples = {
   index: {
     title: "Examples",
@@ -46,13 +36,11 @@ export const examples = {
     description:
       "Masked input, date and time pairs that enforce end-after-start, rating, segmented, slider, signature, and file — each backed by a built-in field type.",
   },
-  /** Shared ExampleForm (components/examples/ExampleForm.tsx) chrome. */
   form: {
     submittedValuesLabel: "Submitted values",
     viewConfig: "View config",
     configJsonLabel: "Config JSON",
   },
-  /** StaticExampleBoundary (components/examples/StaticExampleBoundary.tsx) render-error chrome. */
   boundary: {
     failedTitle: "This example failed to render",
   },

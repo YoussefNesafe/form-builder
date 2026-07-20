@@ -40,6 +40,8 @@ function scrollToHashAfterNav(id: string, framesLeft = 30) {
   }
 }
 
+const SEARCH_DEBOUNCE_MS = 500;
+
 const GROUP_ORDER: { group: SearchGroup; heading: string }[] = [
   { group: "page", heading: nav.search.groups.pages },
   { group: "fieldType", heading: nav.search.groups.fieldTypes },
@@ -63,7 +65,7 @@ export function SearchPalette({ index, open, onOpenChange }: Props) {
 
   useEffect(() => {
     if (!query.trim() || results.length > 0) return;
-    const id = window.setTimeout(() => logEmptyQuery(query), 500);
+    const id = window.setTimeout(() => logEmptyQuery(query), SEARCH_DEBOUNCE_MS);
     return () => window.clearTimeout(id);
   }, [query, results.length]);
 

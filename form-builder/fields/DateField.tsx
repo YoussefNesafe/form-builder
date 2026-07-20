@@ -16,6 +16,11 @@ import { FieldWrapper, fieldAriaDescribedBy } from "../ui/FieldWrapper";
 
 type DateFieldConfig = Extract<FieldConfig, { type: "date" }>;
 
+const CALENDAR_YEARS_BACK = 100;
+const CALENDAR_YEARS_FORWARD = 10;
+const JANUARY = 0;
+const DECEMBER = 11;
+
 type IsoRange = { from?: string; to?: string };
 
 function parseIso(value: string | undefined): Date | undefined {
@@ -42,8 +47,8 @@ function calendarNavigation(config: DateFieldConfig) {
   const now = new Date();
   return {
     captionLayout: "dropdown" as const,
-    startMonth: min ?? new Date(now.getFullYear() - 100, 0),
-    endMonth: max ?? new Date(now.getFullYear() + 10, 11),
+    startMonth: min ?? new Date(now.getFullYear() - CALENDAR_YEARS_BACK, JANUARY),
+    endMonth: max ?? new Date(now.getFullYear() + CALENDAR_YEARS_FORWARD, DECEMBER),
     defaultMonth: max && max < now ? max : undefined,
   };
 }

@@ -11,6 +11,8 @@ import { useSerializedConfig } from "./model/useSerializedConfig";
 import { toCode } from "./model/serializeCode";
 import type { OutputMode } from "./model/types";
 
+const COPIED_RESET_MS = 1500;
+
 const MODES: { value: OutputMode; label: string }[] = [
   { value: "ts", label: builder.output.modeTs },
   { value: "json", label: builder.output.modeJson },
@@ -31,7 +33,7 @@ export function CodeOutputPanel() {
     try {
       await navigator.clipboard.writeText(code);
       setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
+      setTimeout(() => setCopied(false), COPIED_RESET_MS);
     } catch {
     }
   };

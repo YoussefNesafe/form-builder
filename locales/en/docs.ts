@@ -1,12 +1,3 @@
-/**
- * Docs site chrome — DocsToc/DocsPagination/DocsBreadcrumb shell strings,
- * the docsNav (lib/docsNav.ts) group/page titles, the docs index page
- * (title/intro/per-slug card descriptions), and the shared metadata titles
- * every docs content page reuses. Long-form docs prose (the actual H2
- * section bodies on installation/your-first-form/conditions/wizards/
- * field-types) is NOT extracted here — staff-engineer ruling: multi-
- * paragraph prose with inline `<code>`/links stays in JSX where it lives.
- */
 export const docs = {
   toc: {
     onThisPage: "On this page",

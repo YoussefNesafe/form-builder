@@ -6,14 +6,17 @@ import { Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { FieldComponentProps } from "../core/registry";
 import type { FieldConfig } from "../core/types";
+import { BYTES_PER_KB, BYTES_PER_MB } from "../core/units";
 import { useFieldDisabled, useFieldRuntime } from "../components/FieldRuntime";
 import { FieldWrapper } from "../ui/FieldWrapper";
 
 type FileFieldConfig = Extract<FieldConfig, { type: "file" }>;
 
+const MIN_DISPLAYED_KB = 1;
+
 function formatSize(bytes: number): string {
-  if (bytes >= 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-  return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+  if (bytes >= BYTES_PER_MB) return `${(bytes / BYTES_PER_MB).toFixed(1)} MB`;
+  return `${Math.max(MIN_DISPLAYED_KB, Math.round(bytes / BYTES_PER_KB))} KB`;
 }
 
 export function FileField({ field }: FieldComponentProps) {

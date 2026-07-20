@@ -14,6 +14,8 @@ import {
   type ThemeUnit,
 } from "./model/themeCss";
 
+const COPIED_RESET_MS = 1500;
+
 const UNITS: { value: ThemeUnit; label: string }[] = [
   { value: "vw", label: "vw" },
   { value: "px", label: "px" },
@@ -65,7 +67,7 @@ export function ThemeExportPanel() {
     try {
       await navigator.clipboard.writeText(css);
       setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
+      setTimeout(() => setCopied(false), COPIED_RESET_MS);
     } catch {
     }
   };

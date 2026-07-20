@@ -23,6 +23,8 @@ import {
 } from "../core/validation";
 import type { FormConfig, FormValues } from "../core/types";
 
+const DEFAULT_DRAFT_DEBOUNCE_MS = 500;
+
 function conditionAwareResolver(
   config: FormConfig,
   messages: Messages,
@@ -91,7 +93,7 @@ export function useDynamicForm(
 
   const autosave = opts?.autosave;
   const draftId = autosave ? (autosave.key ?? config.id) : null;
-  const draftDebounceMs = autosave?.debounceMs ?? 500;
+  const draftDebounceMs = autosave?.debounceMs ?? DEFAULT_DRAFT_DEBOUNCE_MS;
   const includeSignatures = autosave?.includeSignatures ?? false;
   const draftHash = useMemo(() => (draftId !== null ? draftConfigHash(config.fields) : ""), [draftId, config]);
   const [restoredStep, setRestoredStep] = useState<number | undefined>(undefined);

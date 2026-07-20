@@ -1,3 +1,4 @@
+import { assertNever } from "./assertNever";
 import { isBuiltInField } from "./types";
 import type { AnyFieldConfig, FieldConfig, FormValues } from "./types";
 
@@ -39,6 +40,8 @@ function defaultValueFor(field: FieldConfig): { value: unknown } | null {
       const row = buildDefaultValues(field.fields);
       return { value: Array.from({ length: rowCount }, () => ({ ...row })) };
     }
+    default:
+      return assertNever(field);
   }
 }
 
