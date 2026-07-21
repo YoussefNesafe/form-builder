@@ -9,24 +9,34 @@
 # independent: neither blocks nor triggers the other.
 #
 # ============================================================================
-# ACTIVATION CHECKLIST — until all three are true, runs are a clean no-op:
+# ACTIVATION CHECKLIST — until both are true, runs won't publish:
 #
-#   1. Add an NPM_TOKEN repo secret (Settings → Secrets and variables →
-#      Actions). It MUST be an npm *automation* (or granular read+write)
-#      token — a classic publish token still prompts for a 2FA OTP, which
-#      no CI runner can answer, and the publish step would fail with EOTP.
-#      Absent, the publish step skips cleanly with an ::notice::.
+#   1. Link this repo as an npm Trusted Publisher for `form-builder-nextjs`
+#      (npmjs.com → package → Settings → Trusted Publisher → GitHub Actions):
+#      organization/user `YoussefNesafe`, repository `form-builder`, workflow
+#      filename `release-cli.yml` (filename only, case-sensitive), environment
+#      `release`, allowed action `npm publish`. No npm token/secret is created
+#      or stored — publish auth is a short-lived OIDC token npm exchanges
+#      automatically at publish time using the `id-token: write` permission
+#      below. Requires npm CLI >= 11.5.1 and Node >= 22.14.0, guaranteed by
+#      the "Ensure npm supports Trusted Publishing" step below regardless of
+#      what setup-node's pinned Node 22 line ships by default.
+#      (Linked 2026-07-20 — see docs/plans/2026-07-18-packaging-publish-runbook.md
+#      Addendum for the full migration history.)
 #   2. Create a `release` GitHub Environment (Settings → Environments) with
 #      at least one required reviewer. The job below declares
 #      `environment: release`, so GitHub pauses and waits for approval before
 #      any step runs — the human gate on an irreversible publish. Without
-#      required reviewers the job runs unattended.
+#      required reviewers the job runs unattended. (The `environment` name
+#      MUST match what was entered in the Trusted Publisher link above.)
 #   3. Push a tag matching `cli-v*` whose version equals cli/package.json's
-#      "version" (e.g. `git tag cli-v0.1.2 && git push origin cli-v0.1.2`).
+#      "version" (e.g. `git tag cli-v0.1.5 && git push origin cli-v0.1.5`).
 #      A mismatch fails the run before reaching the registry.
 #
 # `workflow_dispatch` defaults to --dry-run, so a manual run can never
-# publish by accident; it must be explicitly unchecked.
+# publish by accident; it must be explicitly unchecked. Verify the OIDC link
+# with a `workflow_dispatch` --dry-run run before the first real token-free
+# publish (a misconfigured Trusted Publisher link must not block a release).
 # ============================================================================
 
 name: Release CLI
@@ -55,33 +65,47 @@ jobs:
     runs-on: ubuntu-latest
     environment: release
     permissions:
-      contents: read # only needs to read the repo; npm auth comes from the secret
-      id-token: write # OIDC token for npm provenance attestation on a real publish
+      contents: read # only needs to read the repo
+      id-token: write # OIDC token: npm Trusted Publishing auth AND provenance attestation
     steps:
       # Pinned to full commit SHAs (not moving `@v4` tags): this publish job
-      # can read NPM_TOKEN, so a compromised mutable tag would run with
-      # registry-write credentials. CI (ci.yml) stays on tags — no secrets
-      # there. Dependabot updates these pins.
+      # runs with `id-token: write` and can mint a short-lived npm publish
+      # credential via OIDC, so a compromised mutable tag would run with
+      # registry-write capability. CI (ci.yml) has no such permission.
+      # Dependabot updates these pins.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 22
           cache: yarn
-          # Writes a scoped ~/.npmrc reading auth from NODE_AUTH_TOKEN at
-          # publish time — no token is ever written into the repo or this YAML.
+          # Sets the registry and writes a scoped ~/.npmrc. Auth itself is OIDC
+          # Trusted Publishing (see the Publish step) — no token is written into
+          # the repo or this YAML. (See the NOTE below if the empty _authToken
+          # this input writes ever shadows the OIDC exchange.)
           registry-url: "https://registry.npmjs.org"
         env:
           # setup-node v7 writes the ~/.npmrc auth line
           # (//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}) BEFORE the
           # `cache: yarn` step shells out to `yarn cache dir`. yarn-classic then
           # env-expands that .npmrc and hard-fails ("Failed to replace env in
-          # config: ${NODE_AUTH_TOKEN}") when the var is undefined. Defining it
-          # on THIS step lets the cache step resolve it (an empty value is fine
-          # when the secret is absent — the publish step re-sets it for the real
-          # upload). Regression introduced by the actions/setup-node 4->7 bump;
-          # setup-node v4 ordered its steps so this never triggered.
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          # config: ${NODE_AUTH_TOKEN}") when the var is undefined. Trusted
+          # Publishing removes the NPM_TOKEN secret entirely, so this is now
+          # hardcoded to an empty string purely to keep the cache step's
+          # env-expand from failing — the Publish step authenticates via OIDC,
+          # not this var. Regression introduced by the actions/setup-node 4->7
+          # bump; setup-node v4 ordered its steps so this never triggered.
+          # NOTE: if the first token-free publish 401s (npm sending the empty
+          # _authToken instead of falling back to OIDC), remove the
+          # `registry-url:` input above so no _authToken line is written at all
+          # — OIDC Trusted Publishing does not need registry-url.
+          NODE_AUTH_TOKEN: ""
+
+      - name: Ensure npm supports Trusted Publishing
+        # Trusted Publishing (OIDC token exchange) requires npm CLI >= 11.5.1,
+        # newer than the version bundled with Node 22 above. Upgrade in place so
+        # the OIDC exchange is available when the Publish step runs.
+        run: npm install -g npm@latest
 
       - name: Install dependencies
         # cli/ declares no dependencies of its own, but its prepublishOnly
@@ -101,17 +125,6 @@ jobs:
           if [ "$TAG_VERSION" != "$PKG_VERSION" ]; then
             echo "::error::Tag $GITHUB_REF_NAME does not match cli/package.json version $PKG_VERSION. Bump the version and retag."
             exit 1
-          fi
-
-      - name: "Guard: NPM_TOKEN secret is present"
-        id: npm_token_check
-        env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: |
-          if [ -z "$NPM_TOKEN" ]; then
-            echo "present=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "present=true" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Determine publish mode (real vs --dry-run)
@@ -140,13 +153,12 @@ jobs:
       - name: Publish to npm
         # `npm publish` runs cli/'s prepublishOnly, which re-vendors the engine
         # source and runs the self-sufficiency gate — no separate vendor step.
-        if: steps.npm_token_check.outputs.present == 'true'
+        # Auth is OIDC Trusted Publishing: npm's CLI detects the GitHub Actions
+        # environment and exchanges the `id-token: write` OIDC token for a
+        # short-lived publish credential automatically — no NODE_AUTH_TOKEN, no
+        # stored secret. If the repo isn't linked as a Trusted Publisher for
+        # form-builder-nextjs on npmjs.com, this fails loudly (401/403) rather
+        # than skipping — verify with a dry-run workflow_dispatch first (see
+        # ACTIVATION CHECKLIST above).
         working-directory: cli
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: npm publish --access public ${{ steps.publish_mode.outputs.args }}
-
-      - name: Skip publish (guard not satisfied)
-        if: steps.npm_token_check.outputs.present != 'true'
-        run: |
-          echo "::notice::Skipping publish — NPM_TOKEN repo secret is not set. Add it under Settings > Secrets and variables > Actions, using an npm automation token (a classic token would fail on 2FA)."

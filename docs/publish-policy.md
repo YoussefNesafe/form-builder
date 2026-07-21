@@ -51,10 +51,13 @@ attestation; it is not an accepted path under any circumstance.
 ## Account security
 
 - npm account 2FA: owner to confirm enabled (pending gate, hardening plan Item 4).
-- **Target, once npm Trusted Publishing is live** (see the
-  [publish runbook's Trusted Publishing addendum](plans/2026-07-18-packaging-publish-runbook.md)):
-  flip the npm package setting that requires 2FA for publishing and
-  disallows token-based publishes. This is safe to enable only once Trusted
+- **npm Trusted Publishing: LINKED (2026-07-20)** — `form-builder-nextjs` is
+  linked to this repo's `release-cli.yml` (env `release`) via OIDC, and the
+  workflow publishes token-free. See the
+  [publish runbook's Trusted Publishing addendum](plans/2026-07-18-packaging-publish-runbook.md).
+- **Target, after the first successful token-free publish** (see the same
+  addendum): delete the `NPM_TOKEN` secret, then flip the npm package setting
+  that requires 2FA for publishing and disallows token-based publishes. This is safe to enable only once Trusted
   Publishing (OIDC) means no long-lived automation token exists for that
   setting to lock out — enabling it today would just block the current
   `NPM_TOKEN`-based CI publish. **Not yet enabled** — owner action, gated on
