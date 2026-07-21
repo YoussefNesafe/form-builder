@@ -430,7 +430,20 @@ remaining one-time steps, not new engineering:
 
 ---
 
-## Addendum (2026-07-20): npm Trusted Publishing migration — ready to apply, owner-gated
+## Addendum (2026-07-20): npm Trusted Publishing migration — APPLIED
+
+> **Status update (2026-07-20):** the npm Trusted Publisher link is now LIVE
+> (npmjs.com → `form-builder-nextjs` → Settings → Trusted Publisher: org
+> `YoussefNesafe`, repo `form-builder`, workflow `release-cli.yml`, env
+> `release`, allowed action `npm publish`), and the token-free workflow patch
+> below has been APPLIED to `.github/workflows/release-cli.yml` (PR
+> "release-cli trusted publishing"). Remaining owner steps, in order: (a) run a
+> `workflow_dispatch` dry-run to smoke the pipeline [note: `--dry-run` does not
+> fully exercise the OIDC exchange — the first *real* `cli-v*` publish is the
+> true test]; (b) after the first successful token-free publish, DELETE the
+> `NPM_TOKEN` repo secret; (c) then flip npm "require 2FA / disallow tokens".
+> The `NPM_TOKEN` secret is intentionally kept until (b) as a rollback path,
+> though the applied workflow no longer reads it.
 
 This is additive to §1/§6b above — it does not replace the `NPM_TOKEN` steps
 documented there; it describes the token-free path this repo moves to once
