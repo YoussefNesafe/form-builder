@@ -768,6 +768,7 @@ git commit -m "chore(core): tsc perf gate + document type-inference seam"
 - **Name-reference constraints** on `Condition.field`, `copyFrom`, `countryFrom`, `optionsFrom.field`, step `fieldNames`, `dependsOn`, `min/maxDateField` — a follow-up plan. `validateFormConfig` covers these at dev-time meanwhile. (Design open item #1: deferred.)
 - **Codegen `.d.ts` path** (alternative B).
 - **Ecosystem adapters** (tRPC, TanStack, next-safe-action), CMS runtime typing, AI/schema import.
+- **Step-level conditional visibility.** `InferValues`'s `IsConditional` check (Task 4) only looks at a field's own `visibleWhen`/`enabledWhenVerified`. A field with neither, but nested inside a `StepConfig` whose own `visibleWhen` can hide the whole step, can still be stripped by `parseSubmission` (via `hiddenStepFieldNames`/`visibleFieldsFor` in `core/conditions.ts`) — yet `InferValues` currently infers it as a required (non-optional) key. Same risk bucket as the name-reference constraints above: `validateFormConfig`/runtime behavior is correct, only the inferred *type* is optimistic. Flagged in code review 2026-07-23; not fixed in Phase 1 — widening `IsConditional` to also walk `C["steps"]` and mark a field optional when it belongs to a conditional step is a follow-up.
 
 ## Definition of done
 

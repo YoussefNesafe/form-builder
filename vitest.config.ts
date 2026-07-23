@@ -16,6 +16,10 @@ export default defineConfig({
       "cli/**/*.test.{ts,tsx,mjs}",
     ],
     passWithNoTests: true,
+    typecheck: {
+      enabled: true,
+      include: ["**/*.test-d.{ts,tsx}"],
+    },
   },
   resolve: {
     alias: [

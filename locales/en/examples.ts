@@ -17,6 +17,10 @@ export const examples = {
         title: "Advanced fields",
         description: "Masked input, date/time fields with sibling bounds, rating, segmented, slider, signature, and file.",
       },
+      typedSubmit: {
+        title: "Typed submit",
+        description: "A defineForm config whose submit payload is fully inferred, wired to a createFormAction server action.",
+      },
     },
   },
   multiStepSignup: {
@@ -35,6 +39,13 @@ export const examples = {
     title: "Advanced fields",
     description:
       "Masked input, date and time pairs that enforce end-after-start, rating, segmented, slider, signature, and file — each backed by a built-in field type.",
+  },
+  typedSubmit: {
+    title: "Typed submit",
+    description:
+      "config.ts calls defineForm(...), action.ts wires createFormAction(config, handler) as a server action, and page.tsx renders FormRenderer<typeof config> — the submit payload is fully inferred from the config; server field errors reuse the same ServerErrorResult shape.",
+    notePrefix: "Demo only — submitting ",
+    noteSuffix: " funnels a server-side field error back onto the email field.",
   },
   form: {
     submittedValuesLabel: "Submitted values",

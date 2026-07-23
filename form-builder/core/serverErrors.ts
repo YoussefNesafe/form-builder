@@ -1,7 +1,7 @@
 import type { AnyFieldConfig } from "./types";
 
-export type ServerErrorResult = {
-  fieldErrors?: Record<string, string>;
+export type ServerErrorResult<K extends string = string> = {
+  fieldErrors?: Partial<Record<K, string>>;
   formError?: string;
 };
 
@@ -21,7 +21,7 @@ export function applyServerErrors(
   const applied: [number, string][] = [];
   const unknown: string[] = [];
 
-  for (const [name, message] of Object.entries(result.fieldErrors ?? {})) {
+  for (const [name, message] of Object.entries(result.fieldErrors ?? {}) as [string, string][]) {
     const root = name.split(".")[0];
     const index = indexByRoot.get(root);
     if (index === undefined || (name !== root && fields[index].type !== "group")) {
