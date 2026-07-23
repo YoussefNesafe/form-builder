@@ -10,6 +10,7 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
+    "typecheck": "tsc --noEmit",
     "zip:form-builder": "node scripts/zip-form-builder.mjs",
     "registry:generate": "node scripts/build-registry.mjs",
     "registry:build": "shadcn build registry/registry.json -o public/r",

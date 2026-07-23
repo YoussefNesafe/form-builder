@@ -3,6 +3,7 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 import { FormProvider } from "react-hook-form";
 import type { AutosaveOptions } from "../core/autosave";
+import type { InferValues } from "../core/inferValues";
 import type { Messages } from "../core/messages";
 import { hiddenStepFieldNames } from "../core/conditions";
 import { applyServerErrors, type ServerErrorResult } from "../core/serverErrors";
@@ -16,9 +17,9 @@ import { FormStepper } from "./FormStepper";
 import { renderField } from "./renderField";
 import { FLAT_GRID_CLASS } from "../ui/layout";
 
-type FormRendererProps = {
-  config: FormConfig;
-  onSubmit: (values: FormValues) => void | ServerErrorResult | Promise<void | ServerErrorResult>;
+type FormRendererProps<C extends FormConfig = FormConfig> = {
+  config: C;
+  onSubmit: (values: InferValues<C>) => void | ServerErrorResult | Promise<void | ServerErrorResult>;
   onSendOtp?: (fieldName: string, values: FormValues) => Promise<void>;
   onVerifyOtp?: (fieldName: string, code: string) => Promise<boolean>;
   otp?: OtpController;
@@ -29,7 +30,7 @@ type FormRendererProps = {
   reviewFormatters?: ReviewFormatters;
 };
 
-export function FormRenderer({
+export function FormRenderer<C extends FormConfig = FormConfig>({
   config,
   onSubmit,
   onSendOtp,
@@ -40,7 +41,7 @@ export function FormRenderer({
   className,
   autosave,
   reviewFormatters,
-}: FormRendererProps) {
+}: FormRendererProps<C>) {
   const legacyFallback = useMemo(
     () => (onSendOtp || onVerifyOtp ? { send: onSendOtp, verify: onVerifyOtp } : undefined),
     [onSendOtp, onVerifyOtp],
@@ -94,7 +95,7 @@ export function FormRenderer({
   const submitHandler = (event: React.FormEvent<HTMLFormElement>) => {
     setFormError(null);
     return form.handleSubmit(async (values) => {
-      const result = await onSubmit(values);
+      const result = await onSubmit(values as InferValues<C>);
       if (!result || (!result.fieldErrors && !result.formError)) {
         draft?.clear();
         return;
