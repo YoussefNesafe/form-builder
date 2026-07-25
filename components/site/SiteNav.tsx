@@ -3,6 +3,7 @@ import { NavLinks } from "./NavLinks";
 import { SearchTrigger } from "./SearchTrigger";
 import { docsSearchIndex } from "./search/buildDocsIndex";
 import { NAV_CONTAINER } from "@/components/shared/containers";
+import { Logo } from "@/components/brand/Logo";
 import { cn } from "@/lib/utils";
 import { t } from "@/locales";
 
@@ -25,9 +26,10 @@ export function SiteNav() {
       >
         <Link
           href="/"
-          className="border-b border-transparent text-[4.005vw] tablet:text-[2vw] desktop:text-[0.832vw] font-semibold tracking-tight text-foreground focus-visible:border-foreground focus-visible:outline-none"
+          aria-label={t.nav.brand}
+          className="inline-flex border-b border-transparent focus-visible:border-foreground focus-visible:outline-none"
         >
-          {t.nav.brand}
+          <Logo withWordmark />
         </Link>
         <div className="flex items-center gap-[5.34vw] tablet:gap-[2.5vw] desktop:gap-[1.04vw]">
           <SearchTrigger index={docsSearchIndex} />
