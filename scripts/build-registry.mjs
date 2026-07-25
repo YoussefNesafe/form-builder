@@ -49,7 +49,16 @@ export const DEFAULT_OUT_FILE = path.join(ROOT, "registry", "registry.json");
 // runtime slice (Unit A's source, minus `fields/` which gets its own
 // per-field items). Order is the file-list sort key's tiebreak only —
 // output is always fully sorted below.
-export const ENGINE_DIRS = ["core", "hooks", "store", "ui", "components", "internal"];
+//
+// `next/` (the typed submit->backend helper `createFormAction`) is included:
+// despite the framework-oriented folder name its source imports only
+// `../core/*` — zero `next` import — so it is pure and ships to copy-in
+// consumers with no added coupling. This is INTENTIONALLY different from the
+// npm engine (Unit A / headless.ts), which keeps `next/` behind a separate
+// `./next` export-map subpath so `import "<engine>"` never drags it in; the
+// copy-in CLI has no such barrel-import concern (files are imported directly),
+// so bundling it here is what makes the CLI's type-safe spine complete.
+export const ENGINE_DIRS = ["core", "hooks", "store", "ui", "components", "internal", "next"];
 
 // ADR-0003 peer/bundled npm split: peers are shared-instance-critical
 // (react/react-dom/react-hook-form/zod) or heavy enough the host almost
@@ -472,7 +481,7 @@ function toRegistryItems(model) {
     type: "registry:file",
     title: "Form Builder engine",
     description:
-      "The shadcn-free-plus-runtime base every field depends on: core/hooks/store/ui/components/internal. See docs/adr/0003-packaging-split-distribution.md.",
+      "The shadcn-free-plus-runtime base every field depends on: core/hooks/store/ui/components/internal, plus the pure typed submit->backend helper next/createFormAction. See docs/adr/0003-packaging-split-distribution.md.",
     files: sortedArray(engine.filesRel).map((rel) => fileEntry(rel, "registry:file")),
     dependencies: sortedArray(engine.npmDeps),
     // Documentation only — see the module doc comment. cli/src/plan.mjs

@@ -83,4 +83,26 @@ describe("build-registry closure", () => {
       }
     }
   });
+
+  // Anti-drift for the allowlist-drift bug class: ENGINE_DIRS is a
+  // hand-maintained list, and the other closure tests above only see dirs
+  // that something ALREADY imports — so a brand-new top-level dir that
+  // nothing internally references (exactly how form-builder/next/ shipped
+  // its createFormAction to nobody) is invisible to them and silently fails
+  // to ship in the copy-in CLI. This guard forces a conscious ship-or-exclude
+  // decision for every new dir instead.
+  it("every source dir under form-builder/ is classified (in ENGINE_DIRS or a known non-engine item)", () => {
+    // fields/ -> per-field registry items; theme/ -> buildThemeItem;
+    // dist/ -> engine build output, not source.
+    const NON_ENGINE_DIRS = new Set(["fields", "theme", "dist"]);
+    const subdirs = fs
+      .readdirSync(FORM_BUILDER_DIR, { withFileTypes: true })
+      .filter((e) => e.isDirectory())
+      .map((e) => e.name);
+    const unclassified = subdirs.filter((d) => !ENGINE_DIRS.includes(d) && !NON_ENGINE_DIRS.has(d));
+    expect(
+      unclassified,
+      `form-builder/${unclassified[0]}/ is a new top-level dir covered by neither ENGINE_DIRS nor the known non-engine set — it would silently NOT ship in the copy-in CLI. Add it to ENGINE_DIRS (to ship it) or to this test's NON_ENGINE_DIRS (to deliberately exclude it).`,
+    ).toEqual([]);
+  });
 });
