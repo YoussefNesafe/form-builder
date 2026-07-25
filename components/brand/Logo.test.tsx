@@ -10,8 +10,9 @@ describe("Logo", () => {
     expect(screen.getByRole("img", { name: /form builder/i })).toBeTruthy();
   });
 
-  it("renders the wordmark text when asked", () => {
+  it("hides the mark from a11y when the wordmark is present", () => {
     render(<Logo withWordmark />);
     expect(screen.getByText("Form Builder")).toBeTruthy();
+    expect(screen.queryByRole("img")).toBeNull();
   });
 });
