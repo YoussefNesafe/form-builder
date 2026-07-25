@@ -56,7 +56,7 @@ async function png(svg, outRel, size) {
   console.log("wrote", outRel);
 }
 
-await png(mark("#0a0a0a"), "app/icon.png", 32);            // legacy favicon fallback
+await png(tile(32), "app/icon.png");                        // legacy favicon fallback: white rows on dark tile, contrast-safe at native 32px
 await png(tile(180), "app/apple-icon.png");                 // iOS home screen
 await png(tile(512), "public/brand/logo-512.png");          // npm org avatar
 await png(wordmark(), "public/brand/logo-wordmark.png");    // README / marketing
