@@ -19,7 +19,15 @@ export default function Image() {
           padding: "80px",
         }}
       >
-        <div style={{ width: "12px", height: "64px", backgroundColor: "#7f98f5", display: "flex" }} />
+        <div style={{ display: "flex", alignItems: "center", gap: "10px", marginRight: "8px" }}>
+          <div style={{ fontSize: 96, color: "#7f98f5", display: "flex", fontWeight: 600 }}>{"{"}</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+            <div style={{ width: "56px", height: "10px", borderRadius: "5px", backgroundColor: "#fafafa", display: "flex" }} />
+            <div style={{ width: "36px", height: "10px", borderRadius: "5px", backgroundColor: "#fafafa", display: "flex" }} />
+            <div style={{ width: "46px", height: "10px", borderRadius: "5px", backgroundColor: "#fafafa", display: "flex" }} />
+          </div>
+          <div style={{ fontSize: 96, color: "#7f98f5", display: "flex", fontWeight: 600 }}>{"}"}</div>
+        </div>
         <div style={{ display: "flex", flexDirection: "column", marginLeft: "40px", justifyContent: "center" }}>
           <div
             style={{
