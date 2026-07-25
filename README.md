@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="./public/brand/logo-wordmark.png" alt="Form Builder" width="260" />
+</p>
+
 # Form Builder
 
 [![npm version](https://img.shields.io/npm/v/form-builder-nextjs.svg)](https://www.npmjs.com/package/form-builder-nextjs)
