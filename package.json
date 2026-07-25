@@ -12,6 +12,7 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "zip:form-builder": "node scripts/zip-form-builder.mjs",
+    "brand:assets": "node scripts/build-brand-assets.mjs",
     "registry:generate": "node scripts/build-registry.mjs",
     "registry:build": "shadcn build registry/registry.json -o public/r",
     "form-builder": "node cli/bin/form-builder.mjs"
