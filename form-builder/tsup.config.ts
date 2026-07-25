@@ -10,7 +10,7 @@ const pkg = JSON.parse(
 };
 
 export default defineConfig({
-  entry: ["headless.ts"],
+  entry: ["headless.ts", "next/index.ts"],
   outDir: "dist",
   format: ["esm", "cjs"],
   dts: {

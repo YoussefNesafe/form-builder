@@ -5,9 +5,10 @@ export function toJson(config: FormConfig): string {
 }
 
 export function toTs(config: FormConfig): string {
-  return `import type { FormConfig } from "@/form-builder";
+  return `import { defineForm, type InferValues } from "@/form-builder";
 
-export const config: FormConfig = ${JSON.stringify(config, null, 2)};
+export const config = defineForm(${JSON.stringify(config, null, 2)});
+export type Values = InferValues<typeof config>;
 `;
 }
 

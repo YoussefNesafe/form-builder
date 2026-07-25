@@ -73,17 +73,17 @@ Register the built-in field renderers once, then render a `FormConfig`:
 
 ```tsx
 "use client";
-import { FormRenderer, registerBuiltInFields, type FormConfig } from "@/form-builder";
+import { defineForm, FormRenderer, registerBuiltInFields } from "@/form-builder";
 
 registerBuiltInFields();
 
-const config: FormConfig = {
+const config = defineForm({
   id: "contact",
   fields: [
     { name: "email", type: "email", label: "Email", required: true },
     { name: "message", type: "textarea", label: "Message" },
   ],
-};
+});
 
 export function ContactForm() {
   return <FormRenderer config={config} onSubmit={(values) => console.log(values)} />;

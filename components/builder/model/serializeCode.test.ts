@@ -13,11 +13,20 @@ describe("code serializers", () => {
     expect(JSON.parse(toJson(config))).toEqual(config);
   });
 
-  it("toTs emits a typed const and the import, with the config as valid JSON body", () => {
+  it("toTs wraps the config in defineForm, imports it, and emits a Values alias", () => {
     const ts = toTs(config);
-    expect(ts).toContain('import type { FormConfig } from "@/form-builder";');
-    expect(ts).toContain("export const config: FormConfig =");
-    const body = ts.slice(ts.indexOf("=") + 1).replace(/;\s*$/, "").trim();
+    expect(ts).toContain("defineForm(");
+    expect(ts).toMatch(/import \{[^}]*defineForm[^}]*\} from ["']@\/form-builder["']/);
+    expect(ts).toMatch(/import \{[^}]*InferValues[^}]*\} from ["']@\/form-builder["']/);
+    expect(ts).toContain("export const config = defineForm(");
+    expect(ts).toContain("export type Values = InferValues<typeof config>;");
+  });
+
+  it("toTs's defineForm(...) body is the config as valid JSON", () => {
+    const ts = toTs(config);
+    const start = ts.indexOf("defineForm(") + "defineForm(".length;
+    const end = ts.indexOf(");", start);
+    const body = ts.slice(start, end).trim();
     expect(JSON.parse(body)).toEqual(config);
   });
 

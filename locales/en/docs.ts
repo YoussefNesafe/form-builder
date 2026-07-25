@@ -25,6 +25,8 @@ export const docs = {
       conditions: "Conditions",
       wizards: "Multi-step wizards",
       serverValidation: "Server-side validation",
+      typeSafety: "Type safety",
+      submitToBackend: "Submit to backend",
       fieldTypes: "Field types",
     },
   },
@@ -54,6 +56,10 @@ export const docs = {
       wizards: "The steps config shape, Next/Back gating, conditional steps, and the read-only review step.",
       serverValidation:
         "parseSubmission — the server-side trust boundary for a submitted config. Route Handler/Server Action recipes, the fail-closed otp pattern, and every documented sharp edge.",
+      typeSafety:
+        "defineForm and InferValues — a typed submit payload straight from your config, the value-type table, and the conditional-optional rule.",
+      submitToBackend:
+        "The typed wire end to end: createFormAction for Server Actions, parseSubmission direct for Route Handlers, and applyServerErrors on the way back.",
       fieldTypes:
         "Every built-in field type the registry ships, generated from the package's own type list so it can't drift.",
     },

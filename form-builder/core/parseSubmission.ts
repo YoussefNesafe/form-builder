@@ -1,5 +1,6 @@
 import { visibleFieldsFor } from "./conditions";
 import { buildDefaultValues } from "./defaults";
+import type { InferValues } from "./inferValues";
 import { mergeMessages, type Messages } from "./messages";
 import { validateFormConfig } from "./schema";
 import type { ServerErrorResult } from "./serverErrors";
@@ -20,8 +21,8 @@ export type ParseSubmissionOptions = {
   maxStringLength?: number;
 };
 
-export type ParseSubmissionResult =
-  | { ok: true; values: FormValues; unvalidated: string[] }
+export type ParseSubmissionResult<V = FormValues> =
+  | { ok: true; values: V; unvalidated: string[] }
   | { ok: false; code: ParseSubmissionErrorCode; errors: ServerErrorResult; unvalidated: string[] };
 
 const DEFAULT_MAX_STRING_LENGTH = 10_000;
@@ -180,11 +181,11 @@ function mapIssuesToServerErrors(issues: MinimalIssue[]): ServerErrorResult {
   return result;
 }
 
-export function parseSubmission(
-  config: FormConfig,
+export function parseSubmission<C extends FormConfig = FormConfig>(
+  config: C,
   rawBody: unknown,
   opts?: ParseSubmissionOptions,
-): ParseSubmissionResult {
+): ParseSubmissionResult<InferValues<C>> {
   if (!isPlainObject(rawBody)) {
     return { ok: false, code: "invalid_body", errors: { formError: GENERIC_SUBMISSION_ERROR }, unvalidated: [] };
   }
@@ -251,5 +252,5 @@ export function parseSubmission(
   }
   reinjectNestedFileValues(visibleFields, values, scrubbed);
 
-  return { ok: true, values, unvalidated };
+  return { ok: true, values: values as InferValues<C>, unvalidated };
 }

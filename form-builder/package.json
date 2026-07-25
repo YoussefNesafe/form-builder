@@ -20,6 +20,11 @@
       "import": "./dist/headless.js",
       "require": "./dist/headless.cjs"
     },
+    "./next": {
+      "types": "./dist/next/index.d.ts",
+      "import": "./dist/next/index.js",
+      "require": "./dist/next/index.cjs"
+    },
     "./theme.css": "./theme/tokens.css",
     "./package.json": "./package.json"
   },

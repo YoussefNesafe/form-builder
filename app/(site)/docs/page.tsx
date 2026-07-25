@@ -17,6 +17,8 @@ const DESCRIPTIONS: Record<string, string> = {
   "/docs/conditions": t.docs.index.descriptions.conditions,
   "/docs/wizards": t.docs.index.descriptions.wizards,
   "/docs/server-validation": t.docs.index.descriptions.serverValidation,
+  "/docs/type-safety": t.docs.index.descriptions.typeSafety,
+  "/docs/submit-to-backend": t.docs.index.descriptions.submitToBackend,
   "/docs/field-types": t.docs.index.descriptions.fieldTypes,
 };
 

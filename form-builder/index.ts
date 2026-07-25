@@ -57,6 +57,8 @@ export {
   type ParseSubmissionResult,
   type ParseSubmissionErrorCode,
 } from "./core/parseSubmission";
+export { defineForm } from "./core/defineForm";
+export type { InferValues, FieldNames, FieldValue } from "./core/inferValues";
 export { registerBuiltInFields } from "./fields";
 export { formatMasked, extractRaw, maskTokenCount } from "./fields/maskedValue";
 export {

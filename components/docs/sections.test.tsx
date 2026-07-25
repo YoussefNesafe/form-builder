@@ -10,6 +10,11 @@ import {
   SECTIONS as serverValidationSections,
   TOC_ITEMS as serverValidationToc,
 } from "./server-validation/sections";
+import { SECTIONS as typeSafetySections, TOC_ITEMS as typeSafetyToc } from "./type-safety/sections";
+import {
+  SECTIONS as submitToBackendSections,
+  TOC_ITEMS as submitToBackendToc,
+} from "./submit-to-backend/sections";
 import { SECTIONS as fieldTypesSections, TOC_ITEMS as fieldTypesToc } from "./field-types/sections";
 
 registerBuiltInFields();
@@ -30,6 +35,8 @@ const PAGES: { name: string; SECTIONS: SectionEntry[]; TOC_ITEMS: { id: string; 
   { name: "conditions", SECTIONS: conditionsSections, TOC_ITEMS: conditionsToc },
   { name: "wizards", SECTIONS: wizardsSections, TOC_ITEMS: wizardsToc },
   { name: "server-validation", SECTIONS: serverValidationSections, TOC_ITEMS: serverValidationToc },
+  { name: "type-safety", SECTIONS: typeSafetySections, TOC_ITEMS: typeSafetyToc },
+  { name: "submit-to-backend", SECTIONS: submitToBackendSections, TOC_ITEMS: submitToBackendToc },
   { name: "field-types", SECTIONS: fieldTypesSections, TOC_ITEMS: fieldTypesToc },
 ];
 

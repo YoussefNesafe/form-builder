@@ -20,6 +20,11 @@ const EXAMPLES = [
     title: t.examples.index.cards.advancedFields.title,
     description: t.examples.index.cards.advancedFields.description,
   },
+  {
+    href: "/examples/typed-submit",
+    title: t.examples.index.cards.typedSubmit.title,
+    description: t.examples.index.cards.typedSubmit.description,
+  },
 ] as const;
 
 export default function ExamplesIndexPage() {

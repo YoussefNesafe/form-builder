@@ -42,8 +42,8 @@ export type FormDraft = {
   noteStep: (step: number) => void;
 };
 
-export function useDynamicForm(
-  config: FormConfig,
+export function useDynamicForm<C extends FormConfig = FormConfig>(
+  config: C,
   opts?: {
     messages?: Partial<Messages>;
     otpVerified?: OtpVerifiedChecker;
