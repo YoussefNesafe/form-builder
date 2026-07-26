@@ -66,3 +66,6 @@ next-env.d.ts
 # npm auth — never commit a registry token
 .npmrc
 **/.npmrc
+
+# Claude Code local config/skills (kept local only)
+.claude/
