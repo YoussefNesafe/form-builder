@@ -15,7 +15,11 @@ type CopyButtonProps = {
 
 const COPIED_RESET_MS = 2000;
 
-export function CopyButton({ text, label = docs.codeBlock.defaultLabel, className }: CopyButtonProps) {
+export function CopyButton({
+  text,
+  label = docs.codeBlock.defaultLabel,
+  className,
+}: CopyButtonProps) {
   const [copied, setCopied] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -33,8 +37,7 @@ export function CopyButton({ text, label = docs.codeBlock.defaultLabel, classNam
       setCopied(true);
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
       timeoutRef.current = setTimeout(() => setCopied(false), COPIED_RESET_MS);
-    } catch {
-    }
+    } catch {}
   };
 
   const idleText = fmt(docs.codeBlock.copyAriaLabel, { label });
