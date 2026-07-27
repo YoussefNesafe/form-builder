@@ -22,6 +22,13 @@ export type FormLocale = {
 type FieldRuntime = {
   disabled: boolean;
   messages: Messages;
+  /**
+   * The config of the field currently being rendered, published by `FieldGate`
+   * so shared chrome can read declarative config without every field component
+   * threading it through. `FieldWrapper` uses it for `badge`. Undefined outside
+   * a gate — a `FieldWrapper` rendered by hand rather than via `renderField`.
+   */
+  field?: AnyFieldConfig;
   otp?: OtpRuntime;
   isFieldValid?: (fieldName: string, value: unknown) => boolean;
   verifiedFields?: ReadonlySet<string>;
@@ -73,7 +80,7 @@ export function FieldGate({ field, children }: { field: AnyFieldConfig; children
   if (!visible) return null;
 
   return (
-    <FieldRuntimeContext.Provider value={{ ...runtime, disabled }}>
+    <FieldRuntimeContext.Provider value={{ ...runtime, field, disabled }}>
       {children}
     </FieldRuntimeContext.Provider>
   );

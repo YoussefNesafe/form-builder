@@ -517,6 +517,15 @@ export const BASE_FIELD_PROPS: BasePropDoc[] = [
     description: "Helper text rendered under the label and wired into aria-describedby alongside any error.",
   },
   {
+    name: "badge",
+    type: "string",
+    required: false,
+    description:
+      "Short annotation rendered beside the label — \"Required in Germany\" — so a conditionally-revealed field can say why it appeared. Part of the field's accessible name, unlike the required mark, which is aria-hidden because the control already exposes required-ness on its own.",
+    exceptions:
+      "needs a label to annotate: no label, no badge — which also means static, submit, and hidden ignore it, since they render none.",
+  },
+  {
     name: "placeholder",
     type: "string",
     required: false,

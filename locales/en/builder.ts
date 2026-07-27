@@ -99,6 +99,10 @@ export const builder = {
       name: { label: "Name", help: "Unique key in the submitted values. No dots." },
       label: { label: "Label" },
       description: { label: "Description" },
+      badge: {
+        label: "Badge",
+        help: "Short note beside the label, e.g. \"Required in Germany\". Read out as part of the field's name; needs a label to sit next to.",
+      },
       placeholder: { label: "Placeholder" },
       required: { label: "Required" },
       disabled: { label: "Disabled" },

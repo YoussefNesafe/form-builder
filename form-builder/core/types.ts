@@ -41,6 +41,26 @@ export type BaseField = {
   name: string;
   label?: string;
   description?: string;
+  /**
+   * Short annotation rendered beside the label — "Required in Germany",
+   * "Verified by your bank". Says why this field is here, which a
+   * conditionally-revealed field otherwise leaves the visitor to infer.
+   *
+   * It is part of the field's accessible name ("Tax identification number
+   * Required in Germany"), unlike the required `*`, which is `aria-hidden`
+   * because `required` already reaches assistive tech through the control's
+   * own attribute. The badge has no such second channel, so hiding it would
+   * drop the information rather than de-duplicate it.
+   *
+   * `FieldWrapper` reads it off the runtime context that `FieldGate` publishes,
+   * so no field component passes it through and custom types registered with
+   * `registerField` inherit it for free. Two consequences: a `FieldWrapper`
+   * rendered outside a `FieldGate` (i.e. not reached via `renderField`) shows
+   * no badge, and a field with no `label` shows none either — there is nothing
+   * for it to annotate, and `hidden`, `static`, and `submit` render no label at
+   * all. Empty string renders nothing, same as `label`/`description`.
+   */
+  badge?: string;
   placeholder?: string;
   required?: boolean;
   disabled?: boolean;

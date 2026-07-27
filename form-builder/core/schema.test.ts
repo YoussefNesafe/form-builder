@@ -56,6 +56,26 @@ describe("validateFormConfig", () => {
       }),
     ).toThrow());
 
+  // baseFieldSchema is a strictObject, so every base prop has to be declared
+  // there as well as on the BaseField type — a prop that only exists in
+  // TypeScript typechecks fine and then throws on the first real config.
+  it("accepts badge on every field type, not just the one it was added for", () =>
+    expect(() =>
+      validateFormConfig({
+        id: "t",
+        fields: [
+          { type: "text", name: "taxId", badge: "Required in Germany" },
+          { type: "radio", name: "residency", badge: "Screened", options: [{ label: "DE", value: "de" }] },
+          { type: "group", name: "team", badge: "Beneficial owners", fields: [{ type: "text", name: "member" }] },
+        ],
+      }),
+    ).not.toThrow());
+
+  it("rejects a non-string badge", () =>
+    expect(() =>
+      validateFormConfig({ id: "t", fields: [{ type: "text", name: "a", badge: 12 as never }] }),
+    ).toThrow(/badge/));
+
   it("rejects field names containing dots", () =>
     expect(() =>
       validateFormConfig({ id: "t", fields: [{ type: "text", name: "a.b" }] }),

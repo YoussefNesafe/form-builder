@@ -66,6 +66,7 @@ const baseFieldSchema = z.strictObject({
     }),
   label: z.string().optional(),
   description: z.string().optional(),
+  badge: z.string().optional(),
   placeholder: z.string().optional(),
   required: z.boolean().optional(),
   disabled: z.boolean().optional(),
