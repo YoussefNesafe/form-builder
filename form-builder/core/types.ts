@@ -109,19 +109,36 @@ export type FieldConfig =
        * value falls outside `minDate`/`maxDate`, so a date expressing a rule can
        * state the rule: "You must be 18 or older to open an account."
        *
+       * WHERE THIS SURFACES: not while picking a date. The calendar disables
+       * out-of-range days and clamps its navigable months, and the field has no
+       * text-entry path, so a user driving the UI cannot reach a bound
+       * violation. This fires on values that arrive without passing through the
+       * calendar — `parseSubmission`, a restored autosave draft, `copyFrom`,
+       * and programmatic defaults. It is the message for untrusted or restored
+       * input, not inline feedback, and it does not explain greyed-out days.
+       *
        * It covers every `minDate`/`maxDate` violation on the field and nothing
        * else. That means:
        * - one sentence serves both bounds, so with `minDate` and `maxDate` both
        *   set it must read for too-early and too-late alike ("Settlement must
        *   fall inside January 2026", not "Too late");
-       * - on `range: true` it applies to `from` and `to` alike, and leaves the
-       *   missing-`to` and `from`-after-`to` messages generic;
+       * - on `range: true` it applies to `from` and `to` alike. The missing-`to`
+       *   and `from`-after-`to` messages stay generic, so a reversed range that
+       *   also breaks a bound reports the override on each offending endpoint
+       *   *and* `messages.invalidDate` at the field root;
        * - an unparseable value still gets `messages.invalidDate`;
        * - `minDateField`/`maxDateField` keep their own messages, which already
        *   name the other field ("Must be on or after Start date"). Overriding
        *   those would collapse two distinct rules into one sentence and drop
        *   that label — the same reason `TextRules` gives `matches` its own
-       *   `matchesMessage` rather than reusing `message`.
+       *   `matchesMessage` rather than reusing `message`. When a static bound
+       *   and a cross-field rule both fail, both issues land on this field and
+       *   the override is reported first, so it is the one a form using
+       *   react-hook-form's default `criteriaMode: "firstError"` shows.
+       *
+       * The string is a config literal, so it bypasses the `Messages` layer and
+       * renders as written on a localized form — the same tradeoff `masked`
+       * makes with its own `message`. Must be non-empty (validator-enforced).
        */
       message?: string;
     })

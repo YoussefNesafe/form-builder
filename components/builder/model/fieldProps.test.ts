@@ -21,7 +21,7 @@ const REQUIRED_TYPE_KEYS: Record<string, string[]> = {
   segmented: ["options"],
   checkbox: ["options"],
   switch: ["options"],
-  date: ["range", "minDate", "maxDate", "minDateField", "maxDateField"],
+  date: ["range", "minDate", "maxDate", "minDateField", "maxDateField", "message"],
   time: ["minTime", "maxTime", "stepMinutes", "minTimeField", "maxTimeField"],
   rating: ["max"],
   slider: ["min", "max", "step"],

@@ -184,6 +184,7 @@ export const FIELD_PROPS: Record<FieldType, PropDescriptor[]> = {
       refKind: "dateSource",
       help: P.maxDateField.help,
     },
+    { key: "message", label: P.message.label, control: "text" },
   ],
   time: [
     ...BASE,

@@ -64,6 +64,17 @@ function datePart(value: string): string {
  * `field.message` replaces the bound messages only. A value that is not a date
  * at all keeps `messages.invalidDate`: the override explains a rule, and a
  * typo has not reached the rule yet.
+ *
+ * The override is reported before the `minDateField`/`maxDateField` message
+ * when a field carries both a static bound and a cross-field rule and both
+ * fail — these refinements run inside the field's own schema, and the
+ * cross-field pass is a `superRefine` on the enclosing object, which Zod runs
+ * afterwards. Under react-hook-form's default `criteriaMode: "firstError"` only
+ * the leading issue per path reaches the user, so this ordering decides which
+ * sentence they read. It is the intended one: the override was written for this
+ * field's rule, whereas the cross-field message is derivable from the form. As
+ * with the type-before-size ordering in `fileIssueReporter`, moving either
+ * check out of its current pass is a user-visible change.
  */
 function isoDateSchema(field: Extract<FieldConfig, { type: "date" }>, messages: Messages): z.ZodType<string> {
   let schema = z

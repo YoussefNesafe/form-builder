@@ -1048,6 +1048,32 @@ describe("date message override", () => {
     }
   });
 
+  it("when a bound and a cross-field rule both fail, the override is reported first", () => {
+    const schema = buildFieldsSchema(
+      [
+        { type: "date", name: "start", label: "Start date", required: true },
+        {
+          type: "date",
+          name: "end",
+          required: true,
+          minDate: "2026-01-01",
+          minDateField: "start",
+          message: "Pick a date in the current plan year.",
+        },
+      ],
+      messages,
+    );
+    // Before 2026-01-01 (static bound) and before "start" (cross-field): both fail.
+    const result = schema.safeParse({ start: "2026-06-01", end: "2025-05-01" });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues.map((issue) => [issue.path, issue.message])).toEqual([
+        [["end"], "Pick a date in the current plan year."],
+        [["end"], messages.dateAfter("Start date")],
+      ]);
+    }
+  });
+
   it("range: the override covers a bound violation on either endpoint", () => {
     const schema = schemaFor({
       type: "date",
@@ -1086,5 +1112,26 @@ describe("date message override", () => {
     const reversed = schema.safeParse({ from: "2026-01-20", to: "2026-01-10" });
     expect(reversed.success).toBe(false);
     if (!reversed.success) expect(reversed.error.issues[0].message).toBe(messages.invalidDate);
+  });
+
+  it("range: a reversed range that also breaks a bound reports the override and the generic message", () => {
+    const schema = schemaFor({
+      type: "date",
+      name: "stay",
+      range: true,
+      required: true,
+      minDate: "2026-01-01",
+      maxDate: "2026-01-31",
+      message: "Bookings are open for January 2026 only.",
+    });
+    const result = schema.safeParse({ from: "2026-02-20", to: "2025-12-10" });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues.map((issue) => [issue.path, issue.message])).toEqual([
+        [["from"], "Bookings are open for January 2026 only."],
+        [["to"], "Bookings are open for January 2026 only."],
+        [[], messages.invalidDate],
+      ]);
+    }
   });
 });

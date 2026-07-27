@@ -1320,6 +1320,15 @@ describe("date config", () => {
     ).not.toThrow();
   });
 
+  it("rejects an empty message, which would fall through to Zod's untranslated default", () => {
+    expect(() =>
+      validateFormConfig({
+        id: "f",
+        fields: [{ type: "date", name: "dob", maxDate: "2008-07-27", message: "" }],
+      }),
+    ).toThrow();
+  });
+
   it("rejects a non-string message", () => {
     expect(() =>
       validateFormConfig({
