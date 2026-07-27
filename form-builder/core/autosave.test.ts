@@ -92,18 +92,27 @@ describe("storage selection", () => {
   afterEach(() => window.sessionStorage.clear());
 
   it("defaults to localStorage", () => {
-    saveDraft("f", "h", { name: "Ada" });
-    expect(window.localStorage.getItem(draftStorageKey("f"))).not.toBeNull();
-    expect(window.sessionStorage.getItem(draftStorageKey("f"))).toBeNull();
+    saveDraft("signup", "h1", { name: "Ada" });
+    expect(window.localStorage.getItem(draftStorageKey("signup"))).not.toBeNull();
+    expect(window.sessionStorage.getItem(draftStorageKey("signup"))).toBeNull();
+  });
+
+  it("round-trips through localStorage when selected explicitly", () => {
+    saveDraft("signup", "h1", { name: "Ada" }, 2, "local");
+    expect(window.sessionStorage.getItem(draftStorageKey("signup"))).toBeNull();
+    expect(loadDraft("signup", "h1", "local")).toEqual({ values: { name: "Ada" }, step: 2 });
+    expect(hasDraft("signup", "local")).toBe(true);
+    clearDraft("signup", "local");
+    expect(hasDraft("signup", "local")).toBe(false);
   });
 
   it("round-trips through sessionStorage when selected", () => {
-    saveDraft("f", "h", { name: "Ada" }, 2, "session");
-    expect(window.localStorage.getItem(draftStorageKey("f"))).toBeNull();
-    expect(loadDraft("f", "h", "session")).toEqual({ values: { name: "Ada" }, step: 2 });
-    expect(hasDraft("f", "session")).toBe(true);
-    clearDraft("f", "session");
-    expect(hasDraft("f", "session")).toBe(false);
+    saveDraft("signup", "h1", { name: "Ada" }, 2, "session");
+    expect(window.localStorage.getItem(draftStorageKey("signup"))).toBeNull();
+    expect(loadDraft("signup", "h1", "session")).toEqual({ values: { name: "Ada" }, step: 2 });
+    expect(hasDraft("signup", "session")).toBe(true);
+    clearDraft("signup", "session");
+    expect(hasDraft("signup", "session")).toBe(false);
   });
 
   it("accepts a custom storage object", () => {
@@ -113,7 +122,12 @@ describe("storage selection", () => {
       setItem: (k: string, v: string) => void map.set(k, v),
       removeItem: (k: string) => void map.delete(k),
     };
-    saveDraft("f", "h", { name: "Ada" }, undefined, custom);
-    expect(loadDraft("f", "h", custom)).toEqual({ values: { name: "Ada" } });
+    saveDraft("signup", "h1", { name: "Ada" }, undefined, custom);
+    expect(window.localStorage.getItem(draftStorageKey("signup"))).toBeNull();
+    expect(window.sessionStorage.getItem(draftStorageKey("signup"))).toBeNull();
+    expect(loadDraft("signup", "h1", custom)).toEqual({ values: { name: "Ada" } });
+    expect(hasDraft("signup", custom)).toBe(true);
+    clearDraft("signup", custom);
+    expect(hasDraft("signup", custom)).toBe(false);
   });
 });

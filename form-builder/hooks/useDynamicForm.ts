@@ -96,6 +96,11 @@ export function useDynamicForm<C extends FormConfig = FormConfig>(
   const draftDebounceMs = autosave?.debounceMs ?? DEFAULT_DRAFT_DEBOUNCE_MS;
   const includeSignatures = autosave?.includeSignatures ?? false;
   const draftStorage = autosave?.storage;
+  // Read through a ref inside the save effect so the effect never resubscribes on
+  // storage identity: an inline object would otherwise tear the effect down every
+  // render, and its cleanup flushes the pending save — a write per keystroke.
+  const draftStorageRef = useRef(draftStorage);
+  draftStorageRef.current = draftStorage;
   const draftHash = useMemo(() => (draftId !== null ? draftConfigHash(config.fields) : ""), [draftId, config]);
   const [restoredStep, setRestoredStep] = useState<number | undefined>(undefined);
   const [restoreGeneration, setRestoreGeneration] = useState(0);
@@ -130,7 +135,7 @@ export function useDynamicForm<C extends FormConfig = FormConfig>(
           draftHash,
           sanitizeDraftValues(config.fields, values as FormValues, includeSignatures),
           draftStepRef.current,
-          draftStorage,
+          draftStorageRef.current,
         );
       }, draftDebounceMs);
     });
@@ -144,11 +149,11 @@ export function useDynamicForm<C extends FormConfig = FormConfig>(
           draftHash,
           sanitizeDraftValues(config.fields, form.getValues(), includeSignatures),
           draftStepRef.current,
-          draftStorage,
+          draftStorageRef.current,
         );
       }
     };
-  }, [draftId, draftHash, config, form, draftDebounceMs, includeSignatures, draftStorage]);
+  }, [draftId, draftHash, config, form, draftDebounceMs, includeSignatures]);
 
   const noteStep = useCallback(
     (step: number) => {

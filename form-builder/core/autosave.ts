@@ -1,13 +1,16 @@
 import type { AnyFieldConfig, FormValues } from "./types";
 
 /** The subset of the Web Storage API a draft needs. Anything matching this
- *  shape works — sessionStorage, localStorage, or an in-memory stub. */
+ *  shape works — sessionStorage, localStorage, or an in-memory stub.
+ *  Note the SSR difference: the built-in `"local"`/`"session"` stores are
+ *  skipped when there is no `window`, but a custom store is used as given, so
+ *  it will also be read and written during server rendering. */
 export type DraftStorage = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 
 export type DraftStorageOption = "local" | "session" | DraftStorage;
 
-function resolveStorage(storage?: DraftStorageOption): DraftStorage | null {
-  if (typeof storage === "object") return storage;
+function resolveStorage(storage: DraftStorageOption = "local"): DraftStorage | null {
+  if (storage && typeof storage === "object") return storage;
   if (typeof window === "undefined") return null;
   return storage === "session" ? window.sessionStorage : window.localStorage;
 }
@@ -16,7 +19,9 @@ export type AutosaveOptions = {
   key?: string;
   debounceMs?: number;
   includeSignatures?: boolean;
-  /** Where drafts live. Defaults to "local" — unchanged from previous behaviour. */
+  /** Where drafts live. Defaults to "local" — unchanged from previous behaviour.
+   *  If you pass an object, keep it referentially stable (module scope or
+   *  useMemo); a new object each render re-subscribes the autosave effect. */
   storage?: DraftStorageOption;
 };
 
