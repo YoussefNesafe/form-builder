@@ -141,4 +141,35 @@ describe("build-registry closure", () => {
       `form-builder/${unclassified[0]}/ is a new top-level dir covered by neither ENGINE_DIRS nor the known non-engine set — it would silently NOT ship in the copy-in CLI. Add it to ENGINE_DIRS (to ship it) or to this test's NON_ENGINE_DIRS (to deliberately exclude it).`,
     ).toEqual([]);
   });
+
+  // The installation docs page states how many shadcn primitives a full
+  // install copies. It cannot call this scanner (Node-only) at render time,
+  // so the number is a literal there — and a literal restating a derived
+  // list is exactly the thing that desynchronises quietly. `primitives.size`
+  // moves whenever a field adds or drops a `@/components/ui/*` import, and
+  // nothing about that edit would prompt anyone to reopen a docs page.
+  //
+  // Note this is NOT `components/ui/`'s file count: that folder also holds
+  // primitives outside the registry's closure (alert, progress,
+  // segmented-control today), which are never vendored. Reading the source as
+  // text rather than importing it keeps this .mjs test free of JSX/React.
+  it("the installation docs page's primitive count matches the derived model", () => {
+    const docsPath = path.join(ROOT, "components", "docs", "installation", "InstallCliSection.tsx");
+    const src = fs.readFileSync(docsPath, "utf8");
+    const match = /export const VENDORED_PRIMITIVE_COUNT = (\d+);/.exec(src);
+    expect(
+      match,
+      `Could not find "export const VENDORED_PRIMITIVE_COUNT = <n>;" in ${path.relative(ROOT, docsPath)} — if it was renamed or inlined back into the prose, update this guard rather than deleting it.`,
+    ).not.toBeNull();
+    expect(
+      Number(match[1]),
+      `${path.relative(ROOT, docsPath)} claims ${match[1]} vendored shadcn primitives, but the registry closure derives ${model.primitives.size}. Set VENDORED_PRIMITIVE_COUNT to ${model.primitives.size}.`,
+    ).toBe(model.primitives.size);
+    // Guards the guard: a prose edit that drops the interpolation would leave
+    // the constant correct-but-unused and the page silently stale.
+    expect(
+      (src.match(/\{VENDORED_PRIMITIVE_COUNT\}/g) ?? []).length,
+      "VENDORED_PRIMITIVE_COUNT is declared but no longer interpolated into the prose — the page has a hardcoded number again.",
+    ).toBeGreaterThan(0);
+  });
 });
