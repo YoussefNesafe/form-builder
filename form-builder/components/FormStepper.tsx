@@ -28,6 +28,7 @@ export function FormStepper({
   initialStep,
   controlledStep,
   orientation = "horizontal",
+  onStepSettled,
   onStepChange,
 }: {
   config: FormConfig;
@@ -39,6 +40,11 @@ export function FormStepper({
    *  `step` prop's JSDoc on FormRenderer for the full contract. */
   controlledStep?: number;
   orientation?: StepperOrientation;
+  /** Bookkeeping channel: fires on EVERY real move, including one the host
+   *  itself asked for through `controlledStep`. Autosave rides this, because a
+   *  draft's resume point has to track host-driven moves too. Keep it distinct
+   *  from `onStepChange`, which is deliberately suppressed for those. */
+  onStepSettled?: (step: number) => void;
   onStepChange?: (step: number) => void;
 }) {
   const steps = useMemo(() => config.steps ?? [], [config.steps]);
@@ -81,18 +87,26 @@ export function FormStepper({
     if (controlledStep !== undefined) store.getState().goTo(controlledStep);
   }, [controlledStep, store]);
 
-  // Reports landings, not requests. Silent for a step the host already knows
-  // about — the one it just asked for through `controlledStep`, the one we last
-  // reported, or the step we mounted on. Without that, a host that navigates on
-  // every call would fire a redundant navigation on load and echo its own
-  // `step` prop straight back at itself.
-  const reportedStepRef = useRef<number | null>(null);
+  // Two channels off one observation, and they must NOT be collapsed into one.
+  //
+  //   onStepSettled — every real move. Bookkeeping (autosave's resume point)
+  //     has to see host-driven moves too, or a host that drives the wizard from
+  //     a router silently stops persisting where the visitor got to.
+  //   onStepChange  — only moves the host doesn't already know about. Silent for
+  //     the step we mounted on and for a step reached because the host passed it
+  //     as `controlledStep`, so a host that navigates on every call fires no
+  //     redundant navigation on load and never echoes its own prop back.
+  //
+  // Both skip the mount observation and any re-run where the step didn't
+  // actually move (an unrelated dep, e.g. an inline `onStepChange` arrow).
+  const lastStepRef = useRef<number | null>(null);
   useEffect(() => {
-    const alreadyKnown =
-      reportedStepRef.current === null || step === reportedStepRef.current || step === controlledStep;
-    reportedStepRef.current = step;
-    if (!alreadyKnown) onStepChange?.(step);
-  }, [step, controlledStep, onStepChange]);
+    const previous = lastStepRef.current;
+    lastStepRef.current = step;
+    if (previous === null || previous === step) return;
+    onStepSettled?.(step);
+    if (step !== controlledStep) onStepChange?.(step);
+  }, [step, controlledStep, onStepSettled, onStepChange]);
 
   useEffect(() => {
     if (!stepJumpRef) return;

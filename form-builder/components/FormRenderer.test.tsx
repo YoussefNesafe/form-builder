@@ -512,6 +512,51 @@ describe("FormRenderer step control", () => {
     expect(spy.mock.calls).toEqual([[2]]);
   });
 
+  it("controlled: a negative step clamps to where the wizard already was, so nothing is reported", () => {
+    const spy = vi.fn();
+    render(<FormRenderer config={wizardConfig} onSubmit={vi.fn()} step={-5} onStepChange={spy} />);
+
+    expect(currentStepText()).toContain("One");
+    expect(spy).not.toHaveBeenCalled();
+  });
+
+  // Documented on the `step` JSDoc as consequence 1 of a lagging `step`.
+  it("controlled: a return to the step the host still holds is not reported", async () => {
+    const spy = vi.fn();
+    render(<FormRenderer config={wizardConfig} onSubmit={vi.fn()} step={1} onStepChange={spy} />);
+    expect(currentStepText()).toContain("Two");
+
+    await click("Next");
+    expect(spy.mock.calls).toEqual([[2]]);
+
+    await click("Back");
+    expect(currentStepText()).toContain("Two");
+    // The move happened; it just matches the step the host passed in, so the
+    // engine treats it as one the host already knows about.
+    expect(spy.mock.calls).toEqual([[2]]);
+  });
+
+  // Documented on the `step` JSDoc as consequence 2 of a lagging `step`.
+  it("controlled: a step prop arriving late pulls the wizard forward again", async () => {
+    const spy = vi.fn();
+    const wizard = (atStep: number) => (
+      <FormRenderer config={wizardConfig} onSubmit={vi.fn()} step={atStep} onStepChange={spy} />
+    );
+    const { rerender } = render(wizard(0));
+
+    await click("Next");
+    await click("Next");
+    await click("Back");
+    expect(currentStepText()).toContain("Two");
+    expect(spy.mock.calls).toEqual([[1], [2], [1]]);
+
+    // The host's router finally catches up to the *first* report — and the
+    // wizard honours it, overriding the Back the visitor has since pressed.
+    rerender(wizard(2));
+    expect(currentStepText()).toContain("Three");
+    expect(spy.mock.calls).toEqual([[1], [2], [1]]);
+  });
+
   it("controlled: a hidden step redirects to the nearest visible one and reports the correction", () => {
     const spy = vi.fn();
     render(
@@ -542,6 +587,46 @@ describe("FormRenderer step control", () => {
 
     await waitFor(() => expect(currentStepText()).toContain("Two"));
     expect(spy.mock.calls).toEqual([[1]]);
+  });
+
+  it("controlled + autosave: a host-driven step is still recorded in the draft", async () => {
+    window.localStorage.clear();
+    const key = "controlled-autosave";
+    const spy = vi.fn();
+    const wizard = (atStep: number) => (
+      <FormRenderer
+        config={wizardConfig}
+        onSubmit={vi.fn()}
+        step={atStep}
+        onStepChange={spy}
+        autosave={{ key, debounceMs: 0 }}
+      />
+    );
+    const { rerender } = render(wizard(0));
+
+    // A step is only persisted onto an existing draft, so give it one first.
+    await act(async () => {
+      fireEvent.change(screen.getByLabelText("First"), { target: { value: "typed" } });
+    });
+    await waitFor(() => expect(window.localStorage.getItem(`form-builder:draft:${key}`)).not.toBeNull());
+
+    rerender(wizard(2));
+    expect(currentStepText()).toContain("Three");
+
+    await act(async () => {
+      fireEvent.change(screen.getByLabelText("Third"), { target: { value: "edited" } });
+    });
+    await waitFor(() => {
+      const saved = JSON.parse(window.localStorage.getItem(`form-builder:draft:${key}`)!) as {
+        values: Record<string, unknown>;
+        step?: number;
+      };
+      expect(saved.values).toMatchObject({ third: "edited" });
+      // The move came from the host, so it is never reported back to the host —
+      // but autosave still has to record it, or the visitor resumes on step one.
+      expect(saved.step).toBe(2);
+    });
+    expect(spy).not.toHaveBeenCalled();
   });
 
   it("composes the consumer callback with autosave's own step bookkeeping", async () => {

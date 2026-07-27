@@ -41,14 +41,38 @@ type FormRendererProps<C extends FormConfig = FormConfig> = {
    * ignores `onStepChange` still gets a working wizard — its own `step` value
    * just goes stale.
    *
-   * The request is not honoured literally in two cases, and `onStepChange`
-   * fires with the real index in both: an out-of-range index is clamped into
-   * `[0, steps.length - 1]`, and an index whose step is hidden by `visibleWhen`
-   * redirects to the nearest visible step (the next one, else the previous).
+   * The request is not honoured literally in two cases: an out-of-range index
+   * is clamped into `[0, steps.length - 1]`, and an index whose step is hidden
+   * by `visibleWhen` redirects to the nearest visible step (the next one, else
+   * the previous). `onStepChange` reports the real index whenever it differs
+   * from the step the wizard was already on — so `step={99}` on a fresh mount
+   * reports the last step, but `step={-5}` reports nothing, because it clamps
+   * to 0 and that is where the wizard already was.
    *
    * If autosave restores a draft that recorded a different step, the restored
    * step wins on mount and is reported — so a router-backed host navigates to
    * where the visitor left off rather than fighting it.
+   *
+   * **Two consequences worth knowing if your `step` lags behind the wizard**
+   * (an async router that only updates it after a navigation commits, rather
+   * than deriving it synchronously from the URL):
+   *
+   * 1. *A return to the step you still hold is not reported.* Hold `step={1}`
+   *    while the visitor goes Next to 2 (reported) then Back to 1: that last
+   *    move matches the value you passed, so the engine treats it as one you
+   *    already know about and stays silent. You are on step 1 and so is the
+   *    wizard, so nothing is out of sync — but no callback tells you the
+   *    visitor moved.
+   * 2. *A late `step` pulls the visitor forward again.* If your router lands
+   *    `step={2}` a tick after the visitor has already gone Back to 1, the
+   *    wizard honours it and moves to 2. A sync is a sync whenever it arrives;
+   *    the engine cannot tell a stale echo of its own report from a genuine
+   *    browser-Back navigation to that URL, because both arrive as the same
+   *    number.
+   *
+   * Deriving `step` synchronously from the URL (`routes.indexOf(pathname)`)
+   * avoids both: there is then no window in which `step` disagrees with where
+   * the visitor is.
    */
   step?: number;
   /**
@@ -60,7 +84,12 @@ type FormRendererProps<C extends FormConfig = FormConfig> = {
    *
    * It DOES fire for a step the wizard chose itself: Next/Back, a review-step
    * Edit button, a server-error jump, a hidden-step bounce, and the clamping
-   * and redirect cases described on `step`.
+   * and redirect cases described on `step` — whenever the resulting index
+   * differs both from the step the wizard was on and from your `step`.
+   *
+   * This is the host's channel only. Autosave records the step over a separate
+   * internal channel that is NOT suppressed, so driving the wizard from a
+   * router never costs a draft its resume point.
    */
   onStepChange?: (step: number) => void;
   /**
@@ -159,16 +188,12 @@ export function FormRenderer<C extends FormConfig = FormConfig>({
   const [formError, setFormError] = useState<string | null>(null);
   const stepJumpRef = useRef<((fieldName: string) => void) | null>(null);
 
-  // Autosave's own step bookkeeping runs first and unconditionally: a consumer
-  // supplying onStepChange must not cost the draft its resume point.
+  // Autosave rides FormStepper's bookkeeping channel, NOT the consumer-facing
+  // one. Composing the two into a single callback would look equivalent, but
+  // the host-facing report is deliberately suppressed for a move the host asked
+  // for — so autosave would stop recording exactly the moves a router-driven
+  // wizard makes, and the visitor would resume on the wrong step.
   const noteStep = draft?.noteStep;
-  const handleStepChange = useCallback(
-    (next: number) => {
-      noteStep?.(next);
-      onStepChange?.(next);
-    },
-    [noteStep, onStepChange],
-  );
 
   // restoreGeneration only ever increments, and only on a draft that was
   // actually loaded — so comparing against the last one we announced fires the
@@ -213,7 +238,8 @@ export function FormRenderer<C extends FormConfig = FormConfig>({
               initialStep={restoredStep}
               controlledStep={step}
               orientation={stepperOrientation}
-              onStepChange={handleStepChange}
+              onStepSettled={noteStep}
+              onStepChange={onStepChange}
             />
           ) : (
             <div className={FLAT_GRID_CLASS}>{config.fields.map(renderField)}</div>

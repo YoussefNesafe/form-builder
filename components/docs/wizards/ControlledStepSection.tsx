@@ -35,9 +35,23 @@ function Section() {
         step just goes stale.
       </P>
       <P>
-        Two requests aren&apos;t honoured literally, and <IC>onStepChange</IC> fires with the real index in
-        both: an out-of-range index is clamped into <IC>{"[0, steps.length - 1]"}</IC>, and an index whose step
-        is hidden by <IC>visibleWhen</IC> redirects to the nearest visible step.
+        Two requests aren&apos;t honoured literally: an out-of-range index is clamped into{" "}
+        <IC>{"[0, steps.length - 1]"}</IC>, and an index whose step is hidden by <IC>visibleWhen</IC>{" "}
+        redirects to the nearest visible step. <IC>onStepChange</IC> reports the real index whenever it
+        differs from the step the wizard was already on — so <IC>{"step={99}"}</IC> on a fresh mount reports
+        the last step, while <IC>{"step={-5}"}</IC> reports nothing, having clamped to the step it was already
+        showing.
+      </P>
+      <P>
+        <strong className="text-foreground">Derive <IC>step</IC> synchronously from the URL</strong> — as the
+        snippet above does with <IC>pathname</IC> — rather than updating it after a navigation commits. A{" "}
+        <IC>step</IC> that lags behind the wizard has two consequences. First, a return to the step you still
+        hold isn&apos;t reported: hold <IC>{"step={1}"}</IC> while the visitor goes Next to 2 (reported) then
+        Back to 1, and that last move matches the value you passed, so the engine stays silent — you and the
+        wizard agree on the step, but no callback told you. Second, a late <IC>step</IC> pulls the visitor
+        forward again: if your router lands <IC>{"step={2}"}</IC> a tick after the visitor already pressed
+        Back, the wizard honours it. The engine can&apos;t tell a stale echo of its own report from a genuine
+        browser-Back to that URL — both arrive as the same number.
       </P>
       <P>
         <IC>onStepChange</IC> reports landings, not requests. It stays quiet for the step the wizard mounts on
@@ -59,7 +73,10 @@ function Section() {
         With <IC>autosave</IC> on, <IC>onDraftRestore</IC> fires once per restore so you can tell the visitor
         their progress came back. Its <IC>step</IC> is whatever step the restored draft recorded (
         <IC>undefined</IC> if it recorded none); the wizard moves there itself and reports it through{" "}
-        <IC>onStepChange</IC>, so a router-backed host navigates to where the visitor left off.
+        <IC>onStepChange</IC>, so a router-backed host navigates to where the visitor left off. Autosave
+        records the current step over its own internal channel rather than <IC>onStepChange</IC>, so the moves
+        that callback deliberately stays silent about — the ones you asked for — are still persisted, and a
+        router-driven wizard keeps a correct resume point.
       </P>
     </DocsSection>
   );
