@@ -20,15 +20,25 @@ function nearestVisible(step: number, visibleIndices: number[]): number | undefi
   );
 }
 
+export type StepperOrientation = "horizontal" | "vertical";
+
 export function FormStepper({
   config,
   stepJumpRef,
   initialStep,
+  controlledStep,
+  orientation = "horizontal",
   onStepChange,
 }: {
   config: FormConfig;
   stepJumpRef?: React.MutableRefObject<((fieldName: string) => void) | null>;
   initialStep?: number;
+  /** A step the host wants the wizard on. Synchronised in, not rendered from:
+   *  the store stays the single source of truth so the stepper can still move
+   *  itself (validation gating, a step hiding under the user). See the
+   *  `step` prop's JSDoc on FormRenderer for the full contract. */
+  controlledStep?: number;
+  orientation?: StepperOrientation;
   onStepChange?: (step: number) => void;
 }) {
   const steps = useMemo(() => config.steps ?? [], [config.steps]);
@@ -63,9 +73,26 @@ export function FormStepper({
     if (initialStep !== undefined) store.getState().goTo(initialStep);
   }, [initialStep, store]);
 
+  // Sync in only. Deliberately keyed on `controlledStep` alone, never on the
+  // store's own `step`: ask for a hidden step and the bounce effect above
+  // redirects off it once, and nothing here pulls it back. Keying this on the
+  // store's step too would make the pair ping-pong forever.
   useEffect(() => {
-    onStepChange?.(step);
-  }, [step, onStepChange]);
+    if (controlledStep !== undefined) store.getState().goTo(controlledStep);
+  }, [controlledStep, store]);
+
+  // Reports landings, not requests. Silent for a step the host already knows
+  // about — the one it just asked for through `controlledStep`, the one we last
+  // reported, or the step we mounted on. Without that, a host that navigates on
+  // every call would fire a redundant navigation on load and echo its own
+  // `step` prop straight back at itself.
+  const reportedStepRef = useRef<number | null>(null);
+  useEffect(() => {
+    const alreadyKnown =
+      reportedStepRef.current === null || step === reportedStepRef.current || step === controlledStep;
+    reportedStepRef.current = step;
+    if (!alreadyKnown) onStepChange?.(step);
+  }, [step, controlledStep, onStepChange]);
 
   useEffect(() => {
     if (!stepJumpRef) return;
@@ -79,6 +106,14 @@ export function FormStepper({
     };
   }, [stepJumpRef, steps, store]);
 
+  // Moving focus to the labelled step list IS the engine's step-change
+  // announcement: it re-reads the list's accessible name and the new
+  // aria-current item, and it puts the keyboard where the new step starts. A
+  // live region deliberately does NOT live here — it would fire at the same
+  // moment as this focus move (double announcement in several screen readers),
+  // and its wording ("Step 2 of 5, Personal details") is host copy that the
+  // Messages bundle has no interpolation slot for. Hosts that want one now have
+  // `onStepChange` to drive their own aria-live element with their own words.
   const stepListRef = useRef<HTMLOListElement>(null);
   const mounted = useRef(false);
   useEffect(() => {
@@ -131,13 +166,29 @@ export function FormStepper({
     if (prev !== undefined) store.getState().goTo(prev);
   };
 
+  const vertical = orientation === "vertical";
+
   return (
-    <div className="flex flex-col gap-[var(--fb-space-12,6.408vw)] tablet:gap-[var(--fb-space-12-tablet,3vw)] desktop:gap-[var(--fb-space-12-desktop,1.248vw)]">
+    <div
+      className={cn(
+        "flex gap-[var(--fb-space-12,6.408vw)] tablet:gap-[var(--fb-space-12-tablet,3vw)] desktop:gap-[var(--fb-space-12-desktop,1.248vw)]",
+        // A left rail is only a rail once there is room beside the fields; below
+        // the tablet breakpoint vertical still stacks, like horizontal does.
+        vertical ? "flex-col tablet:flex-row" : "flex-col",
+      )}
+    >
       <ol
         ref={stepListRef}
         tabIndex={-1}
         aria-label={messages.steps}
-        className="flex items-center gap-[var(--fb-space-8,4.272vw)] tablet:gap-[var(--fb-space-8-tablet,2vw)] desktop:gap-[var(--fb-space-8-desktop,0.832vw)] outline-none"
+        // Not aria-orientation: that attribute isn't supported on role="list",
+        // and the step list carries no orientation-dependent keyboard model.
+        // This is a styling/testing hook, not an accessibility one.
+        data-orientation={orientation}
+        className={cn(
+          "flex gap-[var(--fb-space-8,4.272vw)] tablet:gap-[var(--fb-space-8-tablet,2vw)] desktop:gap-[var(--fb-space-8-desktop,0.832vw)] outline-none",
+          vertical ? "flex-col items-start tablet:shrink-0" : "items-center",
+        )}
       >
         {visibleIndices.map((index, displayIndex) => (
           <li
@@ -162,34 +213,38 @@ export function FormStepper({
         ))}
       </ol>
 
-      {currentStep.review ? (
-        <>
-          <ReviewStep
-            config={config}
-            currentIndex={effectiveStep}
-            visibleIndices={visibleIndices}
-            goTo={(index) => store.getState().goTo(index)}
-          />
-          <div className={FLAT_GRID_CLASS}>{hiddenFields.map(renderField)}</div>
-        </>
-      ) : (
-        <div className={FLAT_GRID_CLASS}>
-          {currentFields.map(renderField)}
-          {hiddenFields.map(renderField)}
-        </div>
-      )}
-
-      <div className="flex items-center justify-between">
-        <Button type="button" variant="outline" disabled={position === 0} onClick={handleBack}>
-          {messages.back}
-        </Button>
-        {isLast ? (
-          renderField(submitField ?? { type: "submit", name: "__submit", text: messages.submit })
+      {/* Panel wrapper: in horizontal it just re-creates the old three-in-a-column
+          stack (same gap token); in vertical it is what sits beside the rail. */}
+      <div className="flex min-w-0 flex-1 flex-col gap-[var(--fb-space-12,6.408vw)] tablet:gap-[var(--fb-space-12-tablet,3vw)] desktop:gap-[var(--fb-space-12-desktop,1.248vw)]">
+        {currentStep.review ? (
+          <>
+            <ReviewStep
+              config={config}
+              currentIndex={effectiveStep}
+              visibleIndices={visibleIndices}
+              goTo={(index) => store.getState().goTo(index)}
+            />
+            <div className={FLAT_GRID_CLASS}>{hiddenFields.map(renderField)}</div>
+          </>
         ) : (
-          <Button type="button" onClick={handleNext}>
-            {messages.next}
-          </Button>
+          <div className={FLAT_GRID_CLASS}>
+            {currentFields.map(renderField)}
+            {hiddenFields.map(renderField)}
+          </div>
         )}
+
+        <div className="flex items-center justify-between">
+          <Button type="button" variant="outline" disabled={position === 0} onClick={handleBack}>
+            {messages.back}
+          </Button>
+          {isLast ? (
+            renderField(submitField ?? { type: "submit", name: "__submit", text: messages.submit })
+          ) : (
+            <Button type="button" onClick={handleNext}>
+              {messages.next}
+            </Button>
+          )}
+        </div>
       </div>
     </div>
   );

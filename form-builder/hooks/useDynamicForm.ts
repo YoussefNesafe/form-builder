@@ -119,10 +119,12 @@ export function useDynamicForm<C extends FormConfig = FormConfig>(
     const sanitized = sanitizeDraftValues(config.fields, draft.values, includeSignatures);
     form.reset({ ...buildDefaultValues(config.fields), ...sanitized });
     setRestoreGeneration((generation) => generation + 1);
-    if (draft.step !== undefined) {
-      draftStepRef.current = draft.step;
-      setRestoredStep(draft.step);
-    }
+    // Assigned even when the draft carries no step, so a second restore (the
+    // draft key changed) can't leave the first draft's step behind to be
+    // re-persisted or reported. Batched with the generation bump above, so
+    // anything keyed on restoreGeneration sees the matching step.
+    draftStepRef.current = draft.step;
+    setRestoredStep(draft.step);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [draftId]);
 
