@@ -7,6 +7,7 @@ export type Messages = {
   max: (limit: number | string) => string;
   pattern: string;
   fileSize: (mb: number) => string;
+  fileTypeRejected: (name: string, extension: string, accept: string) => string;
   otpLength: (n: number) => string;
   sendCode: string;
   codeSent: string;
@@ -64,6 +65,8 @@ export const defaultMessages: Messages = {
   max: (n) => `Must be at most ${n}`,
   pattern: "Invalid format",
   fileSize: (mb) => `File must be smaller than ${mb} MB`,
+  fileTypeRejected: (name, extension, accept) =>
+    `${name} is ${extension ? `a ${extension} file` : "an unrecognised file type"} — accepted formats are ${accept}`,
   otpLength: (n) => `Enter the ${n}-digit code`,
   sendCode: "Send OTP",
   codeSent: "Code Sent",

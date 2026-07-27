@@ -2,6 +2,7 @@ import { z } from "zod";
 import { getCountries, isValidPhoneNumber } from "libphonenumber-js";
 import { assertNever } from "./assertNever";
 import { visibleFieldsFor } from "./conditions";
+import { fileExtensionLabel, fileMatchesAccept } from "./fileAccept";
 import type { Messages } from "./messages";
 import { getPasswordChecks } from "./password";
 import { isBuiltInField } from "./types";
@@ -73,13 +74,49 @@ function isoDateSchema(field: Extract<FieldConfig, { type: "date" }>, messages: 
   return schema;
 }
 
-function fileSchema(field: Extract<FieldConfig, { type: "file" }>, messages: Messages): z.ZodType {
-  let schema: z.ZodType = z.instanceof(File, { error: messages.required });
-  if (field.maxSizeMB !== undefined) {
-    const maxBytes = field.maxSizeMB * BYTES_PER_MB;
-    schema = schema.refine((file) => (file as File).size <= maxBytes, messages.fileSize(field.maxSizeMB));
+type FileField = Extract<FieldConfig, { type: "file" }>;
+
+/** `maxSizeMB` as the schema needs it: a byte ceiling and its ready-made message. */
+type SizeLimit = { maxBytes: number; message: string };
+
+function sizeLimitFor(field: FileField, messages: Messages): SizeLimit | undefined {
+  if (field.maxSizeMB === undefined) return undefined;
+  return { maxBytes: field.maxSizeMB * BYTES_PER_MB, message: messages.fileSize(field.maxSizeMB) };
+}
+
+/**
+ * Reports everything wrong with one file — an unaccepted type and an oversize
+ * file are independent problems, so a file with both gets an issue for each.
+ *
+ * `path` is empty for a single-file field and `[index]` within a multi-file
+ * array, which is what lets the UI mark exactly which file failed and why.
+ */
+function addFileIssues(
+  ctx: z.RefinementCtx,
+  file: File,
+  path: (string | number)[],
+  accept: string | undefined,
+  size: SizeLimit | undefined,
+  messages: Messages,
+): void {
+  if (accept !== undefined && !fileMatchesAccept(file, accept)) {
+    ctx.addIssue({
+      code: "custom",
+      path,
+      message: messages.fileTypeRejected(file.name, fileExtensionLabel(file), accept),
+    });
   }
-  return schema;
+  if (size !== undefined && file.size > size.maxBytes) {
+    ctx.addIssue({ code: "custom", path, message: size.message });
+  }
+}
+
+function fileSchema(field: FileField, messages: Messages): z.ZodType {
+  const base = z.instanceof(File, { error: messages.required });
+  const size = sizeLimitFor(field, messages);
+  if (field.accept === undefined && size === undefined) return base;
+  const accept = field.accept;
+  return base.superRefine((file, ctx) => addFileIssues(ctx, file, [], accept, size, messages));
 }
 
 export type OtpVerifiedChecker = (fieldName: string, code: string) => boolean;
@@ -243,14 +280,16 @@ export function toZodSchema(
       if (field.multiple) {
         const base = z.array(z.instanceof(File, { error: messages.required }));
         const withMin = field.required ? base.min(1, messages.required) : base;
-        const maxBytes = field.maxSizeMB !== undefined ? field.maxSizeMB * BYTES_PER_MB : undefined;
-        const schema =
-          maxBytes === undefined
-            ? withMin
-            : withMin.refine(
-                (files) => files.every((file) => file.size <= maxBytes),
-                messages.fileSize(field.maxSizeMB as number),
-              );
+        const size = sizeLimitFor(field, messages);
+        if (field.accept === undefined && size === undefined) {
+          return field.required ? withMin : withMin.optional();
+        }
+        const accept = field.accept;
+        // One issue per index rather than one for the whole list, so the UI can
+        // say which file failed and why.
+        const schema = withMin.superRefine((files, ctx) => {
+          files.forEach((file, index) => addFileIssues(ctx, file, [index], accept, size, messages));
+        });
         return field.required ? schema : schema.optional();
       }
       const single = fileSchema(field, messages);

@@ -135,17 +135,39 @@ describe("password complexity", () => {
 });
 
 describe("file", () => {
-  it("multiple: oversize file errors at the array root with the size message", () => {
+  it("multiple: oversize file errors at its own index with the size message", () => {
     const schema = schemaFor({ type: "file", name: "f", multiple: true, maxSizeMB: 1, required: true });
+    const small = new File([new ArrayBuffer(1024)], "small.bin");
     const big = new File([new ArrayBuffer(2 * 1024 * 1024)], "big.bin");
-    const result = schema.safeParse([big]);
+    const result = schema.safeParse([small, big]);
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.error.issues[0].path).toEqual([]);
+      expect(result.error.issues).toHaveLength(1);
+      expect(result.error.issues[0].path).toEqual([1]);
       expect(result.error.issues[0].message).toBe(messages.fileSize(1));
     }
-    const small = new File([new ArrayBuffer(1024)], "small.bin");
     expect(schema.safeParse([small]).success).toBe(true);
+  });
+
+  it("multiple: a non-File entry errors on its own without reaching the per-file checks", () => {
+    const schema = schemaFor({ type: "file", name: "f", multiple: true, accept: ".pdf", maxSizeMB: 1, required: true });
+    const result = schema.safeParse(["not a file"]);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues).toHaveLength(1);
+      expect(result.error.issues[0].path).toEqual([0]);
+      expect(result.error.issues[0].message).toBe(messages.required);
+    }
+  });
+
+  it("single: a non-File value errors without reaching the per-file checks", () => {
+    const schema = schemaFor({ type: "file", name: "f", accept: ".pdf", maxSizeMB: 1, required: true });
+    const result = schema.safeParse("not a file");
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues).toHaveLength(1);
+      expect(result.error.issues[0].message).toBe(messages.required);
+    }
   });
 });
 
@@ -791,6 +813,50 @@ describe("optionsFrom", () => {
   it("rule drops when the source is not in the field list (condition-hidden)", () => {
     const schema = buildFieldsSchema([fields[1]], messages);
     expect(schema.safeParse({ city: "nyc" }).success).toBe(true);
+  });
+});
+
+describe("file accept enforcement", () => {
+  const pdf = () => new File(["x"], "passport.pdf", { type: "application/pdf" });
+  const tiff = () => new File(["x"], "scan.tiff", { type: "image/tiff" });
+
+  it("rejects a single file whose type is not accepted, naming the format", () => {
+    const schema = schemaFor({ type: "file", name: "doc", required: true, accept: ".pdf,.jpg,.png" });
+    const result = schema.safeParse(tiff());
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0].message).toContain("TIFF");
+      expect(result.error.issues[0].message).toContain(".pdf");
+    }
+  });
+
+  it("accepts a file whose type is allowed", () => {
+    const schema = schemaFor({ type: "file", name: "doc", required: true, accept: ".pdf,.jpg,.png" });
+    expect(schema.safeParse(pdf()).success).toBe(true);
+  });
+
+  it("reports the offending index for multi-file uploads", () => {
+    const schema = schemaFor({ type: "file", name: "docs", required: true, multiple: true, accept: ".pdf" });
+    const result = schema.safeParse([pdf(), tiff()]);
+    expect(result.success).toBe(false);
+    if (!result.success) expect(result.error.issues[0].path).toEqual([1]);
+  });
+
+  it("reports size and type issues independently, per index", () => {
+    const big = new File([new Uint8Array(3 * 1024 * 1024)], "big.pdf", { type: "application/pdf" });
+    const schema = schemaFor({
+      type: "file",
+      name: "docs",
+      required: true,
+      multiple: true,
+      accept: ".pdf",
+      maxSizeMB: 2,
+    });
+    const result = schema.safeParse([big, tiff()]);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues.map((issue) => issue.path[0]).sort()).toEqual([0, 1]);
+    }
   });
 });
 
