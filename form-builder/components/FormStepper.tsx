@@ -8,7 +8,7 @@ import { cn } from "../internal/cn";
 import { conditionFieldNames, conditionSpecMatches } from "../core/conditions";
 import type { FormConfig } from "../core/types";
 import { createStepperStore } from "../store/stepper";
-import { FLAT_GRID_CLASS } from "../ui/layout";
+import { FLAT_GRID_CLASS, STACK_GAP_CLASS } from "../ui/layout";
 import { useFieldRuntime } from "./FieldRuntime";
 import { renderField } from "./renderField";
 import { ReviewStep } from "./ReviewStep";
@@ -26,25 +26,32 @@ export function FormStepper({
   config,
   stepJumpRef,
   initialStep,
+  restoreKey,
   controlledStep,
   orientation = "horizontal",
-  onStepSettled,
+  onStepMoved,
   onStepChange,
 }: {
   config: FormConfig;
   stepJumpRef?: React.MutableRefObject<((fieldName: string) => void) | null>;
+  /** A step recovered from somewhere the visitor left it. Applied once per
+   *  distinct `restoreKey`, and it outranks `controlledStep` when both land in
+   *  the same commit — see the resolution effect below. */
   initialStep?: number;
+  /** Changes exactly when `initialStep` has been recovered afresh, even if its
+   *  value is unchanged. Without it, two recoveries naming the same step are
+   *  indistinguishable and the second is silently dropped. */
+  restoreKey?: number;
   /** A step the host wants the wizard on. Synchronised in, not rendered from:
    *  the store stays the single source of truth so the stepper can still move
    *  itself (validation gating, a step hiding under the user). See the
    *  `step` prop's JSDoc on FormRenderer for the full contract. */
   controlledStep?: number;
   orientation?: StepperOrientation;
-  /** Bookkeeping channel: fires on EVERY real move, including one the host
-   *  itself asked for through `controlledStep`. Autosave rides this, because a
-   *  draft's resume point has to track host-driven moves too. Keep it distinct
-   *  from `onStepChange`, which is deliberately suppressed for those. */
-  onStepSettled?: (step: number) => void;
+  /** Fires on EVERY real move, including one the host itself asked for through
+   *  `controlledStep`. Anything that must not miss a host-driven move belongs
+   *  here rather than on `onStepChange`, which is filtered. */
+  onStepMoved?: (step: number) => void;
   onStepChange?: (step: number) => void;
 }) {
   const steps = useMemo(() => config.steps ?? [], [config.steps]);
@@ -75,38 +82,54 @@ export function FormStepper({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentHidden, step, store]);
 
-  useEffect(() => {
-    if (initialStep !== undefined) store.getState().goTo(initialStep);
-  }, [initialStep, store]);
-
-  // Sync in only. Deliberately keyed on `controlledStep` alone, never on the
-  // store's own `step`: ask for a hidden step and the bounce effect above
-  // redirects off it once, and nothing here pulls it back. Keying this on the
-  // store's step too would make the pair ping-pong forever.
-  useEffect(() => {
-    if (controlledStep !== undefined) store.getState().goTo(controlledStep);
-  }, [controlledStep, store]);
-
-  // Two channels off one observation, and they must NOT be collapsed into one.
+  // ONE effect resolves both inbound step requests, because they can arrive in
+  // the same commit and the winner must be a stated rule rather than whichever
+  // `useEffect` happens to be written second.
   //
-  //   onStepSettled — every real move. Bookkeeping (autosave's resume point)
-  //     has to see host-driven moves too, or a host that drives the wizard from
-  //     a router silently stops persisting where the visitor got to.
-  //   onStepChange  — only moves the host doesn't already know about. Silent for
-  //     the step we mounted on and for a step reached because the host passed it
-  //     as `controlledStep`, so a host that navigates on every call fires no
-  //     redundant navigation on load and never echoes its own prop back.
+  // Precedence: a freshly restored draft beats the host. A visitor returning to
+  // a half-finished form should land where they left off, not be pinned to
+  // whatever step the host's route happens to name; the restored step is then
+  // reported through `onStepChange` so the host can catch its URL up.
+  //
+  // The restore arm is keyed on `restoreKey`, NOT on `initialStep`'s value: two
+  // consecutive drafts can name the same step, and comparing values would treat
+  // the second restore as a no-op and strand the visitor wherever they had
+  // since navigated.
+  //
+  // Deliberately never keyed on the store's own `step`: ask for a hidden step
+  // and the bounce effect above redirects off it once, and nothing here pulls
+  // it back. Keying this on `step` would make the two ping-pong forever.
+  const appliedRestoreRef = useRef<number | undefined>(undefined);
+  const appliedControlledRef = useRef<number | undefined>(undefined);
+  useEffect(() => {
+    const restored = restoreKey !== appliedRestoreRef.current;
+    const hostMoved = controlledStep !== appliedControlledRef.current;
+    appliedRestoreRef.current = restoreKey;
+    appliedControlledRef.current = controlledStep;
+    if (restored && initialStep !== undefined) {
+      store.getState().goTo(initialStep);
+      return;
+    }
+    if (hostMoved && controlledStep !== undefined) store.getState().goTo(controlledStep);
+  }, [restoreKey, initialStep, controlledStep, store]);
+
+  // Two channels off one observation. They must NOT be collapsed: `onStepMoved`
+  // sees every real move, `onStepChange` is filtered down to the moves the host
+  // doesn't already know about (not the step we mounted on, not one it asked
+  // for via `controlledStep`) so a host that navigates on every call fires no
+  // redundant navigation on load and never echoes its own prop back.
   //
   // Both skip the mount observation and any re-run where the step didn't
-  // actually move (an unrelated dep, e.g. an inline `onStepChange` arrow).
+  // actually move — an unrelated dep changing, e.g. an inline arrow passed as
+  // `onStepChange`, must not be mistaken for navigation.
   const lastStepRef = useRef<number | null>(null);
   useEffect(() => {
     const previous = lastStepRef.current;
     lastStepRef.current = step;
     if (previous === null || previous === step) return;
-    onStepSettled?.(step);
+    onStepMoved?.(step);
     if (step !== controlledStep) onStepChange?.(step);
-  }, [step, controlledStep, onStepSettled, onStepChange]);
+  }, [step, controlledStep, onStepMoved, onStepChange]);
 
   useEffect(() => {
     if (!stepJumpRef) return;
@@ -185,7 +208,8 @@ export function FormStepper({
   return (
     <div
       className={cn(
-        "flex gap-[var(--fb-space-12,6.408vw)] tablet:gap-[var(--fb-space-12-tablet,3vw)] desktop:gap-[var(--fb-space-12-desktop,1.248vw)]",
+        "flex",
+        STACK_GAP_CLASS,
         // A left rail is only a rail once there is room beside the fields; below
         // the tablet breakpoint vertical still stacks, like horizontal does.
         vertical ? "flex-col tablet:flex-row" : "flex-col",
@@ -229,7 +253,7 @@ export function FormStepper({
 
       {/* Panel wrapper: in horizontal it just re-creates the old three-in-a-column
           stack (same gap token); in vertical it is what sits beside the rail. */}
-      <div className="flex min-w-0 flex-1 flex-col gap-[var(--fb-space-12,6.408vw)] tablet:gap-[var(--fb-space-12-tablet,3vw)] desktop:gap-[var(--fb-space-12-desktop,1.248vw)]">
+      <div className={cn("flex min-w-0 flex-1 flex-col", STACK_GAP_CLASS)}>
         {currentStep.review ? (
           <>
             <ReviewStep

@@ -32,14 +32,23 @@ type FormRendererProps<C extends FormConfig = FormConfig> = {
    * The wizard step to show, by index into `config.steps`. Ignored when the
    * config has no `steps`.
    *
+   * **Derive it synchronously from the URL** — `routes.indexOf(pathname)` —
+   * rather than storing it in state you update after a navigation commits.
+   *
+   * **If your router can't give you a synchronous step, don't pass `step` at
+   * all.** Use `onStepChange` on its own to push the URL and let the wizard own
+   * the step. You still get one route per step and a working back button; you
+   * simply stop trying to feed the value back in. That is the safe default, and
+   * the only thing you give up is the ability to drive the wizard from outside
+   * (deep links into a step, or a browser Back the wizard should follow).
+   *
    * **This shares the step, it does not own it.** Unlike a controlled `<input
    * value>`, the wizard still moves on its own: Next advances after its own
-   * validation gate passes, a step hiding under the user bounces to the nearest
-   * visible one, and a server field error jumps to that field's step. Setting
-   * `step` asks the wizard to go somewhere; the wizard goes there and then
-   * reports through `onStepChange` wherever it actually ended up. A host that
-   * ignores `onStepChange` still gets a working wizard — its own `step` value
-   * just goes stale.
+   * validation gate passes, a step hiding under the visitor bounces to the
+   * nearest visible one, and a server field error jumps to that field's step.
+   * Setting `step` asks the wizard to go somewhere; it goes, then reports
+   * through `onStepChange` wherever it actually ended up. A host that ignores
+   * `onStepChange` still gets a working wizard — its own `step` just goes stale.
    *
    * The request is not honoured literally in two cases: an out-of-range index
    * is clamped into `[0, steps.length - 1]`, and an index whose step is hidden
@@ -49,30 +58,24 @@ type FormRendererProps<C extends FormConfig = FormConfig> = {
    * reports the last step, but `step={-5}` reports nothing, because it clamps
    * to 0 and that is where the wizard already was.
    *
-   * If autosave restores a draft that recorded a different step, the restored
-   * step wins on mount and is reported — so a router-backed host navigates to
-   * where the visitor left off rather than fighting it.
+   * If autosave restores a draft that recorded a step, the restored step beats
+   * `step` — including when both land in the same commit — and is reported, so
+   * a router-backed host navigates to where the visitor left off rather than
+   * pinning them to the route they happened to open.
    *
-   * **Two consequences worth knowing if your `step` lags behind the wizard**
-   * (an async router that only updates it after a navigation commits, rather
-   * than deriving it synchronously from the URL):
+   * Why the guidance above matters: a `step` that lags the wizard has two
+   * consequences, neither of which the engine can detect.
    *
    * 1. *A return to the step you still hold is not reported.* Hold `step={1}`
    *    while the visitor goes Next to 2 (reported) then Back to 1: that last
    *    move matches the value you passed, so the engine treats it as one you
-   *    already know about and stays silent. You are on step 1 and so is the
-   *    wizard, so nothing is out of sync — but no callback tells you the
-   *    visitor moved.
+   *    already know about and stays silent. Nothing is out of sync — you and
+   *    the wizard agree on step 1 — but no callback told you the visitor moved.
    * 2. *A late `step` pulls the visitor forward again.* If your router lands
    *    `step={2}` a tick after the visitor has already gone Back to 1, the
-   *    wizard honours it and moves to 2. A sync is a sync whenever it arrives;
-   *    the engine cannot tell a stale echo of its own report from a genuine
-   *    browser-Back navigation to that URL, because both arrive as the same
-   *    number.
-   *
-   * Deriving `step` synchronously from the URL (`routes.indexOf(pathname)`)
-   * avoids both: there is then no window in which `step` disagrees with where
-   * the visitor is.
+   *    wizard honours it. A sync is a sync whenever it arrives; the engine
+   *    cannot tell a stale echo of its own report from a genuine browser-Back
+   *    to that URL, because both arrive as the same number.
    */
   step?: number;
   /**
@@ -188,11 +191,12 @@ export function FormRenderer<C extends FormConfig = FormConfig>({
   const [formError, setFormError] = useState<string | null>(null);
   const stepJumpRef = useRef<((fieldName: string) => void) | null>(null);
 
-  // Autosave rides FormStepper's bookkeeping channel, NOT the consumer-facing
-  // one. Composing the two into a single callback would look equivalent, but
-  // the host-facing report is deliberately suppressed for a move the host asked
-  // for — so autosave would stop recording exactly the moves a router-driven
-  // wizard makes, and the visitor would resume on the wrong step.
+  // Autosave records the step over `onStepMoved` (every move) rather than the
+  // consumer's `onStepChange` (filtered). Composing the two into one callback
+  // looks equivalent and isn't: the host-facing report is deliberately
+  // suppressed for a move the host asked for, so autosave would stop recording
+  // exactly the moves a router-driven wizard makes and the visitor would resume
+  // on the wrong step.
   const noteStep = draft?.noteStep;
 
   // restoreGeneration only ever increments, and only on a draft that was
@@ -236,9 +240,10 @@ export function FormRenderer<C extends FormConfig = FormConfig>({
               config={config}
               stepJumpRef={stepJumpRef}
               initialStep={restoredStep}
+              restoreKey={restoreGeneration}
               controlledStep={step}
               orientation={stepperOrientation}
-              onStepSettled={noteStep}
+              onStepMoved={noteStep}
               onStepChange={onStepChange}
             />
           ) : (

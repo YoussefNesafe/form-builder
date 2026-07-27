@@ -43,6 +43,15 @@ function Section() {
         showing.
       </P>
       <P>
+        <strong className="text-foreground">
+          If your router can&apos;t give you a synchronous step, don&apos;t pass <IC>step</IC> at all.
+        </strong>{" "}
+        Use <IC>onStepChange</IC> on its own to push the URL and let the wizard own the step — you still get
+        one route per step and a working back button, you just stop feeding the value back in. The only thing
+        you give up is driving the wizard from outside: deep links into a step, and a browser Back the wizard
+        should follow.
+      </P>
+      <P>
         <strong className="text-foreground">Derive <IC>step</IC> synchronously from the URL</strong> — as the
         snippet above does with <IC>pathname</IC> — rather than updating it after a navigation commits. A{" "}
         <IC>step</IC> that lags behind the wizard has two consequences. First, a return to the step you still
@@ -73,7 +82,8 @@ function Section() {
         With <IC>autosave</IC> on, <IC>onDraftRestore</IC> fires once per restore so you can tell the visitor
         their progress came back. Its <IC>step</IC> is whatever step the restored draft recorded (
         <IC>undefined</IC> if it recorded none); the wizard moves there itself and reports it through{" "}
-        <IC>onStepChange</IC>, so a router-backed host navigates to where the visitor left off. Autosave
+        <IC>onStepChange</IC>, so a router-backed host navigates to where the visitor left off — the restored
+        step beats your <IC>step</IC> even when both arrive together. Autosave
         records the current step over its own internal channel rather than <IC>onStepChange</IC>, so the moves
         that callback deliberately stays silent about — the ones you asked for — are still persisted, and a
         router-driven wizard keeps a correct resume point.

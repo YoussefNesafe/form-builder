@@ -557,6 +557,25 @@ describe("FormRenderer step control", () => {
     expect(spy.mock.calls).toEqual([[1], [2], [1]]);
   });
 
+  // I1: both props landing in one commit. `initialStep` has no public prop —
+  // it comes from the draft — so this is the one case that has to drive
+  // FormStepper directly to get them into the same render.
+  it("a restored step beats the host's when both arrive in the same commit", () => {
+    function BothAtOnce() {
+      const f = useForm({ defaultValues: buildDefaultValues(wizardConfig.fields) });
+      return (
+        <FormProvider {...f}>
+          <FieldRuntimeContext.Provider value={{ disabled: false, messages: defaultMessages }}>
+            <FormStepper config={wizardConfig} initialStep={2} restoreKey={1} controlledStep={1} />
+          </FieldRuntimeContext.Provider>
+        </FormProvider>
+      );
+    }
+    render(<BothAtOnce />);
+
+    expect(currentStepText()).toContain("Three");
+  });
+
   it("controlled: a hidden step redirects to the nearest visible one and reports the correction", () => {
     const spy = vi.fn();
     render(
@@ -627,6 +646,88 @@ describe("FormRenderer step control", () => {
       expect(saved.step).toBe(2);
     });
     expect(spy).not.toHaveBeenCalled();
+  });
+
+  // M2: the bounce is two landings, so the draft momentarily records a step the
+  // visitor was never on. It self-corrects on the very next landing, and the
+  // stale value would be discarded by the bounce again on restore — so this
+  // pins the correction rather than trying to coalesce the writes. Coalescing
+  // would mean deferring the callback off the synchronous commit, which buys
+  // one avoided write per bounce at the cost of making the ordering against
+  // autosave's unmount flush unclear.
+  it("controlled: bouncing off a hidden step writes the transient step, then corrects it", async () => {
+    const { draftConfigHash } = await import("../core/autosave");
+    const data = new Map<string, string>();
+    const recorded: (number | undefined)[] = [];
+    const storage = {
+      getItem: (key: string) => data.get(key) ?? null,
+      setItem: (key: string, value: string) => {
+        data.set(key, value);
+        recorded.push((JSON.parse(value) as { step?: number }).step);
+      },
+      removeItem: (key: string) => {
+        data.delete(key);
+      },
+    };
+    data.set(
+      "form-builder:draft:bounce-writes",
+      JSON.stringify({
+        hash: draftConfigHash(conditionalWizardConfig.fields),
+        values: { wantsExtras: false },
+      }),
+    );
+
+    render(
+      <FormRenderer
+        config={conditionalWizardConfig}
+        onSubmit={vi.fn()}
+        step={1}
+        autosave={{ key: "bounce-writes", debounceMs: 0, storage }}
+      />,
+    );
+
+    await waitFor(() => expect(currentStepText()).toContain("Finish"));
+    expect(recorded).toContain(1);
+    await waitFor(() => expect(recorded[recorded.length - 1]).toBe(2));
+  });
+
+  it("vertical and controlled compose: the rail renders on the host's step", async () => {
+    const spy = vi.fn();
+    render(
+      <FormRenderer
+        config={wizardConfig}
+        onSubmit={vi.fn()}
+        step={1}
+        stepperOrientation="vertical"
+        onStepChange={spy}
+      />,
+    );
+
+    const list = document.querySelector("ol")!;
+    expect(list.getAttribute("data-orientation")).toBe("vertical");
+    expect(currentStepText()).toContain("Two");
+    expect(spy).not.toHaveBeenCalled();
+
+    await click("Next");
+    expect(spy.mock.calls).toEqual([[2]]);
+    expect(document.activeElement).toBe(list);
+  });
+
+  it("a fresh onStepChange identity on re-render does not re-report the current step", async () => {
+    const spy = vi.fn();
+    // A new inline arrow every render — the common case, and the one that would
+    // re-fire if the report effect keyed on callback identity alone.
+    const wizard = () => (
+      <FormRenderer config={wizardConfig} onSubmit={vi.fn()} onStepChange={(next) => spy(next)} />
+    );
+    const { rerender } = render(wizard());
+
+    await click("Next");
+    expect(spy.mock.calls).toEqual([[1]]);
+
+    rerender(wizard());
+    rerender(wizard());
+    expect(spy.mock.calls).toEqual([[1]]);
   });
 
   it("composes the consumer callback with autosave's own step bookkeeping", async () => {
@@ -716,6 +817,26 @@ describe("FormRenderer onDraftRestore", () => {
     expect(onDraftRestore).toHaveBeenCalledTimes(1);
   });
 
+  it("announces the restore before reporting the step it moved the wizard to", async () => {
+    window.localStorage.clear();
+    await seedDraft("restore-order", { first: "from draft" }, 1);
+    const calls: string[] = [];
+    render(
+      <FormRenderer
+        config={wizardConfig}
+        onSubmit={vi.fn()}
+        autosave={{ key: "restore-order", debounceMs: 0 }}
+        onDraftRestore={({ step }) => calls.push(`restore:${step}`)}
+        onStepChange={(step) => calls.push(`change:${step}`)}
+      />,
+    );
+
+    await waitFor(() => expect(currentStepText()).toContain("Two"));
+    // A host that toasts on restore and navigates on change gets them in this
+    // order: you learn a restore happened, then you learn where it landed.
+    expect(calls).toEqual(["restore:1", "change:1"]);
+  });
+
   it("fires with an undefined step when the restored draft carried none", async () => {
     window.localStorage.clear();
     await seedDraft("restore-no-step", { first: "from draft" });
@@ -777,6 +898,36 @@ describe("FormRenderer onDraftRestore", () => {
 
     await click("Next");
     expect(onDraftRestore).not.toHaveBeenCalled();
+  });
+
+  // M3: the handover is keyed on the restore itself, not on the step's value,
+  // so a second draft naming the SAME step still moves the wizard back.
+  it("moves the wizard on a second restore that names the step it already restored once", async () => {
+    window.localStorage.clear();
+    await seedDraft("same-step-a", { first: "a" }, 1);
+    await seedDraft("same-step-b", { first: "b" }, 1);
+    const onDraftRestore = vi.fn();
+    const wizard = (key: string) => (
+      <FormRenderer
+        config={wizardConfig}
+        onSubmit={vi.fn()}
+        autosave={{ key, debounceMs: 0 }}
+        onDraftRestore={onDraftRestore}
+      />
+    );
+
+    const { rerender } = render(wizard("same-step-a"));
+    await waitFor(() => expect(currentStepText()).toContain("Two"));
+
+    await click("Next");
+    expect(currentStepText()).toContain("Three");
+
+    rerender(wizard("same-step-b"));
+    await waitFor(() => expect(onDraftRestore).toHaveBeenCalledTimes(2));
+    expect(onDraftRestore).toHaveBeenLastCalledWith({ step: 1 });
+    // The value of restoredStep never changed, so keying the handover on it
+    // would silently leave the visitor on "Three" while the draft said 1.
+    expect(currentStepText()).toContain("Two");
   });
 
   it("reports each restore when the draft key changes, without carrying the previous step over", async () => {
