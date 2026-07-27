@@ -842,7 +842,7 @@ describe("file accept enforcement", () => {
     if (!result.success) expect(result.error.issues[0].path).toEqual([1]);
   });
 
-  it("reports size and type issues independently, per index", () => {
+  it("reports each file's own problem at its own index — an oversize one and a wrong-type one", () => {
     const big = new File([new Uint8Array(3 * 1024 * 1024)], "big.pdf", { type: "application/pdf" });
     const schema = schemaFor({
       type: "file",
@@ -856,6 +856,43 @@ describe("file accept enforcement", () => {
     expect(result.success).toBe(false);
     if (!result.success) {
       expect(result.error.issues.map((issue) => issue.path[0]).sort()).toEqual([0, 1]);
+    }
+  });
+
+  // Size and type are independent problems, so one file can fail both. Order is
+  // load-bearing, not incidental: both issues land on the same path, and
+  // react-hook-form keeps only the first per path — so the type message is the
+  // one the user actually reads. Type first, then size.
+  const bigTiff = () => new File([new Uint8Array(3 * 1024 * 1024)], "scan.tiff", { type: "image/tiff" });
+
+  it("multiple: a file that is both wrong-type and oversize gets both issues, type first", () => {
+    const schema = schemaFor({
+      type: "file",
+      name: "docs",
+      required: true,
+      multiple: true,
+      accept: ".pdf",
+      maxSizeMB: 2,
+    });
+    const result = schema.safeParse([bigTiff()]);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues).toHaveLength(2);
+      expect(result.error.issues.map((issue) => issue.path)).toEqual([[0], [0]]);
+      expect(result.error.issues[0].message).toContain("TIFF");
+      expect(result.error.issues[1].message).toBe(messages.fileSize(2));
+    }
+  });
+
+  it("single: a file that is both wrong-type and oversize gets both issues at the root, type first", () => {
+    const schema = schemaFor({ type: "file", name: "doc", required: true, accept: ".pdf", maxSizeMB: 2 });
+    const result = schema.safeParse(bigTiff());
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues).toHaveLength(2);
+      expect(result.error.issues.map((issue) => issue.path)).toEqual([[], []]);
+      expect(result.error.issues[0].message).toContain("TIFF");
+      expect(result.error.issues[1].message).toBe(messages.fileSize(2));
     }
   });
 });

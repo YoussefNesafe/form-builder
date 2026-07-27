@@ -88,6 +88,11 @@ function sizeLimitFor(field: FileField, messages: Messages): SizeLimit | undefin
  * Reports everything wrong with one file — an unaccepted type and an oversize
  * file are independent problems, so a file with both gets an issue for each.
  *
+ * Type is reported before size on purpose. Both issues land on the same path,
+ * and react-hook-form keeps only the first one per path, so the leading issue
+ * is the message the user actually reads — and "wrong format" is the more
+ * actionable of the two. Reordering these two blocks is a user-visible change.
+ *
  * `path` is empty for a single-file field and `[index]` within a multi-file
  * array, which is what lets the UI mark exactly which file failed and why.
  */
