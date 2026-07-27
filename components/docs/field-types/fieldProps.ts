@@ -263,7 +263,8 @@ export const FIELD_PROP_DOCS: { [T in FieldType]: Record<OwnProps<T>, PropDoc> }
     accept: {
       type: "string",
       required: false,
-      description: 'Native accept attribute (MIME types / extensions), e.g. ".pdf,.doc,.docx".',
+      description:
+        'Native accept attribute (MIME types / extensions), e.g. ".pdf,.doc,.docx". Also enforced by the generated schema — a file the browser could not type matches no MIME token, so list the extension too (".pdf,application/pdf") if those must get through — and written out as the dropzone\'s hint ("PDF, DOC or DOCX").',
     },
     maxSizeMB: {
       type: "number",

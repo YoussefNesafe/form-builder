@@ -958,6 +958,44 @@ describe("file accept enforcement", () => {
       expect(result.error.issues[1].message).toBe(messages.fileSize(2));
     }
   });
+
+  // The two tests above pass even with both issues sharing one path array,
+  // because the sync parse builds each issue's final path without touching the
+  // array it was given. The async parse prepends the parent key in place, so a
+  // shared array is prefixed once per issue — and the async parse is the one
+  // react-hook-form's resolver calls. Asserting the field name is what makes
+  // the difference visible: unfixed, this reads ["docs", "docs", 0].
+  it("multiple: keeps both issues on the same path under the async parse the resolver uses", async () => {
+    const schema = buildFieldsSchema(
+      [{ type: "file", name: "docs", required: true, multiple: true, accept: ".pdf", maxSizeMB: 2 }],
+      messages,
+    );
+    const result = await schema.safeParseAsync({ docs: [bigTiff()] });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues.map((issue) => issue.path)).toEqual([
+        ["docs", 0],
+        ["docs", 0],
+      ]);
+    }
+  });
+
+  it("multiple: one broken file does not disturb another's path", async () => {
+    const schema = buildFieldsSchema(
+      [{ type: "file", name: "docs", required: true, multiple: true, accept: ".pdf", maxSizeMB: 2 }],
+      messages,
+    );
+    const bigPdf = new File([new Uint8Array(3 * 1024 * 1024)], "statement.pdf", { type: "application/pdf" });
+    const result = await schema.safeParseAsync({ docs: [bigPdf, bigTiff()] });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues.map((issue) => [issue.path, issue.message])).toEqual([
+        [["docs", 0], messages.fileSize(2)],
+        [["docs", 1], expect.stringContaining("TIFF")],
+        [["docs", 1], messages.fileSize(2)],
+      ]);
+    }
+  });
 });
 
 describe("optionsFrom blank source", () => {

@@ -132,15 +132,23 @@ function fileIssueReporter(field: FileField, messages: Messages) {
   if (!accept && size === undefined) return undefined;
   const formats = acceptedFormatsLabel(accept);
   return (ctx: z.RefinementCtx, file: File, path: (string | number)[]): void => {
+    // Each issue gets its own copy of `path`. Zod walks the parse back up the
+    // tree prepending the parent key to every issue *in place*, so two issues
+    // sharing one array get that array prefixed twice: a file that is both the
+    // wrong type and too large ends up reported at ["docs","docs",0] instead of
+    // ["docs",0], which react-hook-form then nests under a second `docs` key
+    // where no consumer can find it. Only the async parse prefixes this way —
+    // and the async parse is the one react-hook-form's resolver uses, so the
+    // corruption is invisible to a `safeParse` test and total in the browser.
     if (accept && !fileMatchesAccept(file, accept)) {
       ctx.addIssue({
         code: "custom",
-        path,
+        path: [...path],
         message: messages.fileTypeRejected(file.name, fileExtensionLabel(file) || undefined, formats),
       });
     }
     if (size !== undefined && file.size > size.maxBytes) {
-      ctx.addIssue({ code: "custom", path, message: size.message });
+      ctx.addIssue({ code: "custom", path: [...path], message: size.message });
     }
   };
 }
