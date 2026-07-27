@@ -825,9 +825,60 @@ describe("file accept enforcement", () => {
     const result = schema.safeParse(tiff());
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.error.issues[0].message).toContain("TIFF");
-      expect(result.error.issues[0].message).toContain(".pdf");
+      expect(result.error.issues[0].message).toBe(
+        "scan.tiff isn't in a format we accept (TIFF) — please upload PDF, JPG or PNG",
+      );
     }
+  });
+
+  it("writes MIME-token accepts out in prose rather than leaking the raw attribute", () => {
+    const schema = schemaFor({ type: "file", name: "doc", required: true, accept: "application/pdf,image/*" });
+    const result = schema.safeParse(new File(["x"], "notes.txt", { type: "text/plain" }));
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0].message).toBe(
+        "notes.txt isn't in a format we accept (TXT) — please upload PDF or images",
+      );
+    }
+  });
+
+  it("names no format for a file that has no extension, rather than an empty one", () => {
+    const schema = schemaFor({ type: "file", name: "doc", required: true, accept: ".pdf" });
+    const result = schema.safeParse(new File(["x"], "scan", { type: "image/tiff" }));
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0].message).toBe("scan isn't in a format we accept — please upload PDF");
+      expect(result.error.issues[0].message).not.toContain("undefined");
+    }
+  });
+
+  // The default copy treats "" and undefined alike, so only an override can see
+  // the difference — and an override interpolating the sentinel is exactly the
+  // "scan est un fichier " bug the undefined is there to prevent.
+  it("hands an override undefined for a missing extension, never an empty string", () => {
+    const seen: (string | undefined)[] = [];
+    const spying = mergeMessages({
+      fileTypeRejected: (name, extension, formats) => {
+        seen.push(extension);
+        return `${name} ${extension} ${formats}`;
+      },
+    });
+    const schema = toZodSchema({ type: "file", name: "doc", required: true, accept: ".pdf" }, spying);
+    schema!.safeParse(new File(["x"], "scan", { type: "image/tiff" }));
+    schema!.safeParse(tiff());
+    expect(seen).toEqual([undefined, "TIFF"]);
+  });
+
+  it("an optional field accepts nothing at all but still checks a file that is provided", () => {
+    const single = schemaFor({ type: "file", name: "doc", accept: ".pdf" });
+    expect(single.safeParse(undefined).success).toBe(true);
+    expect(single.safeParse(pdf()).success).toBe(true);
+    expect(single.safeParse(tiff()).success).toBe(false);
+
+    const many = schemaFor({ type: "file", name: "docs", multiple: true, accept: ".pdf" });
+    expect(many.safeParse(undefined).success).toBe(true);
+    expect(many.safeParse([pdf()]).success).toBe(true);
+    expect(many.safeParse([tiff()]).success).toBe(false);
   });
 
   it("accepts a file whose type is allowed", () => {

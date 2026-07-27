@@ -2,7 +2,7 @@ import { z } from "zod";
 import { getCountries, isValidPhoneNumber } from "libphonenumber-js";
 import { assertNever } from "./assertNever";
 import { visibleFieldsFor } from "./conditions";
-import { fileExtensionLabel, fileMatchesAccept } from "./fileAccept";
+import { acceptedFormatsLabel, fileExtensionLabel, fileMatchesAccept } from "./fileAccept";
 import type { Messages } from "./messages";
 import { getPasswordChecks } from "./password";
 import { isBuiltInField } from "./types";
@@ -85,43 +85,51 @@ function sizeLimitFor(field: FileField, messages: Messages): SizeLimit | undefin
 }
 
 /**
- * Reports everything wrong with one file — an unaccepted type and an oversize
- * file are independent problems, so a file with both gets an issue for each.
+ * Builds the per-file check for a field, or `undefined` when the field
+ * constrains nothing and needs no refinement wrapped around it at all. Both the
+ * single-file and multi-file branches go through this, so a new per-file
+ * constraint is added in one place and neither branch can quietly skip it.
+ *
+ * The returned reporter says everything wrong with one file — an unaccepted
+ * type and an oversize file are independent problems, so a file with both gets
+ * an issue for each.
  *
  * Type is reported before size on purpose. Both issues land on the same path,
- * and react-hook-form keeps only the first one per path, so the leading issue
- * is the message the user actually reads — and "wrong format" is the more
+ * and under react-hook-form's default `criteriaMode: "firstError"` only the
+ * leading one per path reaches the user — and "wrong format" is the more
  * actionable of the two. Reordering these two blocks is a user-visible change.
+ * (Both issues are always present in the parse result, so a consumer using
+ * `criteriaMode: "all"`, or reading the schema directly, sees each of them.)
  *
  * `path` is empty for a single-file field and `[index]` within a multi-file
  * array, which is what lets the UI mark exactly which file failed and why.
  */
-function addFileIssues(
-  ctx: z.RefinementCtx,
-  file: File,
-  path: (string | number)[],
-  accept: string | undefined,
-  size: SizeLimit | undefined,
-  messages: Messages,
-): void {
-  if (accept !== undefined && !fileMatchesAccept(file, accept)) {
-    ctx.addIssue({
-      code: "custom",
-      path,
-      message: messages.fileTypeRejected(file.name, fileExtensionLabel(file), accept),
-    });
-  }
-  if (size !== undefined && file.size > size.maxBytes) {
-    ctx.addIssue({ code: "custom", path, message: size.message });
-  }
+function fileIssueReporter(field: FileField, messages: Messages) {
+  const size = sizeLimitFor(field, messages);
+  const { accept } = field;
+  // An empty `accept` constrains nothing, same as an absent one — without this
+  // it would wrap the schema in a refinement that can never fire.
+  if (!accept && size === undefined) return undefined;
+  const formats = acceptedFormatsLabel(accept);
+  return (ctx: z.RefinementCtx, file: File, path: (string | number)[]): void => {
+    if (accept && !fileMatchesAccept(file, accept)) {
+      ctx.addIssue({
+        code: "custom",
+        path,
+        message: messages.fileTypeRejected(file.name, fileExtensionLabel(file) || undefined, formats),
+      });
+    }
+    if (size !== undefined && file.size > size.maxBytes) {
+      ctx.addIssue({ code: "custom", path, message: size.message });
+    }
+  };
 }
 
 function fileSchema(field: FileField, messages: Messages): z.ZodType {
   const base = z.instanceof(File, { error: messages.required });
-  const size = sizeLimitFor(field, messages);
-  if (field.accept === undefined && size === undefined) return base;
-  const accept = field.accept;
-  return base.superRefine((file, ctx) => addFileIssues(ctx, file, [], accept, size, messages));
+  const report = fileIssueReporter(field, messages);
+  if (!report) return base;
+  return base.superRefine((file, ctx) => report(ctx, file, []));
 }
 
 export type OtpVerifiedChecker = (fieldName: string, code: string) => boolean;
@@ -285,16 +293,14 @@ export function toZodSchema(
       if (field.multiple) {
         const base = z.array(z.instanceof(File, { error: messages.required }));
         const withMin = field.required ? base.min(1, messages.required) : base;
-        const size = sizeLimitFor(field, messages);
-        if (field.accept === undefined && size === undefined) {
-          return field.required ? withMin : withMin.optional();
-        }
-        const accept = field.accept;
+        const report = fileIssueReporter(field, messages);
         // One issue per index rather than one for the whole list, so the UI can
         // say which file failed and why.
-        const schema = withMin.superRefine((files, ctx) => {
-          files.forEach((file, index) => addFileIssues(ctx, file, [index], accept, size, messages));
-        });
+        const schema = report
+          ? withMin.superRefine((files, ctx) => {
+              files.forEach((file, index) => report(ctx, file, [index]));
+            })
+          : withMin;
         return field.required ? schema : schema.optional();
       }
       const single = fileSchema(field, messages);

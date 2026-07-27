@@ -68,6 +68,60 @@ export function fileMatchesAccept(file: File, accept: string | undefined): boole
 }
 
 /**
+ * How a `type/*` token reads in a sentence. Types outside this map fall back to
+ * "<type> files", which is clumsier but never wrong.
+ */
+const WILDCARD_TYPE_LABELS: Record<string, string> = {
+  image: "images",
+  video: "videos",
+  audio: "audio files",
+  text: "text files",
+};
+
+/**
+ * One token as prose, or `undefined` for tokens that name no format: the
+ * wildcards, and anything `fileMatchesAccept` cannot interpret. Dropping the
+ * latter keeps the message honest — a token that matches nothing must not be
+ * advertised as an accepted format.
+ */
+function tokenLabel(token: string): string | undefined {
+  if (WILDCARD_TOKENS.has(token)) return undefined;
+  if (token.startsWith(".")) return token.slice(1).toUpperCase();
+  if (token.endsWith("/*")) {
+    const type = token.slice(0, -2);
+    return WILDCARD_TYPE_LABELS[type] ?? `${type} files`;
+  }
+  const slash = token.indexOf("/");
+  if (slash === -1) return undefined;
+  return token.slice(slash + 1).toUpperCase();
+}
+
+/**
+ * `accept` as something to show a user: ".pdf,application/pdf" -> "PDF",
+ * ".pdf,.jpg,image/*" -> "PDF, JPG or images".
+ *
+ * A *display approximation* of `fileMatchesAccept`, not a specification of it.
+ * The two can legitimately disagree: "application/pdf" renders as "PDF", but a
+ * `.pdf` the browser gave no MIME type for is still rejected, so the label
+ * promises slightly more than the check allows. Listing the extension too
+ * (".pdf,application/pdf") is what closes that gap in the config, which is why
+ * duplicates collapse rather than reading "PDF or PDF".
+ *
+ * Returns "" when `accept` names no format at all — only wildcards, or only
+ * tokens nothing can match. Callers reaching here from a *rejection* never see
+ * that: an `accept` in that state matches every file, so nothing was rejected.
+ */
+export function acceptedFormatsLabel(accept: string | undefined): string {
+  const labels: string[] = [];
+  for (const token of acceptTokens(accept)) {
+    const label = tokenLabel(token);
+    if (label !== undefined && !labels.includes(label)) labels.push(label);
+  }
+  if (labels.length <= 1) return labels[0] ?? "";
+  return `${labels.slice(0, -1).join(", ")} or ${labels[labels.length - 1]}`;
+}
+
+/**
  * "scan.tiff" -> "TIFF". Used to name the rejected format back to the user.
  *
  * Returns "" when there is no extension to show. Callers must fall back to a

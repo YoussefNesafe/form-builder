@@ -7,7 +7,8 @@ export type Messages = {
   max: (limit: number | string) => string;
   pattern: string;
   fileSize: (mb: number) => string;
-  fileTypeRejected: (name: string, extension: string, accept: string) => string;
+  /** `extension` is undefined when the file has none to name — see fileTypeRejected in defaultMessages. */
+  fileTypeRejected: (name: string, extension: string | undefined, formats: string) => string;
   otpLength: (n: number) => string;
   sendCode: string;
   codeSent: string;
@@ -65,8 +66,14 @@ export const defaultMessages: Messages = {
   max: (n) => `Must be at most ${n}`,
   pattern: "Invalid format",
   fileSize: (mb) => `File must be smaller than ${mb} MB`,
-  fileTypeRejected: (name, extension, accept) =>
-    `${name} is ${extension ? `a ${extension} file` : "an unrecognised file type"} — accepted formats are ${accept}`,
+  // `formats` arrives already written out ("PDF, JPG or images"), not as the raw
+  // accept attribute — don't re-split it. `extension` is undefined for a file
+  // with no extension to name, in which case the parenthetical is dropped
+  // rather than left empty. No indefinite article anywhere on purpose: the
+  // extension is uppercased, so "a" vs "an" would be picked from a letter
+  // instead of a sound and give us "a SVG file".
+  fileTypeRejected: (name, extension, formats) =>
+    `${name} isn't in a format we accept${extension ? ` (${extension})` : ""} — please upload ${formats}`,
   otpLength: (n) => `Enter the ${n}-digit code`,
   sendCode: "Send OTP",
   codeSent: "Code Sent",

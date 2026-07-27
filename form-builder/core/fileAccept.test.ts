@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from "vitest";
-import { fileExtensionLabel, fileMatchesAccept } from "./fileAccept";
+import { acceptedFormatsLabel, fileExtensionLabel, fileMatchesAccept } from "./fileAccept";
 
 const file = (name: string, type: string) => new File(["x"], name, { type });
 
@@ -53,6 +53,44 @@ describe("fileMatchesAccept", () => {
 
   it("treats an accept made only of empty tokens as no constraint", () => {
     expect(fileMatchesAccept(file("a.tiff", "image/tiff"), " , . ")).toBe(true);
+  });
+});
+
+describe("acceptedFormatsLabel", () => {
+  it("names extension tokens without the dot", () => {
+    expect(acceptedFormatsLabel(".pdf")).toBe("PDF");
+  });
+
+  it("joins with commas and 'or' before the last", () => {
+    expect(acceptedFormatsLabel(".pdf,.jpg")).toBe("PDF or JPG");
+    expect(acceptedFormatsLabel(".pdf,.jpg,.png")).toBe("PDF, JPG or PNG");
+  });
+
+  it("names a MIME token by its subtype", () => {
+    expect(acceptedFormatsLabel("application/pdf")).toBe("PDF");
+  });
+
+  it("names a type wildcard in prose rather than as a glob", () => {
+    expect(acceptedFormatsLabel("image/*")).toBe("images");
+    expect(acceptedFormatsLabel("audio/*")).toBe("audio files");
+    expect(acceptedFormatsLabel("model/*")).toBe("model files");
+  });
+
+  // ".pdf,application/pdf" is the pairing fileMatchesAccept's own docs recommend
+  // for files the browser cannot type, so it must not read "PDF or PDF".
+  it("collapses tokens that name the same format", () => {
+    expect(acceptedFormatsLabel(".pdf,application/pdf")).toBe("PDF");
+  });
+
+  it("omits tokens that name no format, so nothing unmatchable is advertised", () => {
+    expect(acceptedFormatsLabel(".pdf,*/*")).toBe("PDF");
+    expect(acceptedFormatsLabel(".pdf,pdf")).toBe("PDF");
+  });
+
+  it("returns an empty string when accept names no format at all", () => {
+    expect(acceptedFormatsLabel(undefined)).toBe("");
+    expect(acceptedFormatsLabel("*")).toBe("");
+    expect(acceptedFormatsLabel(" , . ")).toBe("");
   });
 });
 
