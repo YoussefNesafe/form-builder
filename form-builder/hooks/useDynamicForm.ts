@@ -99,8 +99,12 @@ export function useDynamicForm<C extends FormConfig = FormConfig>(
   // Read through a ref inside the save effect so the effect never resubscribes on
   // storage identity: an inline object would otherwise tear the effect down every
   // render, and its cleanup flushes the pending save — a write per keystroke.
+  // Assigned in an effect, not during render: the ref is only read from the
+  // debounce callback and the effect cleanup, both of which run after this.
   const draftStorageRef = useRef(draftStorage);
-  draftStorageRef.current = draftStorage;
+  useEffect(() => {
+    draftStorageRef.current = draftStorage;
+  }, [draftStorage]);
   const draftHash = useMemo(() => (draftId !== null ? draftConfigHash(config.fields) : ""), [draftId, config]);
   const [restoredStep, setRestoredStep] = useState<number | undefined>(undefined);
   const [restoreGeneration, setRestoreGeneration] = useState(0);

@@ -9,6 +9,7 @@ import {
   sanitizeDraftValues,
   saveDraft,
 } from "./autosave";
+import type { DraftStorageOption } from "./autosave";
 import type { AnyFieldConfig } from "./types";
 
 afterEach(() => window.localStorage.clear());
@@ -113,6 +114,19 @@ describe("storage selection", () => {
     expect(hasDraft("signup", "session")).toBe(true);
     clearDraft("signup", "session");
     expect(hasDraft("signup", "session")).toBe(false);
+  });
+
+  it("falls back to localStorage for a null storage argument", () => {
+    // Unreachable through the types, but this source is copied into consumer
+    // repos where a null can arrive from plain JS — the guard in resolveStorage
+    // exists so that degrades to the default instead of silently no-opping.
+    const nullish = null as unknown as DraftStorageOption;
+    saveDraft("signup", "h1", { name: "Ada" }, undefined, nullish);
+    expect(window.localStorage.getItem(draftStorageKey("signup"))).not.toBeNull();
+    expect(loadDraft("signup", "h1", nullish)).toEqual({ values: { name: "Ada" } });
+    expect(hasDraft("signup", nullish)).toBe(true);
+    clearDraft("signup", nullish);
+    expect(hasDraft("signup", nullish)).toBe(false);
   });
 
   it("accepts a custom storage object", () => {
