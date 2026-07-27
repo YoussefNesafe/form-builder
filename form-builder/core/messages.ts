@@ -67,13 +67,21 @@ export const defaultMessages: Messages = {
   pattern: "Invalid format",
   fileSize: (mb) => `File must be smaller than ${mb} MB`,
   // `formats` arrives already written out ("PDF, JPG or images"), not as the raw
-  // accept attribute — don't re-split it. `extension` is undefined for a file
-  // with no extension to name, in which case the parenthetical is dropped
-  // rather than left empty. No indefinite article anywhere on purpose: the
-  // extension is uppercased, so "a" vs "an" would be picked from a letter
-  // instead of a sound and give us "a SVG file".
+  // accept attribute — don't re-split it.
+  //
+  // Both trailing parts are conditional because both can legitimately be empty,
+  // and an empty one must take its punctuation with it rather than leave a
+  // dangling "(" or a sentence ending in "please upload ". `extension` is
+  // undefined for a file with no extension; `formats` is "" when accept names
+  // no format we can write out, which happens for an accept of only
+  // uninterpretable tokens — a typo like "pdf" for ".pdf" rejects every file,
+  // so this is the path most likely to be seen, not the least.
+  //
+  // No indefinite article anywhere on purpose: the extension is uppercased, so
+  // "a" vs "an" would be picked from a letter instead of a sound — "a SVG file".
   fileTypeRejected: (name, extension, formats) =>
-    `${name} isn't in a format we accept${extension ? ` (${extension})` : ""} — please upload ${formats}`,
+    `${name} isn't in a format we accept${extension ? ` (${extension})` : ""}` +
+    `${formats ? ` — please upload ${formats}` : ""}`,
   otpLength: (n) => `Enter the ${n}-digit code`,
   sendCode: "Send OTP",
   codeSent: "Code Sent",

@@ -107,9 +107,12 @@ function tokenLabel(token: string): string | undefined {
  * (".pdf,application/pdf") is what closes that gap in the config, which is why
  * duplicates collapse rather than reading "PDF or PDF".
  *
- * Returns "" when `accept` names no format at all — only wildcards, or only
- * tokens nothing can match. Callers reaching here from a *rejection* never see
- * that: an `accept` in that state matches every file, so nothing was rejected.
+ * Returns "" when `accept` names no format at all, which happens two ways that
+ * pull in opposite directions. Only wildcards ("*") means every file matches,
+ * so a rejection message is never built and the "" is unreachable. Only
+ * uninterpretable tokens ("pdf" for ".pdf") means every file is *rejected*, so
+ * the "" reaches the message on every single failure. Callers must render the
+ * empty case as a clause they can drop, never interpolate it into a sentence.
  */
 export function acceptedFormatsLabel(accept: string | undefined): string {
   const labels: string[] = [];

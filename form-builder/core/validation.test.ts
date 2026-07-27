@@ -842,6 +842,18 @@ describe("file accept enforcement", () => {
     }
   });
 
+  // "pdf" is the missing-dot typo fileAccept defends against: it matches nothing,
+  // so every file is rejected and this is the message the whole form shows.
+  it("drops the upload clause when accept names no format it can write out", () => {
+    const schema = schemaFor({ type: "file", name: "doc", required: true, accept: "pdf" });
+    const result = schema.safeParse(new File(["x"], "notes.txt", { type: "text/plain" }));
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0].message).toBe("notes.txt isn't in a format we accept (TXT)");
+      expect(result.error.issues[0].message).not.toMatch(/please upload\s*$/);
+    }
+  });
+
   it("names no format for a file that has no extension, rather than an empty one", () => {
     const schema = schemaFor({ type: "file", name: "doc", required: true, accept: ".pdf" });
     const result = schema.safeParse(new File(["x"], "scan", { type: "image/tiff" }));
