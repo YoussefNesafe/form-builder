@@ -46,7 +46,9 @@ describe("fileMatchesAccept", () => {
   it("does not let a bare dot or empty token match everything", () => {
     expect(fileMatchesAccept(file("noext", ""), ".pdf")).toBe(false);
     expect(fileMatchesAccept(file("noext", ""), ".pdf,")).toBe(false);
-    expect(fileMatchesAccept(file("noext", ""), ".pdf,.")).toBe(false);
+    // A name ending in a dot is what pins the bare-dot filter: without it the
+    // "." token would match this via endsWith(".").
+    expect(fileMatchesAccept(file("scan.", ""), ".pdf,.")).toBe(false);
   });
 
   it("treats an accept made only of empty tokens as no constraint", () => {
@@ -66,5 +68,9 @@ describe("fileExtensionLabel", () => {
   it("returns an empty string when there is no extension", () => {
     expect(fileExtensionLabel(file("scan", ""))).toBe("");
     expect(fileExtensionLabel(file("scan.", ""))).toBe("");
+  });
+
+  it("treats a leading-dot name as all extension", () => {
+    expect(fileExtensionLabel(file(".gitignore", ""))).toBe("GITIGNORE");
   });
 });

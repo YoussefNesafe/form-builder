@@ -1,12 +1,32 @@
 /**
  * Interpretation of the HTML `accept` attribute, shared by the Zod schema and
- * the upload UI so a file can never be rendered as accepted while the schema
- * rejects it (or the reverse).
+ * the upload UI so the two can never disagree about a file's *type*.
+ *
+ * Type is only half of acceptance: the schema also enforces `maxSizeMB`
+ * (core/validation.ts). Anything deciding a per-file accepted/rejected status
+ * for the user must check both — this module answers the type question only.
  *
  * Tokens are read the way a browser's own file picker reads them: `.pdf`
  * against the file name, `image/*` and `application/pdf` against the file's
  * MIME type. A token we cannot interpret simply matches nothing, so a typo in
- * `accept` narrows the selection instead of silently opening it up.
+ * `accept` narrows the selection instead of silently opening it up. The two
+ * wildcard spellings in `WILDCARD_TOKENS` below are the one exception: they are
+ * interpreted, not unrecognised, and what they denote is "anything".
+ *
+ * Anything else needing to read `accept` — naming the allowed formats in an
+ * error message, say — belongs here too, rather than re-splitting the string at
+ * the call site.
+ *
+ * Two deliberate narrownesses, both failing closed:
+ * - MIME parameters are not stripped, so `text/csv;charset=utf-8` does not match
+ *   the token `text/csv`, where HTML would. Most likely to show up in
+ *   drag-and-drop, since `DataTransfer` is the usual source of a parameterised
+ *   type.
+ * - `file.type` is lowercased defensively even though the `File` constructor
+ *   already normalises it, because structural typing lets a hand-rolled
+ *   `{ name, type }` reach here. Normalising an input is worth keeping;
+ *   a redundant *branch* is not, which is why there is no `mime !== ""` guard —
+ *   every branch already rejects a typeless file on its own.
  */
 
 /** The HTML spellings of "any file at all"; an absent `accept` means the same. */
@@ -47,7 +67,13 @@ export function fileMatchesAccept(file: File, accept: string | undefined): boole
   });
 }
 
-/** "scan.tiff" -> "TIFF". Used to name the rejected format back to the user. */
+/**
+ * "scan.tiff" -> "TIFF". Used to name the rejected format back to the user.
+ *
+ * Returns "" when there is no extension to show. Callers must fall back to a
+ * generic phrase ("this file type") rather than interpolating an empty format
+ * name into user-facing text.
+ */
 export function fileExtensionLabel(file: File): string {
   const dot = file.name.lastIndexOf(".");
   if (dot === -1 || dot === file.name.length - 1) return "";
