@@ -45,13 +45,20 @@ const NO_FILE_ERRORS: FileErrors = { reasonAt: () => undefined, fieldError: unde
  * component used to pass straight to `FieldWrapper` — therefore rendered
  * nothing at all for every multi-file rejection.
  *
- * Three shapes reach here, and all three are exercised by the tests:
+ * Three shapes reach here, and each has a test that renders it:
  * - a sparse array, from per-index issues on a multi-file field;
  * - a plain `FieldError`, from a single-file field, whose one message is that
  *   one file's reason (its issues are reported at the field's own path);
- * - a plain `FieldError`, from a list-level rule on a multi-file field —
- *   `required` on an empty value. `multiple` is what tells the two plain-object
- *   cases apart, so a list-level message is never mistaken for file 0's reason.
+ * - a plain `FieldError`, from a list-level rule on a multi-file field, which
+ *   today means only `min(1)` — emptying a required list.
+ *
+ * `multiple` is what tells the last two apart. Note what it is and is not: with
+ * `min(1)` as the only list-level rule, a list-level message and a rendered row
+ * cannot coexist — the rule fails only on an empty list — so nothing observable
+ * changes if the check is dropped, and no test can defend it. It is here for
+ * the next list-level rule (a cap on how many files, say), which would
+ * otherwise surface as the first file's own rejection reason. Add one, and
+ * write the test this check has no way to earn today.
  *
  * Only the *first* issue per path survives RHF's default `criteriaMode:
  * "firstError"`, which is why a file that is both the wrong type and too large
@@ -124,7 +131,10 @@ export function FileField({ field }: FieldComponentProps) {
 
         // Both refs want the same node: react-hook-form's, so it can focus the
         // field when a submit fails, and ours, so removing a row can put focus
-        // back somewhere that exists.
+        // back somewhere that exists. Declared per render, so React detaches and
+        // reattaches it every time — which costs nothing here: RHF's own ref
+        // ignores a null argument, and `inputRef` is only ever read from an
+        // event handler, long after the commit has settled it on the node.
         const setInputRef = (node: HTMLInputElement | null) => {
           inputRef.current = node;
           rhf.ref(node);
