@@ -78,6 +78,18 @@ const baseFieldSchema = z.strictObject({
   width: fieldWidthSchema.optional(),
 });
 
+/**
+ * Every key `baseFieldSchema` accepts, `type` included. Exported only so a test
+ * can pin it against `keyof BaseField`.
+ *
+ * This is the one base-prop surface the compiler cannot police. A prop added to
+ * `BaseField` but not to the strictObject above typechecks clean everywhere and
+ * then throws `Unrecognized key` on the first config that sets it — and because
+ * `AnyFieldConfig` admits `Record<string, unknown>` for custom types, even the
+ * config literal that triggers it compiles.
+ */
+export const BASE_FIELD_SCHEMA_KEYS: readonly string[] = Object.keys(baseFieldSchema.shape);
+
 const NESTED_QUANTIFIER = /\([^)]*[+*}][^)]*\)[+*{]/;
 
 function isSafeCharClassBody(body: string): boolean {

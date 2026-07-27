@@ -27,6 +27,19 @@ type FieldRuntime = {
    * so shared chrome can read declarative config without every field component
    * threading it through. `FieldWrapper` uses it for `badge`. Undefined outside
    * a gate — a `FieldWrapper` rendered by hand rather than via `renderField`.
+   *
+   * This is the RAW config as authored, not resolved state. In particular
+   * `field.disabled` is only the statically declared flag; the resolved answer
+   * — which also folds in `disabledWhen`, `enabledWhen`, `enabledWhenVerified`,
+   * and an inherited form-level disable — is the sibling `disabled` on this
+   * same object, or `useFieldDisabled(config)`. Reading `field.disabled` for
+   * that gives the wrong answer with no type error to warn you.
+   *
+   * Chrome-only channel: it exists for wrappers that render around every field.
+   * Field components already receive their config as a `field` prop and should
+   * keep using it. The whole config is published rather than just the props the
+   * chrome needs, which is what lets a new annotation reach every field type
+   * without touching one of them.
    */
   field?: AnyFieldConfig;
   otp?: OtpRuntime;

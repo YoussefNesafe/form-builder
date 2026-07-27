@@ -54,11 +54,12 @@ export type BaseField = {
    *
    * `FieldWrapper` reads it off the runtime context that `FieldGate` publishes,
    * so no field component passes it through and custom types registered with
-   * `registerField` inherit it for free. Two consequences: a `FieldWrapper`
-   * rendered outside a `FieldGate` (i.e. not reached via `renderField`) shows
-   * no badge, and a field with no `label` shows none either — there is nothing
-   * for it to annotate, and `hidden`, `static`, and `submit` render no label at
-   * all. Empty string renders nothing, same as `label`/`description`.
+   * `registerField` inherit it for free. (A `FieldWrapper` rendered by hand,
+   * outside a gate, has no config to read and takes a `badge` prop instead.)
+   *
+   * Needs a `label` to annotate: with none there is nothing to sit beside, and
+   * `hidden`, `static`, and `submit` render no label at all. Empty string
+   * renders nothing, same as `label`/`description`.
    */
   badge?: string;
   placeholder?: string;

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { registerField } from "./registry";
-import { validateFormConfig } from "./schema";
-import type { FieldConfig, FormConfig } from "./types";
+import { BASE_FIELD_SCHEMA_KEYS, validateFormConfig } from "./schema";
+import type { BaseField, FieldConfig, FormConfig } from "./types";
 
 const valid: FormConfig = {
   id: "t",
@@ -58,7 +58,32 @@ describe("validateFormConfig", () => {
 
   // baseFieldSchema is a strictObject, so every base prop has to be declared
   // there as well as on the BaseField type — a prop that only exists in
-  // TypeScript typechecks fine and then throws on the first real config.
+  // TypeScript typechecks fine and then throws on the first real config. This
+  // is the only base-prop surface where divergence survives tsc, so it gets a
+  // completeness guard rather than a per-prop test.
+  it("accepts every prop on BaseField, so none can typecheck and then throw", () => {
+    // Compiler-enforced: a new BaseField prop leaves this literal incomplete.
+    const BASE_FIELD_KEYS: Record<keyof BaseField, true> = {
+      name: true,
+      label: true,
+      description: true,
+      badge: true,
+      placeholder: true,
+      required: true,
+      disabled: true,
+      visibleWhen: true,
+      disabledWhen: true,
+      enabledWhen: true,
+      enabledWhenVerified: true,
+      copyFrom: true,
+      width: true,
+    };
+    const accepted = new Set(BASE_FIELD_SCHEMA_KEYS);
+    for (const key of Object.keys(BASE_FIELD_KEYS)) {
+      expect(accepted.has(key), `baseFieldSchema rejects the BaseField prop "${key}"`).toBe(true);
+    }
+  });
+
   it("accepts badge on every field type, not just the one it was added for", () =>
     expect(() =>
       validateFormConfig({
