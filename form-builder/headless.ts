@@ -2,17 +2,25 @@
  * The npm entry point (`.` in `package.json`'s `exports` map) and the semver
  * contract described in CHANGELOG.md.
  *
- * WHAT BELONGS HERE: everything a consumer needs to drive the engine WITHOUT
- * its rendered components — the `core/` logic and helpers, the hooks, and any
- * type a symbol already on this surface forces the consumer to name, wherever
- * that type is declared. `FormLocale` and `OtpRuntime` are declared in
- * `components/` and still belong here, because `formatReviewValue` and
- * `useOtpController` take them; `DraftStorage` is here for the same reason,
- * via `AutosaveOptions.storage`.
+ * WHAT BELONGS HERE: any symbol that works without the engine's rendered
+ * component tree, plus any type a symbol already on this surface forces the
+ * consumer to name.
+ *
+ * Neither test is about which directory declares it, and neither is about
+ * type-versus-value. `formatReviewValue` (`components/`) and `formatMasked`
+ * (`fields/`) are here because they are pure functions that need nothing
+ * rendered — `reviewValue.ts` imports no React at all, `maskedValue.ts`
+ * imports nothing. `useFieldRuntime` and `useFieldDisabled` are NOT here
+ * despite being hooks alongside `useDynamicForm`, because they read a context
+ * only `FormRenderer` populates: outside that tree they return the bare
+ * default and answer nothing. And `FormLocale`, `OtpRuntime` and
+ * `DraftStorage` reach here as types purely because `formatReviewValue`,
+ * `useOtpController` and `AutosaveOptions.storage` make you name them.
  *
  * "Headless" is about the component tree, not about React — `useDynamicForm`
- * is a client hook. What stays out is anything that renders, and anything only
- * a renderer would need to name.
+ * is a client hook. What stays out is anything that renders, anything that
+ * needs something else rendered, and any type only such a symbol would make
+ * you name.
  *
  * Adding a name here is a semver commitment; renaming or removing one is a
  * major bump. Every value here must also appear in `index.ts`; that superset

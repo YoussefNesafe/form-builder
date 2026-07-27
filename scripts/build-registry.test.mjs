@@ -16,7 +16,11 @@ import { collectFiles } from "./collectFiles.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const FORM_BUILDER_DIR = path.join(ROOT, "form-builder");
-const isTestFile = (relPath) => /\.test\.(ts|tsx)$/.test(relPath);
+// Kept as an independent copy of build-registry.mjs's filter, per this file's
+// header. It must cover BOTH test spellings for the same reason the original
+// does: a test-only file left in `allSourceFiles()` makes the import-closure
+// checks below demand that its imports ship, which is a false failure.
+const isTestFile = (relPath) => /\.test(-d)?\.(ts|tsx)$/.test(relPath);
 
 function allSourceFiles() {
   const files = [];
@@ -74,6 +78,38 @@ describe("build-registry closure", () => {
     const first = JSON.stringify([...buildRegistryModel().engine.filesRel].sort());
     const second = JSON.stringify([...buildRegistryModel().engine.filesRel].sort());
     expect(first).toEqual(second);
+  });
+
+  // The exclusion itself had no guard until now, and it was wrong: the filter
+  // read `.test.(ts|tsx)`, which does not match `.test-d.ts(x)`, so four type
+  // tests shipped to copy-in consumers. Nothing caught it, because every other
+  // check here asks whether something is MISSING from the model — none asked
+  // what got in that should not have.
+  //
+  // Matches deliberately WIDER than the filter it guards (`.test` or `.spec`
+  // followed by either separator), so a third spelling escapes the filter and
+  // still lands here rather than slipping past both.
+  it("ships no test file, in any spelling", () => {
+    const testFilePattern = /\.(test|spec)[.-]/;
+
+    const present = ENGINE_DIRS.flatMap((dir) => {
+      const abs = path.join(FORM_BUILDER_DIR, dir);
+      if (!fs.existsSync(abs)) return [];
+      return collectFiles(abs)
+        .filter((rel) => testFilePattern.test(rel))
+        .map((rel) => `${dir}/${rel}`);
+    });
+    // Sanity: if this is empty the assertion below passes for the wrong
+    // reason. Both spellings must be represented, or the guard is only
+    // proving whichever one happens to still exist.
+    expect(present.some((rel) => /\.test\.(ts|tsx)$/.test(rel))).toBe(true);
+    expect(present.some((rel) => /\.test-d\.(ts|tsx)$/.test(rel))).toBe(true);
+
+    const shipped = [...model.engine.filesRel].filter((rel) => testFilePattern.test(rel));
+    expect(
+      shipped,
+      `${shipped[0]} is a test file but is in form-engine's shipped file list — a copy-in consumer would receive it, and a type test drags in vitest's expectTypeOf. Widen isTestFile in scripts/build-registry.mjs.`,
+    ).toEqual([]);
   });
 
   it("every field item's registryDependencies-implying uiDeps resolve to a real primitive item", () => {

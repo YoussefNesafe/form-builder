@@ -39,14 +39,29 @@ practice.
 
 ## [Unreleased]
 
-Additive throughout: nothing exported was removed or renamed, and no existing
-`FormConfig` needs editing to keep working. **Cut this as `0.2.0`** — a minor
-bump. `form-builder/package.json` is deliberately still `0.1.4`: this section
+Nothing exported was removed or renamed, and no existing `FormConfig` needs
+editing to keep working, so this is a minor bump — but read **Changed** first:
+one behaviour tightened, and a config that already sets `accept` will start
+rejecting files it used to accept. **Cut this as `0.2.0`**. `form-builder/package.json` is deliberately still `0.1.4`: this section
 records the work so it does not have to be reconstructed from `git log`, but
 bumping the version and pushing `engine-v0.2.0` is the release act and stays
 with whoever performs it. To cut: bump the version, rename this heading to
 `## [0.2.0] - <date>`, add its compare link at the foot (the `[Unreleased]`
 link already there points at `HEAD`).
+
+### Changed
+
+- **`accept` is now enforced by validation, per file.** Previously `accept`
+  only shaped the browser's file picker, which a drag-and-drop bypasses; the
+  schema now rejects a non-matching file and names the file, its format, and
+  the accepted formats in the message. **A config that already sets `accept`
+  now fails submissions it used to pass** — this is the one behaviour in this
+  release that tightens rather than adds, and the only upgrade risk here.
+  Tokens are read the way a file picker reads them (`.pdf` against the name,
+  `image/*` and `application/pdf` against the MIME type); an uninterpretable
+  token matches nothing, so a typo in `accept` narrows the selection instead
+  of silently opening it up. Type is checked before size, and every file is
+  judged independently of the others.
 
 ### Added
 
@@ -61,16 +76,6 @@ link already there points at `HEAD`).
   will therefore be read and written during server rendering. Keep the object
   referentially stable (module scope or `useMemo`) — a fresh one each render
   re-subscribes the autosave effect.
-- **`accept` is now enforced by validation, per file.** Previously `accept`
-  only shaped the browser's file picker, which a drag-and-drop bypasses; the
-  schema now rejects a non-matching file and names the file, its format, and
-  the accepted formats in the message. **This is stricter than 0.1.4 for a
-  config that already sets `accept`** — the same config now fails submissions
-  it used to pass. Tokens are read the way a file picker reads them (`.pdf`
-  against the name, `image/*` and `application/pdf` against the MIME type); an
-  uninterpretable token matches nothing, so a typo in `accept` narrows the
-  selection instead of silently opening it up. Type is checked before size,
-  and every file is judged independently of the others.
 - **`acceptedFormatsLabel(accept)`** — the accepted formats as prose
   (`".pdf,.jpg,image/*"` → `"PDF, JPG or images"`). Exported so a
   custom file-taking field type can write the same hint the built-in `file`
