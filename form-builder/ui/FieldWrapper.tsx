@@ -59,8 +59,8 @@ export function FieldWrapper({
 }: FieldWrapperProps) {
   // `badge` is the one piece of field config this wrapper reads for itself.
   // Every rendered field is wrapped in a `FieldGate`, which publishes its
-  // config here — so a declarative annotation reaches all 24 built-in field
-  // types (and any custom one) without a prop threaded through each of them.
+  // config here — so a declarative annotation reaches every built-in field
+  // type (and any custom one) without a prop threaded through each of them.
   const badge = useFieldRuntime().field?.badge;
   const sharedClassName = cn(fieldWrapperVariants({ size }), className);
 
