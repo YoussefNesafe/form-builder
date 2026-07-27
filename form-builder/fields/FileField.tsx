@@ -83,6 +83,13 @@ function readFileErrors(error: unknown, multiple: boolean | undefined): FileErro
   // the set. It is the only part of the field with `role="alert"`, so it is what
   // announces that something went wrong, and a concrete sentence says more than
   // a count; every reason is still on its own row for the rest.
+  //
+  // Accepted cost: with one file rejected, that sentence is on screen twice and
+  // spoken twice — once by the alert, once by the row it also sits in. The
+  // alternative is a count ("1 file can't be uploaded"), which announces without
+  // saying anything and sends the user hunting for the row. Repetition is the
+  // cheaper of the two, but it is a real cost, not an oversight: if this field
+  // ever grows a summary line, that is the thing to reach for instead.
   let first: string | undefined;
   for (let index = 0; index < perFile.length && first === undefined; index += 1) {
     first = reasonAt(index);

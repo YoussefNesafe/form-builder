@@ -980,6 +980,22 @@ describe("file accept enforcement", () => {
     }
   });
 
+  // Single-file fields were corrupted by the same shared array, via the `[]`
+  // that fileSchema passes: unfixed this reads [["doc","doc"], ["doc","doc"]].
+  // Pinned separately because the two call sites pass different paths and only
+  // this one proves a field with no index is affected too.
+  it("single: keeps both issues on the field's own path under the async parse", async () => {
+    const schema = buildFieldsSchema(
+      [{ type: "file", name: "doc", required: true, accept: ".pdf", maxSizeMB: 2 }],
+      messages,
+    );
+    const result = await schema.safeParseAsync({ doc: bigTiff() });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues.map((issue) => issue.path)).toEqual([["doc"], ["doc"]]);
+    }
+  });
+
   it("multiple: one broken file does not disturb another's path", async () => {
     const schema = buildFieldsSchema(
       [{ type: "file", name: "docs", required: true, multiple: true, accept: ".pdf", maxSizeMB: 2 }],

@@ -532,7 +532,7 @@ export const BASE_FIELD_PROPS: BasePropDoc[] = [
     required: false,
     description: "Placeholder/prompt text; meaning is per-control (input placeholder, empty-select prompt, unset-date prompt).",
     exceptions:
-      "on group it overrides the \"Add\" button's label instead of a text placeholder; has no effect on radio, segmented, checkbox group, rating, slider, or signature.",
+      "on group it overrides the \"Add\" button's label instead of a text placeholder; on file it replaces the dropzone's \"Drag files here, or browse\" prompt, which is part of the file input's accessible name — so it is read aloud after the label, not just shown; has no effect on radio, segmented, checkbox group, rating, slider, or signature.",
   },
   {
     name: "required",

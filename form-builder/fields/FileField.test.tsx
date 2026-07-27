@@ -130,6 +130,32 @@ describe("FileDropzone naming and description", () => {
   });
 });
 
+describe("FileDropzone is a drop surface, not a widget", () => {
+  it("exposes no role and takes no focus", () => {
+    renderField();
+    const zone = dropzone();
+
+    // The whole design rests on this: the drop surface catches drag events and
+    // nothing else, and the keyboard path is the file input inside it. A role
+    // or a tabindex here would put an unnamed, unoperable widget in the tab
+    // order in front of the control that actually works. Measured: adding
+    // `role="button" tabIndex={0}` to this element passes every other
+    // assertion in this file, which is exactly why it needs its own.
+    expect(zone.getAttribute("role")).toBeNull();
+    expect(zone.getAttribute("tabindex")).toBeNull();
+    zone.focus();
+    expect(document.activeElement).not.toBe(zone);
+  });
+
+  it("puts the focus on the file input instead", () => {
+    renderField();
+
+    const input = fileInput();
+    input.focus();
+    expect(document.activeElement).toBe(input);
+  });
+});
+
 describe("FileDropzone dragging", () => {
   it("prevents the default on dragover, so the browser does not navigate to the file", () => {
     renderField();
@@ -242,6 +268,12 @@ describe("FileField per-file status", () => {
     pick([pdf(), tiff()]);
 
     await waitFor(() => expect(screen.getByText(wrongFormat("scan.tiff", "TIFF", "PDF"))).toBeTruthy());
+    // Structural, deliberately: "no reason on row 0" is an absence, and an
+    // absence cannot be queried by accessible name. `data-slot`/`data-rejected`
+    // are the restyling seam this component publishes, so this asserts a
+    // documented surface rather than incidental markup — but it is the one
+    // place in this file that reads the DOM instead of the a11y tree, and the
+    // presence half is still pinned by `getByText` above.
     const rows = document.querySelectorAll('[data-slot="file-row"]');
     expect(rows[0].getAttribute("data-rejected")).toBeNull();
     expect(rows[1].getAttribute("data-rejected")).toBe("");
