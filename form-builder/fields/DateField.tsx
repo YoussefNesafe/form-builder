@@ -34,7 +34,17 @@ function toDateString(date: Date): string {
   return format(date, "yyyy-MM-dd");
 }
 
+/**
+ * Whether `minDate`/`maxDate` shape the calendar as well as the schema.
+ * `"validate"` is the only way a user driving the picker can reach a bound
+ * violation and be told why it fails.
+ */
+function restrictsPicker(config: DateFieldConfig): boolean {
+  return config.pickerBounds !== "validate";
+}
+
 function dayMatcher(config: DateFieldConfig): Matcher[] | undefined {
+  if (!restrictsPicker(config)) return undefined;
   const min = parseIso(config.minDate);
   const max = parseIso(config.maxDate);
   const matchers: Matcher[] = [...(min ? [{ before: min }] : []), ...(max ? [{ after: max }] : [])];
@@ -45,10 +55,13 @@ function calendarNavigation(config: DateFieldConfig) {
   const min = parseIso(config.minDate);
   const max = parseIso(config.maxDate);
   const now = new Date();
+  const restricted = restrictsPicker(config);
   return {
     captionLayout: "dropdown" as const,
-    startMonth: min ?? new Date(now.getFullYear() - CALENDAR_YEARS_BACK, JANUARY),
-    endMonth: max ?? new Date(now.getFullYear() + CALENDAR_YEARS_FORWARD, DECEMBER),
+    startMonth: restricted && min ? min : new Date(now.getFullYear() - CALENDAR_YEARS_BACK, JANUARY),
+    endMonth: restricted && max ? max : new Date(now.getFullYear() + CALENDAR_YEARS_FORWARD, DECEMBER),
+    // A landing month, not a bound, so it survives opting out: an age cutoff
+    // still opens where the rule sits, one hop from the dates that break it.
     defaultMonth: max && max < now ? max : undefined,
   };
 }

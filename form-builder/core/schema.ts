@@ -217,6 +217,9 @@ const fieldSchemasByType: Record<FieldConfig["type"], z.ZodType> = {
       // keep it and Zod would fall back to its own untranslated "Invalid input"
       // — losing the bound text and escaping the Messages layer at once.
       message: z.string().min(1).optional(),
+      // Picker-only: "validate" leaves out-of-range days selectable so the
+      // bound can explain itself. The value is rejected either way.
+      pickerBounds: z.enum(["restrict", "validate"]).optional(),
     })
     .refine((field) => !field.range || (field.minDateField === undefined && field.maxDateField === undefined), {
       message: "minDateField/maxDateField are not supported on range date fields",

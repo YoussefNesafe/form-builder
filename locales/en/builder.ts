@@ -158,6 +158,14 @@ export const builder = {
         help: "Must be on or after the named date field's value. Not available on range fields.",
       },
       maxDateField: { label: "Not after field", help: "Must be on or before the named date field's value." },
+      pickerBounds: {
+        label: "Min/max in the calendar",
+        options: {
+          restrict: "Disable out-of-range days",
+          validate: "Allow the pick, show the error",
+        },
+        help: "Disabling is the default. Allowing the pick lets people choose a date and be told why it fails — useful for an age cutoff. The value is rejected either way.",
+      },
       minTime: { label: "Min time" },
       maxTime: { label: "Max time" },
       stepMinutes: { label: "Step (minutes)" },

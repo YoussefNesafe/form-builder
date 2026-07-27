@@ -109,13 +109,15 @@ export type FieldConfig =
        * value falls outside `minDate`/`maxDate`, so a date expressing a rule can
        * state the rule: "You must be 18 or older to open an account."
        *
-       * WHERE THIS SURFACES: not while picking a date. The calendar disables
-       * out-of-range days and clamps its navigable months, and the field has no
-       * text-entry path, so a user driving the UI cannot reach a bound
-       * violation. This fires on values that arrive without passing through the
-       * calendar — `parseSubmission`, a restored autosave draft, `copyFrom`,
-       * and programmatic defaults. It is the message for untrusted or restored
-       * input, not inline feedback, and it does not explain greyed-out days.
+       * WHERE THIS SURFACES depends on `pickerBounds`. Under the default
+       * `"restrict"` the calendar disables out-of-range days and clamps its
+       * navigable months, and the field has no text-entry path, so a user
+       * driving the UI cannot reach a bound violation — the message is then
+       * reserved for values that arrive without passing through the calendar
+       * (`parseSubmission`, a restored autosave draft, `copyFrom`, programmatic
+       * defaults) and it does not explain greyed-out days. Under `"validate"`
+       * those same days stay selectable and this becomes inline feedback on the
+       * pick as well, which is the setting an age cutoff wants.
        *
        * It covers every `minDate`/`maxDate` violation on the field and nothing
        * else. That means:
@@ -141,6 +143,32 @@ export type FieldConfig =
        * makes with its own `message`. Must be non-empty (validator-enforced).
        */
       message?: string;
+      /**
+       * What `minDate`/`maxDate` do to the calendar. They always constrain the
+       * *value*; this chooses whether they also constrain the *picker*.
+       *
+       * - `"restrict"` (default): out-of-range days are disabled and the
+       *   month/year dropdowns stop at the bounds, so an unavailable range is
+       *   simply unreachable — right for a booking calendar with no
+       *   availability before today.
+       * - `"validate"`: those days stay selectable by mouse and by arrow key,
+       *   and picking one fails with `message` (or the generic bound text).
+       *
+       * Choose `"validate"` when the bound states a rule the user needs told
+       * rather than a range that is unavailable. An age cutoff greys out
+       * two-thirds of the calendar and reads as a broken widget — the visitor
+       * is left asking why they cannot select their own birthday, when what
+       * they need to hear is "you must be 18 or older". Only the picker
+       * changes: the schema rejects the value under either setting, so this
+       * never widens what a form accepts.
+       *
+       * `"validate"` also unclamps month navigation, since a 16-year-old cannot
+       * reach their birth year through a year dropdown that stops at the
+       * cutoff. The calendar still *opens* on `maxDate`'s month when that is in
+       * the past — a landing month is not a restriction, and it puts the rule a
+       * hop away from the dates that break it.
+       */
+      pickerBounds?: "restrict" | "validate";
     })
   | (BaseField & {
       type: "time";

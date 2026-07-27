@@ -200,6 +200,12 @@ export const FIELD_PROP_DOCS: { [T in FieldType]: Record<OwnProps<T>, PropDoc> }
       description:
         'Custom error for a minDate/maxDate violation, replacing "Must be at least/at most <date>" — the way to say "You must be 18 or older" instead of a bare bound. One sentence covers both bounds, and with range: true both endpoints; unparseable values and the minDateField/maxDateField rules keep their own messages.',
     },
+    pickerBounds: {
+      type: '"restrict" | "validate"',
+      required: false,
+      description:
+        'What minDate/maxDate do to the calendar — they always constrain the value. "restrict" (default) disables out-of-range days and clamps month navigation, for a range that is genuinely unavailable. "validate" leaves those days selectable by mouse and keyboard so picking one fails with message instead, which is how an age cutoff says "You must be 18 or older" rather than greying out most of the calendar.',
+    },
   },
   time: {
     minTime: {

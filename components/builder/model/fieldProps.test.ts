@@ -21,7 +21,7 @@ const REQUIRED_TYPE_KEYS: Record<string, string[]> = {
   segmented: ["options"],
   checkbox: ["options"],
   switch: ["options"],
-  date: ["range", "minDate", "maxDate", "minDateField", "maxDateField", "message"],
+  date: ["range", "minDate", "maxDate", "minDateField", "maxDateField", "message", "pickerBounds"],
   time: ["minTime", "maxTime", "stepMinutes", "minTimeField", "maxTimeField"],
   rating: ["max"],
   slider: ["min", "max", "step"],
@@ -90,6 +90,8 @@ describe("field prop registry", () => {
       searchable: "boolean",
       multiple: "boolean",
       range: "boolean",
+      // Deliberately not "boolean" — see the pickerBounds serialization test.
+      pickerBounds: "select",
       min: "number",
       max: "number",
       step: "number",
@@ -118,6 +120,23 @@ describe("field prop registry", () => {
       const keys = FIELD_PROPS[type].map((d) => d.key);
       expect(keys, `${type} must edit name`).toContain("name");
     }
+  });
+
+  it("a non-default pickerBounds survives serialization", () => {
+    // The editor for it has to be a "select", not a "boolean": pruneEmpty drops
+    // false and BooleanControl emits undefined for "off", so a boolean prop can
+    // only ever mean "present or absent" — which cannot express turning OFF a
+    // default-on behaviour. A silent no-op toggle is what this pins against.
+    const state: Pick<BuilderState, "title" | "description" | "nodes" | "multiStep" | "steps"> = {
+      title: "T",
+      description: "",
+      nodes: [{ _id: "x", type: "date" as FieldType, props: { name: "dob", pickerBounds: "validate" } }],
+      multiStep: false,
+      steps: [],
+    };
+    const config = serialize({ ...state } as BuilderState);
+    expect(config.fields[0]).toMatchObject({ type: "date", name: "dob", pickerBounds: "validate" });
+    expect(() => validateFormConfig(config)).not.toThrow();
   });
 
   it("a freshly-added field of every type serializes to a valid single-field config", () => {

@@ -1337,4 +1337,25 @@ describe("date config", () => {
       }),
     ).toThrow();
   });
+
+  it("accepts pickerBounds on a date field", () => {
+    expect(() =>
+      validateFormConfig({
+        id: "f",
+        fields: [
+          { type: "date", name: "dob", maxDate: "2008-07-27", message: "Too young", pickerBounds: "validate" },
+          { type: "date", name: "booking", minDate: "2026-01-01", pickerBounds: "restrict" },
+        ],
+      }),
+    ).not.toThrow();
+  });
+
+  it("rejects a pickerBounds value outside the two modes", () => {
+    expect(() =>
+      validateFormConfig({
+        id: "f",
+        fields: [{ type: "date", name: "dob", pickerBounds: "nope" } as never],
+      }),
+    ).toThrow();
+  });
 });

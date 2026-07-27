@@ -102,6 +102,11 @@ const AS_OPTIONS = [
   { label: P.as.options.divider, value: "divider" },
 ];
 
+const PICKER_BOUNDS_OPTIONS = [
+  { label: P.pickerBounds.options.restrict, value: "restrict" },
+  { label: P.pickerBounds.options.validate, value: "validate" },
+];
+
 const VARIANT_OPTIONS = ["default", "destructive", "outline", "secondary", "ghost", "link"].map((v) => ({
   label: v,
   value: v,
@@ -185,6 +190,13 @@ export const FIELD_PROPS: Record<FieldType, PropDescriptor[]> = {
       help: P.maxDateField.help,
     },
     { key: "message", label: P.message.label, control: "text" },
+    {
+      key: "pickerBounds",
+      label: P.pickerBounds.label,
+      control: "select",
+      options: PICKER_BOUNDS_OPTIONS,
+      help: P.pickerBounds.help,
+    },
   ],
   time: [
     ...BASE,
