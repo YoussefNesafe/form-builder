@@ -176,6 +176,13 @@ export const FIELD_PROPS: Record<FieldType, PropDescriptor[]> = {
     { key: "minDate", label: P.minDate.label, control: "date" },
     { key: "maxDate", label: P.maxDate.label, control: "date" },
     {
+      key: "pickerBounds",
+      label: P.pickerBounds.label,
+      control: "select",
+      options: PICKER_BOUNDS_OPTIONS,
+      help: P.pickerBounds.help,
+    },
+    {
       key: "minDateField",
       label: P.minDateField.label,
       control: "fieldRef",
@@ -190,13 +197,6 @@ export const FIELD_PROPS: Record<FieldType, PropDescriptor[]> = {
       help: P.maxDateField.help,
     },
     { key: "message", label: P.message.label, control: "text" },
-    {
-      key: "pickerBounds",
-      label: P.pickerBounds.label,
-      control: "select",
-      options: PICKER_BOUNDS_OPTIONS,
-      help: P.pickerBounds.help,
-    },
   ],
   time: [
     ...BASE,

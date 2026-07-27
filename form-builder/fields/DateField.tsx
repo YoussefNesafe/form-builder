@@ -56,12 +56,25 @@ function calendarNavigation(config: DateFieldConfig) {
   const max = parseIso(config.maxDate);
   const now = new Date();
   const restricted = restrictsPicker(config);
+  // The span to browse when nothing narrows it — a usable range around today
+  // rather than every month react-day-picker would otherwise offer.
+  const genericStart = new Date(now.getFullYear() - CALENDAR_YEARS_BACK, JANUARY);
+  const genericEnd = new Date(now.getFullYear() + CALENDAR_YEARS_FORWARD, DECEMBER);
+  // Unrestricted, the bounds may only *widen* the span, never replace it: dates
+  // between a far-off bound and the generic edge are schema-valid, so the mode
+  // whose job is reaching out-of-range dates must not hide in-range ones. Both
+  // bounds count at both ends — a minDate past genericEnd has to pull the end
+  // forward, or the only selectable dates are ones the schema rejects.
+  const spread = [min, max].filter((d): d is Date => d !== undefined).map((d) => d.getTime());
   return {
     captionLayout: "dropdown" as const,
-    startMonth: restricted && min ? min : new Date(now.getFullYear() - CALENDAR_YEARS_BACK, JANUARY),
-    endMonth: restricted && max ? max : new Date(now.getFullYear() + CALENDAR_YEARS_FORWARD, DECEMBER),
-    // A landing month, not a bound, so it survives opting out: an age cutoff
-    // still opens where the rule sits, one hop from the dates that break it.
+    startMonth: restricted ? (min ?? genericStart) : new Date(Math.min(genericStart.getTime(), ...spread)),
+    endMonth: restricted ? (max ?? genericEnd) : new Date(Math.max(genericEnd.getTime(), ...spread)),
+    // A landing month, not a bound, so it survives `"validate"` — and only
+    // there does it carry weight: under `"restrict"`, endMonth already pins the
+    // calendar to `max`. The condition targets the past-cutoff shape (a date of
+    // birth, where opening a century back beats opening on today); every other
+    // configuration keeps react-day-picker's own landing month of today.
     defaultMonth: max && max < now ? max : undefined,
   };
 }

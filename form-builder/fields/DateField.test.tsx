@@ -63,9 +63,12 @@ function dayButton(iso: string): HTMLButtonElement {
   return button;
 }
 
+function yearSelect(): HTMLSelectElement {
+  return screen.getByRole("combobox", { name: /Year/i }) as HTMLSelectElement;
+}
+
 function yearOptions(): string[] {
-  const select = screen.getByRole("combobox", { name: /Year/i });
-  return Array.from(select.querySelectorAll("option")).map((o) => o.textContent ?? "");
+  return Array.from(yearSelect().querySelectorAll("option")).map((o) => o.textContent ?? "");
 }
 
 // A DOB cutoff: born on or before this date and you are 18. Fixed rather than
@@ -180,8 +183,45 @@ describe("DateField picker bounds", () => {
     it("still opens on the maxDate month, which points at the rule without hiding anything", () => {
       setup(open);
       openCalendar();
-      // July 2008 is rendered, so the days that break the rule are one hop away.
+      // July 2008 — so the days that break the rule are one hop away.
+      expect(yearSelect().value).toBe("2008");
       expect(document.querySelector(`td[data-day="${TOO_YOUNG}"]`)).toBeTruthy();
+    });
+
+    it("widens the navigable window to a bound outside it rather than replacing it", () => {
+      // The fallback window is now-100y..now+10y. A bound beyond it has to widen
+      // that window, not substitute for it: every date between the bound and the
+      // window edge is schema-valid, so the mode whose whole job is making
+      // out-of-range dates reachable must not be what hides in-range ones.
+      setup({ type: "date", name: "dob", label: "Date of birth", minDate: "1890-01-01", pickerBounds: "validate" });
+      openCalendar();
+      const years = yearOptions();
+      expect(years).toContain("1890");
+      expect(years).toContain("1900");
+      expect(years).toContain(String(new Date().getFullYear()));
+    });
+
+    it("widens it at the far end too", () => {
+      setup({ type: "date", name: "eol", label: "Date of birth", maxDate: "2060-06-30", pickerBounds: "validate" });
+      openCalendar();
+      const years = yearOptions();
+      expect(years).toContain("2060");
+      expect(years).toContain(String(new Date().getFullYear()));
+    });
+
+    it("reaches a lone minDate that sits past the far edge", () => {
+      // A bound counts at whichever end it falls, not the end it is named for.
+      // With only a future minDate, every selectable date in the generic span
+      // is one the schema rejects, so the span has to reach the bound.
+      setup({ type: "date", name: "start", label: "Date of birth", minDate: "2050-01-01", pickerBounds: "validate" });
+      openCalendar();
+      expect(yearOptions()).toContain("2050");
+    });
+
+    it("reaches a lone maxDate that sits before the near edge", () => {
+      setup({ type: "date", name: "dob", label: "Date of birth", maxDate: "1850-12-31", pickerBounds: "validate" });
+      openCalendar();
+      expect(yearOptions()).toContain("1850");
     });
 
     it("puts an out-of-range day in arrow-key reach, enabled and activatable", async () => {
@@ -219,6 +259,20 @@ describe("DateField picker bounds", () => {
       setup({ type: "date", name: "stay", label: "Stay", range: true, maxDate: CUTOFF }, { stay: undefined });
       openCalendar("Stay");
       expect(dayButton(TOO_YOUNG).disabled).toBe(true);
+    });
+  });
+
+  describe("pickerBounds governs minDate/maxDate only", () => {
+    it("leaves a minDateField-bounded picker unrestricted even under the default", () => {
+      // The cross-field limit moves with a sibling and is known only to the
+      // form-level refine, so it never reaches the calendar either way — such a
+      // field already behaves like "validate".
+      setup({ type: "date", name: "end", label: "Date of birth", minDateField: "start" }, { end: undefined });
+      openCalendar();
+      expect(document.querySelectorAll("td[data-disabled]")).toHaveLength(0);
+      const years = yearOptions();
+      expect(years).toContain(String(new Date().getFullYear() - 50));
+      expect(years).toContain(String(new Date().getFullYear() + 5));
     });
   });
 

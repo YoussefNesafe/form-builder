@@ -145,7 +145,11 @@ export type FieldConfig =
       message?: string;
       /**
        * What `minDate`/`maxDate` do to the calendar. They always constrain the
-       * *value*; this chooses whether they also constrain the *picker*.
+       * *value*; this chooses whether they also constrain the *picker*. It
+       * governs those two bounds and nothing else: `minDateField`/`maxDateField`
+       * never shape the calendar under either setting, because their limit
+       * moves with a sibling field and is only known to the form-level refine —
+       * so a field bounded only by those already behaves like `"validate"`.
        *
        * - `"restrict"` (default): out-of-range days are disabled and the
        *   month/year dropdowns stop at the bounds, so an unavailable range is
@@ -164,9 +168,12 @@ export type FieldConfig =
        *
        * `"validate"` also unclamps month navigation, since a 16-year-old cannot
        * reach their birth year through a year dropdown that stops at the
-       * cutoff. The calendar still *opens* on `maxDate`'s month when that is in
-       * the past — a landing month is not a restriction, and it puts the rule a
-       * hop away from the dates that break it.
+       * cutoff. Unclamping widens rather than replaces: the navigable span is
+       * the generic one around today *plus* whatever the bounds reach, so a
+       * bound far outside it stays reachable instead of being swapped out for a
+       * window that excludes it. The calendar still *opens* on `maxDate`'s
+       * month when that is in the past — a landing month is not a restriction,
+       * and it puts the rule a hop away from the dates that break it.
        */
       pickerBounds?: "restrict" | "validate";
     })
