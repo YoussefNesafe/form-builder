@@ -194,6 +194,12 @@ export const FIELD_PROP_DOCS: { [T in FieldType]: Record<OwnProps<T>, PropDoc> }
       description:
         "Bounds this date to be on/before a sibling non-range date field's current value; same range: true restriction as minDateField.",
     },
+    message: {
+      type: "string",
+      required: false,
+      description:
+        'Custom error for a minDate/maxDate violation, replacing "Must be at least/at most <date>" — the way to say "You must be 18 or older" instead of a bare bound. One sentence covers both bounds, and with range: true both endpoints; unparseable values and the minDateField/maxDateField rules keep their own messages.',
+    },
   },
   time: {
     minTime: {

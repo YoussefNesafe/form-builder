@@ -56,6 +56,15 @@ function datePart(value: string): string {
   return value.slice(0, ISO_DATE_LENGTH);
 }
 
+/**
+ * The schema for one ISO date value — the whole field when it is a single date,
+ * and each of `from`/`to` when it is a range, which is why `field.message`
+ * lands on both endpoints.
+ *
+ * `field.message` replaces the bound messages only. A value that is not a date
+ * at all keeps `messages.invalidDate`: the override explains a rule, and a
+ * typo has not reached the rule yet.
+ */
 function isoDateSchema(field: Extract<FieldConfig, { type: "date" }>, messages: Messages): z.ZodType<string> {
   let schema = z
     .string({ error: field.required ? messages.required : undefined })
@@ -65,11 +74,11 @@ function isoDateSchema(field: Extract<FieldConfig, { type: "date" }>, messages: 
     );
   if (field.minDate !== undefined) {
     const min = datePart(field.minDate);
-    schema = schema.refine((value) => datePart(value) >= min, messages.min(field.minDate));
+    schema = schema.refine((value) => datePart(value) >= min, field.message ?? messages.min(field.minDate));
   }
   if (field.maxDate !== undefined) {
     const max = datePart(field.maxDate);
-    schema = schema.refine((value) => datePart(value) <= max, messages.max(field.maxDate));
+    schema = schema.refine((value) => datePart(value) <= max, field.message ?? messages.max(field.maxDate));
   }
   return schema;
 }

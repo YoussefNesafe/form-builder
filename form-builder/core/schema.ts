@@ -213,6 +213,7 @@ const fieldSchemasByType: Record<FieldConfig["type"], z.ZodType> = {
       maxDate: z.iso.date().optional(),
       minDateField: z.string().min(1).optional(),
       maxDateField: z.string().min(1).optional(),
+      message: z.string().optional(),
     })
     .refine((field) => !field.range || (field.minDateField === undefined && field.maxDateField === undefined), {
       message: "minDateField/maxDateField are not supported on range date fields",

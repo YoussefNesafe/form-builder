@@ -976,3 +976,115 @@ describe("optionsFrom blank source", () => {
     if (!result.success) expect(result.error.issues[0].message).toBe(messages.invalidOption);
   });
 });
+
+describe("date message override", () => {
+  const field = {
+    type: "date" as const,
+    name: "dob",
+    required: true,
+    maxDate: "2008-07-27",
+    message: "You must be 18 or older to open an account.",
+  };
+
+  it("uses the override for a bound violation", () => {
+    const result = schemaFor(field).safeParse("2015-01-01");
+    expect(result.success).toBe(false);
+    if (!result.success) expect(result.error.issues[0].message).toBe(field.message);
+  });
+
+  it("keeps the generic message for an unparseable date", () => {
+    const result = schemaFor(field).safeParse("not-a-date");
+    expect(result.success).toBe(false);
+    if (!result.success) expect(result.error.issues[0].message).toBe(messages.invalidDate);
+  });
+
+  it("still passes a date inside the bound", () => {
+    expect(schemaFor(field).safeParse("1990-03-14").success).toBe(true);
+  });
+
+  it("covers both bounds with the one sentence", () => {
+    const schema = schemaFor({
+      type: "date",
+      name: "settles",
+      required: true,
+      minDate: "2026-01-01",
+      maxDate: "2026-01-31",
+      message: "Settlement must fall inside January 2026.",
+    });
+    const early = schema.safeParse("2025-12-31");
+    const late = schema.safeParse("2026-02-01");
+    expect(early.success).toBe(false);
+    expect(late.success).toBe(false);
+    if (!early.success && !late.success) {
+      expect(early.error.issues[0].message).toBe("Settlement must fall inside January 2026.");
+      expect(late.error.issues[0].message).toBe("Settlement must fall inside January 2026.");
+    }
+  });
+
+  it("leaves the cross-field minDateField/maxDateField messages alone", () => {
+    const schema = buildFieldsSchema(
+      [
+        { type: "date", name: "start", label: "Start date", required: true },
+        {
+          type: "date",
+          name: "end",
+          required: true,
+          minDate: "2026-01-01",
+          minDateField: "start",
+          message: "Pick a date in the current plan year.",
+        },
+      ],
+      messages,
+    );
+    const boundViolation = schema.safeParse({ start: "2025-06-01", end: "2025-07-01" });
+    expect(boundViolation.success).toBe(false);
+    if (!boundViolation.success) {
+      expect(boundViolation.error.issues[0].message).toBe("Pick a date in the current plan year.");
+    }
+    const crossViolation = schema.safeParse({ start: "2026-06-01", end: "2026-05-01" });
+    expect(crossViolation.success).toBe(false);
+    if (!crossViolation.success) {
+      expect(crossViolation.error.issues[0].message).toBe(messages.dateAfter("Start date"));
+    }
+  });
+
+  it("range: the override covers a bound violation on either endpoint", () => {
+    const schema = schemaFor({
+      type: "date",
+      name: "stay",
+      range: true,
+      required: true,
+      minDate: "2026-01-01",
+      maxDate: "2026-01-31",
+      message: "Bookings are open for January 2026 only.",
+    });
+    const earlyFrom = schema.safeParse({ from: "2025-12-30", to: "2026-01-10" });
+    const lateTo = schema.safeParse({ from: "2026-01-10", to: "2026-02-10" });
+    expect(earlyFrom.success).toBe(false);
+    expect(lateTo.success).toBe(false);
+    if (!earlyFrom.success && !lateTo.success) {
+      expect(earlyFrom.error.issues[0].message).toBe("Bookings are open for January 2026 only.");
+      expect(earlyFrom.error.issues[0].path).toEqual(["from"]);
+      expect(lateTo.error.issues[0].message).toBe("Bookings are open for January 2026 only.");
+      expect(lateTo.error.issues[0].path).toEqual(["to"]);
+    }
+  });
+
+  it("range: the override does not replace the missing-to or from-after-to messages", () => {
+    const schema = schemaFor({
+      type: "date",
+      name: "stay",
+      range: true,
+      required: true,
+      minDate: "2026-01-01",
+      maxDate: "2026-01-31",
+      message: "Bookings are open for January 2026 only.",
+    });
+    const missingTo = schema.safeParse({ from: "2026-01-10" });
+    expect(missingTo.success).toBe(false);
+    if (!missingTo.success) expect(missingTo.error.issues[0].message).toBe(messages.required);
+    const reversed = schema.safeParse({ from: "2026-01-20", to: "2026-01-10" });
+    expect(reversed.success).toBe(false);
+    if (!reversed.success) expect(reversed.error.issues[0].message).toBe(messages.invalidDate);
+  });
+});

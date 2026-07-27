@@ -104,6 +104,26 @@ export type FieldConfig =
       maxDate?: string;
       minDateField?: string;
       maxDateField?: string;
+      /**
+       * Replaces the generic bound message ("Must be at most 2008-07-27") when a
+       * value falls outside `minDate`/`maxDate`, so a date expressing a rule can
+       * state the rule: "You must be 18 or older to open an account."
+       *
+       * It covers every `minDate`/`maxDate` violation on the field and nothing
+       * else. That means:
+       * - one sentence serves both bounds, so with `minDate` and `maxDate` both
+       *   set it must read for too-early and too-late alike ("Settlement must
+       *   fall inside January 2026", not "Too late");
+       * - on `range: true` it applies to `from` and `to` alike, and leaves the
+       *   missing-`to` and `from`-after-`to` messages generic;
+       * - an unparseable value still gets `messages.invalidDate`;
+       * - `minDateField`/`maxDateField` keep their own messages, which already
+       *   name the other field ("Must be on or after Start date"). Overriding
+       *   those would collapse two distinct rules into one sentence and drop
+       *   that label — the same reason `TextRules` gives `matches` its own
+       *   `matchesMessage` rather than reusing `message`.
+       */
+      message?: string;
     })
   | (BaseField & {
       type: "time";

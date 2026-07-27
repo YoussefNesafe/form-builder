@@ -1300,3 +1300,32 @@ describe("rating config", () => {
     ).toThrow();
   });
 });
+
+describe("date config", () => {
+  it("accepts message on a date field", () => {
+    expect(() =>
+      validateFormConfig({
+        id: "f",
+        fields: [{ type: "date", name: "dob", maxDate: "2008-07-27", message: "Too young" }],
+      }),
+    ).not.toThrow();
+  });
+
+  it("accepts message on a range date field", () => {
+    expect(() =>
+      validateFormConfig({
+        id: "f",
+        fields: [{ type: "date", name: "stay", range: true, minDate: "2026-01-01", message: "January only" }],
+      }),
+    ).not.toThrow();
+  });
+
+  it("rejects a non-string message", () => {
+    expect(() =>
+      validateFormConfig({
+        id: "f",
+        fields: [{ type: "date", name: "dob", maxDate: "2008-07-27", message: 18 } as never],
+      }),
+    ).toThrow();
+  });
+});
