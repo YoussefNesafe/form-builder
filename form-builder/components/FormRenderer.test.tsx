@@ -522,6 +522,28 @@ describe("FormRenderer step control", () => {
     expect(spy.mock.calls).toEqual([[2]]);
   });
 
+  it("controlled: a restored draft's step wins over the host's and is reported", async () => {
+    window.localStorage.clear();
+    const { draftConfigHash } = await import("../core/autosave");
+    window.localStorage.setItem(
+      "form-builder:draft:controlled-restore",
+      JSON.stringify({ hash: draftConfigHash(wizardConfig.fields), values: { first: "saved" }, step: 1 }),
+    );
+    const spy = vi.fn();
+    render(
+      <FormRenderer
+        config={wizardConfig}
+        onSubmit={vi.fn()}
+        step={0}
+        onStepChange={spy}
+        autosave={{ key: "controlled-restore", debounceMs: 0 }}
+      />,
+    );
+
+    await waitFor(() => expect(currentStepText()).toContain("Two"));
+    expect(spy.mock.calls).toEqual([[1]]);
+  });
+
   it("composes the consumer callback with autosave's own step bookkeeping", async () => {
     window.localStorage.clear();
     const spy = vi.fn();
@@ -550,16 +572,24 @@ describe("FormRenderer step control", () => {
 });
 
 describe("FormRenderer stepper orientation", () => {
-  it("defaults to a horizontal step list", () => {
+  it("defaults to a horizontal step list laid out along the top", () => {
     render(<FormRenderer config={wizardConfig} onSubmit={vi.fn()} />);
-    expect(document.querySelector("ol")?.getAttribute("data-orientation")).toBe("horizontal");
+
+    const list = document.querySelector("ol")!;
+    expect(list.getAttribute("data-orientation")).toBe("horizontal");
+    expect(list.className).toContain("items-center");
+    expect(list.className).not.toContain("flex-col");
+    expect(list.parentElement!.className).not.toContain("flex-row");
   });
 
-  it("vertical keeps the list semantics, aria-current and the focus move on step change", async () => {
+  it("vertical lays the list down the side, and keeps the semantics, aria-current and focus move", async () => {
     render(<FormRenderer config={wizardConfig} onSubmit={vi.fn()} stepperOrientation="vertical" />);
 
     const list = document.querySelector("ol")!;
     expect(list.getAttribute("data-orientation")).toBe("vertical");
+    expect(list.className).toContain("flex-col");
+    // Only a rail once there is room beside the fields; it stacks below tablet.
+    expect(list.parentElement!.className).toContain("tablet:flex-row");
     expect(list.getAttribute("aria-label")).toBe(defaultMessages.steps);
     expect(list.querySelectorAll("li")).toHaveLength(3);
     expect(currentStepText()).toContain("One");
@@ -691,5 +721,21 @@ describe("FormRenderer onDraftRestore", () => {
     );
     await waitFor(() => expect(onDraftRestore).toHaveBeenCalledTimes(2));
     expect(onDraftRestore).toHaveBeenLastCalledWith({ step: undefined });
+
+    // The wizard is still on the step key-a asked for — a draft that names no
+    // step doesn't move it — but that stale step must not be re-persisted onto
+    // the new key, so editing here saves key-b with no step at all.
+    expect(currentStepText()).toContain("Three");
+    await act(async () => {
+      fireEvent.change(screen.getByLabelText("Third"), { target: { value: "edited" } });
+    });
+    await waitFor(() => {
+      const saved = JSON.parse(window.localStorage.getItem("form-builder:draft:key-b")!) as {
+        values: Record<string, unknown>;
+        step?: number;
+      };
+      expect(saved.values).toMatchObject({ third: "edited" });
+      expect(saved.step).toBeUndefined();
+    });
   });
 });
