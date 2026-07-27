@@ -95,6 +95,7 @@ export function useDynamicForm<C extends FormConfig = FormConfig>(
   const draftId = autosave ? (autosave.key ?? config.id) : null;
   const draftDebounceMs = autosave?.debounceMs ?? DEFAULT_DRAFT_DEBOUNCE_MS;
   const includeSignatures = autosave?.includeSignatures ?? false;
+  const draftStorage = autosave?.storage;
   const draftHash = useMemo(() => (draftId !== null ? draftConfigHash(config.fields) : ""), [draftId, config]);
   const [restoredStep, setRestoredStep] = useState<number | undefined>(undefined);
   const [restoreGeneration, setRestoreGeneration] = useState(0);
@@ -103,7 +104,7 @@ export function useDynamicForm<C extends FormConfig = FormConfig>(
 
   useEffect(() => {
     if (!draftId) return;
-    const draft = loadDraft(draftId, draftHash);
+    const draft = loadDraft(draftId, draftHash, draftStorage);
     draftRestoredRef.current = true;
     if (!draft) return;
     const sanitized = sanitizeDraftValues(config.fields, draft.values, includeSignatures);
@@ -129,6 +130,7 @@ export function useDynamicForm<C extends FormConfig = FormConfig>(
           draftHash,
           sanitizeDraftValues(config.fields, values as FormValues, includeSignatures),
           draftStepRef.current,
+          draftStorage,
         );
       }, draftDebounceMs);
     });
@@ -142,33 +144,35 @@ export function useDynamicForm<C extends FormConfig = FormConfig>(
           draftHash,
           sanitizeDraftValues(config.fields, form.getValues(), includeSignatures),
           draftStepRef.current,
+          draftStorage,
         );
       }
     };
-  }, [draftId, draftHash, config, form, draftDebounceMs, includeSignatures]);
+  }, [draftId, draftHash, config, form, draftDebounceMs, includeSignatures, draftStorage]);
 
   const noteStep = useCallback(
     (step: number) => {
       if (!draftId || !draftRestoredRef.current) return;
       draftStepRef.current = step;
-      if (hasDraft(draftId)) {
+      if (hasDraft(draftId, draftStorage)) {
         saveDraft(
           draftId,
           draftHash,
           sanitizeDraftValues(config.fields, form.getValues(), includeSignatures),
           step,
+          draftStorage,
         );
       }
     },
-    [draftId, draftHash, config, form, includeSignatures],
+    [draftId, draftHash, config, form, includeSignatures, draftStorage],
   );
 
   const clearDraftAndPending = useCallback(() => {
     if (!draftId) return;
     clearTimeout(draftSaveTimerRef.current);
     draftSaveTimerRef.current = undefined;
-    clearDraft(draftId);
-  }, [draftId]);
+    clearDraft(draftId, draftStorage);
+  }, [draftId, draftStorage]);
 
   const draft = useMemo<FormDraft | undefined>(
     () => (draftId ? { restoredStep, clear: clearDraftAndPending, noteStep } : undefined),

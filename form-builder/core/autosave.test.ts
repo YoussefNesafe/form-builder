@@ -87,3 +87,33 @@ describe("draft persistence", () => {
     expect(hasDraft("signup")).toBe(false);
   });
 });
+
+describe("storage selection", () => {
+  afterEach(() => window.sessionStorage.clear());
+
+  it("defaults to localStorage", () => {
+    saveDraft("f", "h", { name: "Ada" });
+    expect(window.localStorage.getItem(draftStorageKey("f"))).not.toBeNull();
+    expect(window.sessionStorage.getItem(draftStorageKey("f"))).toBeNull();
+  });
+
+  it("round-trips through sessionStorage when selected", () => {
+    saveDraft("f", "h", { name: "Ada" }, 2, "session");
+    expect(window.localStorage.getItem(draftStorageKey("f"))).toBeNull();
+    expect(loadDraft("f", "h", "session")).toEqual({ values: { name: "Ada" }, step: 2 });
+    expect(hasDraft("f", "session")).toBe(true);
+    clearDraft("f", "session");
+    expect(hasDraft("f", "session")).toBe(false);
+  });
+
+  it("accepts a custom storage object", () => {
+    const map = new Map<string, string>();
+    const custom = {
+      getItem: (k: string) => map.get(k) ?? null,
+      setItem: (k: string, v: string) => void map.set(k, v),
+      removeItem: (k: string) => void map.delete(k),
+    };
+    saveDraft("f", "h", { name: "Ada" }, undefined, custom);
+    expect(loadDraft("f", "h", custom)).toEqual({ values: { name: "Ada" } });
+  });
+});

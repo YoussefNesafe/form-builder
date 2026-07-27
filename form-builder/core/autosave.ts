@@ -1,9 +1,23 @@
 import type { AnyFieldConfig, FormValues } from "./types";
 
+/** The subset of the Web Storage API a draft needs. Anything matching this
+ *  shape works — sessionStorage, localStorage, or an in-memory stub. */
+export type DraftStorage = Pick<Storage, "getItem" | "setItem" | "removeItem">;
+
+export type DraftStorageOption = "local" | "session" | DraftStorage;
+
+function resolveStorage(storage?: DraftStorageOption): DraftStorage | null {
+  if (typeof storage === "object") return storage;
+  if (typeof window === "undefined") return null;
+  return storage === "session" ? window.sessionStorage : window.localStorage;
+}
+
 export type AutosaveOptions = {
   key?: string;
   debounceMs?: number;
   includeSignatures?: boolean;
+  /** Where drafts live. Defaults to "local" — unchanged from previous behaviour. */
+  storage?: DraftStorageOption;
 };
 
 type DraftPayload = {
@@ -55,49 +69,63 @@ export function sanitizeDraftValues(
   return out;
 }
 
-export function loadDraft(idOrKey: string, hash: string): { values: FormValues; step?: number } | null {
-  if (typeof window === "undefined") return null;
+export function loadDraft(
+  idOrKey: string,
+  hash: string,
+  storage?: DraftStorageOption,
+): { values: FormValues; step?: number } | null {
+  const store = resolveStorage(storage);
+  if (!store) return null;
   const storageKey = draftStorageKey(idOrKey);
   try {
-    const raw = window.localStorage.getItem(storageKey);
+    const raw = store.getItem(storageKey);
     if (raw === null) return null;
     const payload = JSON.parse(raw) as DraftPayload;
     if (payload.hash !== hash || typeof payload.values !== "object" || payload.values === null) {
-      window.localStorage.removeItem(storageKey);
+      store.removeItem(storageKey);
       return null;
     }
     return { values: payload.values, step: payload.step };
   } catch {
     try {
-      window.localStorage.removeItem(storageKey);
+      store.removeItem(storageKey);
     } catch {
     }
     return null;
   }
 }
 
-export function saveDraft(idOrKey: string, hash: string, values: FormValues, step?: number): void {
-  if (typeof window === "undefined") return;
+export function saveDraft(
+  idOrKey: string,
+  hash: string,
+  values: FormValues,
+  step?: number,
+  storage?: DraftStorageOption,
+): void {
+  const store = resolveStorage(storage);
+  if (!store) return;
   try {
     const payload: DraftPayload = { hash, values, ...(step !== undefined ? { step } : {}) };
-    window.localStorage.setItem(draftStorageKey(idOrKey), JSON.stringify(payload));
+    store.setItem(draftStorageKey(idOrKey), JSON.stringify(payload));
   } catch {
   }
 }
 
-export function hasDraft(idOrKey: string): boolean {
-  if (typeof window === "undefined") return false;
+export function hasDraft(idOrKey: string, storage?: DraftStorageOption): boolean {
+  const store = resolveStorage(storage);
+  if (!store) return false;
   try {
-    return window.localStorage.getItem(draftStorageKey(idOrKey)) !== null;
+    return store.getItem(draftStorageKey(idOrKey)) !== null;
   } catch {
     return false;
   }
 }
 
-export function clearDraft(idOrKey: string): void {
-  if (typeof window === "undefined") return;
+export function clearDraft(idOrKey: string, storage?: DraftStorageOption): void {
+  const store = resolveStorage(storage);
+  if (!store) return;
   try {
-    window.localStorage.removeItem(draftStorageKey(idOrKey));
+    store.removeItem(draftStorageKey(idOrKey));
   } catch {
   }
 }
