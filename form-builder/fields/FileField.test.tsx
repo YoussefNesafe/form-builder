@@ -120,6 +120,26 @@ describe("FileDropzone naming and description", () => {
     expect(describedText(fileInput()).trim()).toBe("Any document is fine");
   });
 
+  it("orders the description: constraints, guidance, problem", async () => {
+    renderField({ accept: ".pdf", maxSizeMB: 5, description: "Upload a recent utility bill" });
+
+    pick([tiff()]);
+
+    // Pinned exactly, not by `toContain`: the order is the observable part and
+    // it is the thing a comment can silently start disagreeing with. Error last
+    // matches the shadcn primitives; the hint leads because it is the only part
+    // that is true before the user has done anything.
+    await waitFor(() =>
+      expect(describedText(fileInput())).toBe(
+        [
+          "PDF, max 5 MB",
+          "Upload a recent utility bill",
+          defaultMessages.fileTypeRejected("scan.tiff", "TIFF", "PDF"),
+        ].join(" "),
+      ),
+    );
+  });
+
   it("still describes the field when accept names no format we can write out", () => {
     // "pdf" (no dot) is uninterpretable, so every file is rejected and
     // acceptedFormatsLabel returns "" — the path most likely to be seen, not
@@ -269,14 +289,13 @@ describe("FileField per-file status", () => {
 
     await waitFor(() => expect(screen.getByText(wrongFormat("scan.tiff", "TIFF", "PDF"))).toBeTruthy());
     // Structural, deliberately: "no reason on row 0" is an absence, and an
-    // absence cannot be queried by accessible name. `data-slot`/`data-rejected`
+    // absence cannot be queried by accessible name. `data-slot`/`data-status`
     // are the restyling seam this component publishes, so this asserts a
     // documented surface rather than incidental markup — but it is the one
     // place in this file that reads the DOM instead of the a11y tree, and the
     // presence half is still pinned by `getByText` above.
     const rows = document.querySelectorAll('[data-slot="file-row"]');
-    expect(rows[0].getAttribute("data-rejected")).toBeNull();
-    expect(rows[1].getAttribute("data-rejected")).toBe("");
+    expect([...rows].map((row) => row.getAttribute("data-status"))).toEqual(["accepted", "rejected"]);
   });
 
   it("keeps the rejected file in the value so it can explain itself", async () => {
@@ -372,6 +391,54 @@ describe("FileField selection status", () => {
 
     pick([tiff()]);
     await waitFor(() => expect(screen.getByRole("status").textContent).toBe("2 files selected"));
+  });
+
+  it("says so when a single-file field cannot hold everything dropped on it", async () => {
+    renderField();
+
+    // A drop bypasses `input[multiple]` entirely — `dataTransfer.files` carries
+    // whatever the pointer was holding — so this is reachable on a field the
+    // OS picker would never let the user overfill. Two files used to vanish
+    // here with nothing said, which is the exact silence the rejected-file
+    // handling elsewhere in this field exists to avoid.
+    drop([pdf(), tiff(), new File(["x"], "extra.pdf", { type: "application/pdf" })]);
+
+    await waitFor(() =>
+      expect(screen.getByRole("status").textContent).toContain(defaultMessages.oneFileOnly("passport.pdf")),
+    );
+    expect(screen.getByText("passport.pdf")).toBeTruthy();
+    expect(document.querySelectorAll('[data-slot="file-row"]').length).toBe(1);
+  });
+
+  it("keeps quiet when a single-file drop had nothing to leave behind", async () => {
+    renderField();
+
+    drop([pdf()]);
+
+    await waitFor(() => expect(screen.getByRole("status").textContent).toBe("1 file selected"));
+  });
+
+  it("stops saying it once the selection changes again", async () => {
+    renderField();
+
+    drop([pdf(), tiff()]);
+    await waitFor(() =>
+      expect(screen.getByRole("status").textContent).toContain(defaultMessages.oneFileOnly("passport.pdf")),
+    );
+
+    // The notice describes one action; it must not outlive it.
+    drop([tiff()]);
+
+    await waitFor(() => expect(screen.getByRole("status").textContent).toBe("1 file selected"));
+  });
+
+  it("takes every file dropped on a multi-file field", async () => {
+    renderField({ multiple: true });
+
+    drop([pdf(), tiff()]);
+
+    await waitFor(() => expect(document.querySelectorAll('[data-slot="file-row"]').length).toBe(2));
+    expect(screen.getByRole("status").textContent).toBe("2 files selected");
   });
 
   it("counts a rejected file as selected, because it is", async () => {

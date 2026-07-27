@@ -60,7 +60,14 @@ export type FileDropzoneProps = {
   multiple?: boolean;
   disabled?: boolean;
   invalid?: boolean;
-  /** Ids to describe the input with, ahead of the hint. */
+  /**
+   * Ids to describe the input with, placed *after* this component's own hint.
+   * The resulting order is hint, then whatever these carry — which for
+   * `FieldWrapper` means description then error, so the input reads as
+   * constraints, guidance, problem. Error last is what the shadcn primitives
+   * already do; the hint leads because it is the one part that is true before
+   * the user has done anything.
+   */
   describedBy?: string;
   /** Called with a non-empty list every time the user picks or drops files. */
   onFiles: (files: File[]) => void;

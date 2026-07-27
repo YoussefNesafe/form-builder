@@ -21,6 +21,11 @@ export type Messages = {
   /** Wraps a per-file reason so the row says *that* it failed, not only why. */
   fileRejected: (reason: string) => string;
   filesSelected: (count: number) => string;
+  /**
+   * Shown when more files are dropped on a single-file field than it can hold.
+   * `kept` is the one that was taken, named so the user can see which survived.
+   */
+  oneFileOnly: (kept: string) => string;
   otpLength: (n: number) => string;
   sendCode: string;
   codeSent: string;
@@ -111,6 +116,11 @@ export const defaultMessages: Messages = {
   // position and its red text.
   fileRejected: (reason) => `Rejected: ${reason}`,
   filesSelected: (count) => `${count} ${count === 1 ? "file" : "files"} selected`,
+  // Reachable only by dropping: the `multiple` attribute stops the OS picker
+  // returning more than one, but a drop carries whatever the pointer was
+  // holding. Says which file was kept rather than how many were not, because
+  // the actionable question is "is the right one in there?".
+  oneFileOnly: (kept) => `Only one file can go here — kept ${kept}`,
   otpLength: (n) => `Enter the ${n}-digit code`,
   sendCode: "Send OTP",
   codeSent: "Code Sent",

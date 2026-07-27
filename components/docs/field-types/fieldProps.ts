@@ -461,7 +461,7 @@ export const FIELD_VALUE_INFO: { [T in FieldType]: FieldValueInfo<T> } = {
   },
   file: {
     valueShape:
-      "single (default): a File, or undefined — not JSON-serializable, consumers handle upload in onSubmit. multiple: true → File[]",
+      "single (default): a File, or undefined — not JSON-serializable, consumers handle upload in onSubmit. multiple: true → File[]. Files that failed accept or maxSizeMB are in there too: they stay in the value so the field can show each one its own reason, and the field is invalid until they are removed — so onSubmit never sees them, but a manual read of the value will.",
     example: { type: "file", name: "resume", label: "Resume", accept: ".pdf,.doc,.docx", maxSizeMB: 5 },
   },
   hidden: {
