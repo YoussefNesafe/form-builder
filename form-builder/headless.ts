@@ -1,3 +1,24 @@
+/**
+ * The npm entry point (`.` in `package.json`'s `exports` map) and the semver
+ * contract described in CHANGELOG.md.
+ *
+ * WHAT BELONGS HERE: everything a consumer needs to drive the engine WITHOUT
+ * its rendered components — the `core/` logic and helpers, the hooks, and any
+ * type a symbol already on this surface forces the consumer to name, wherever
+ * that type is declared. `FormLocale` and `OtpRuntime` are declared in
+ * `components/` and still belong here, because `formatReviewValue` and
+ * `useOtpController` take them; `DraftStorage` is here for the same reason,
+ * via `AutosaveOptions.storage`.
+ *
+ * "Headless" is about the component tree, not about React — `useDynamicForm`
+ * is a client hook. What stays out is anything that renders, and anything only
+ * a renderer would need to name.
+ *
+ * Adding a name here is a semver commitment; renaming or removing one is a
+ * major bump. Every value here must also appear in `index.ts`; that superset
+ * relation, and the exact list of names `index.ts` adds on top, are pinned by
+ * `barrels.test-d.ts`.
+ */
 export type {
   FormConfig,
   FieldConfig,
@@ -34,7 +55,13 @@ export {
 } from "./core/conditions";
 export { useDynamicForm, type FormDraft } from "./hooks/useDynamicForm";
 export { buildDefaultValues } from "./core/defaults";
-export { clearDraft, type AutosaveOptions } from "./core/autosave";
+export {
+  clearDraft,
+  type AutosaveOptions,
+  type DraftStorage,
+  type DraftStorageOption,
+} from "./core/autosave";
+export { acceptedFormatsLabel } from "./core/fileAccept";
 export { useOtpFlow, type OtpFlowConfig, type OtpFlowStatus } from "./hooks/useOtpFlow";
 export {
   useOtpController,

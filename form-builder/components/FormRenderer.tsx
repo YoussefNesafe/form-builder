@@ -17,6 +17,23 @@ import { FormStepper, type StepperOrientation } from "./FormStepper";
 import { renderField } from "./renderField";
 import { FLAT_GRID_CLASS } from "../ui/layout";
 
+/**
+ * What `onDraftRestore` is told about the draft that was just restored.
+ *
+ * Named so a host can write `function onRestore(info: DraftRestoreInfo)` as a
+ * standalone handler instead of retyping the shape or reaching for
+ * `Parameters<...>`. It is deliberately an object rather than a bare `step`
+ * argument, so a later restore detail can be added without a breaking change.
+ */
+export type DraftRestoreInfo = {
+  /**
+   * The step index recorded in the draft just restored, or `undefined` if that
+   * draft recorded none — a non-wizard form, or a wizard the visitor never
+   * advanced past the first step of.
+   */
+  step?: number;
+};
+
 type FormRendererProps<C extends FormConfig = FormConfig> = {
   config: C;
   onSubmit: (values: InferValues<C>) => void | ServerErrorResult | Promise<void | ServerErrorResult>;
@@ -118,11 +135,11 @@ type FormRendererProps<C extends FormConfig = FormConfig> = {
    * only if the draft key changes (`autosave.key`, or `config.id` when no key
    * is given) and a draft exists under the new key.
    *
-   * `step` is the step index recorded in the draft just restored, or
+   * `info.step` is the step index recorded in the draft just restored, or
    * `undefined` if that draft recorded none — a non-wizard form, or a wizard
    * the visitor never advanced past the first step of.
    */
-  onDraftRestore?: (info: { step?: number }) => void;
+  onDraftRestore?: (info: DraftRestoreInfo) => void;
 };
 
 export function FormRenderer<C extends FormConfig = FormConfig>({
