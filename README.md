@@ -116,9 +116,12 @@ The engine is copy-in, not an npm package — same model as shadcn/ui.
   large majority of its source files are `"use client"`. Don't advertise this
   as an RSC form solution.
 - **No submission or storage backend.** There is no hosted "responses"
-  feature. You supply `onSubmit`; autosave only ever writes to the visiting
-  browser's `localStorage` (and signature values are excluded from autosave
-  by default).
+  feature. You supply `onSubmit`; autosave never sends a draft anywhere. It
+  writes to the visiting browser's `localStorage` by default, and
+  `autosave.storage` can point it at `sessionStorage` or at any store you
+  supply that implements `getItem`/`setItem`/`removeItem` — so persisting
+  drafts beyond the browser is your code, not the engine's. (Signature values
+  are excluded from autosave by default.)
 - **Signature field is not keyboard-accessible.** Drawing with `signature_pad`
   is inherently pointer/touch-only; there's no keyboard fallback.
 - **The visual builder persists to `localStorage` only.** There's no

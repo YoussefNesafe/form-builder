@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { act, cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
+import type { ReactNode } from "react";
 import { FormProvider, useForm, type UseFormReturn } from "react-hook-form";
 import { defaultMessages } from "../core/messages";
 import type { AnyFieldConfig } from "../core/types";
@@ -11,6 +12,11 @@ function Probe() {
   return <span data-testid="probe">{disabled ? "disabled" : "enabled"}</span>;
 }
 
+function FieldProbe() {
+  const { field } = useFieldRuntime();
+  return <span data-testid="field-probe">{`${field?.name}/${field?.badge}`}</span>;
+}
+
 function Harness({
   field,
   values,
@@ -18,6 +24,7 @@ function Harness({
   isFieldValid,
   parentDisabled = false,
   onForm,
+  children = <Probe />,
 }: {
   field: AnyFieldConfig;
   values?: Record<string, unknown>;
@@ -25,6 +32,7 @@ function Harness({
   isFieldValid?: (fieldName: string, value: unknown) => boolean;
   parentDisabled?: boolean;
   onForm?: (form: UseFormReturn) => void;
+  children?: ReactNode;
 }) {
   const form = useForm({ defaultValues: values });
   onForm?.(form);
@@ -33,9 +41,7 @@ function Harness({
       <FieldRuntimeContext.Provider
         value={{ disabled: parentDisabled, messages: defaultMessages, verifiedFields, isFieldValid }}
       >
-        <FieldGate field={field}>
-          <Probe />
-        </FieldGate>
+        <FieldGate field={field}>{children}</FieldGate>
       </FieldRuntimeContext.Provider>
     </FormProvider>
   );
@@ -133,6 +139,26 @@ describe("FieldGate", () => {
     expect(screen.getByTestId("probe").textContent).toBe("disabled");
     rerender(<Harness field={field} verifiedFields={new Set(["emailOtp"])} />);
     expect(screen.getByTestId("probe").textContent).toBe("enabled");
+  });
+
+  it("publishes the field it gates on the runtime context", () => {
+    render(
+      <Harness field={{ type: "text", name: "taxId", badge: "Required in Germany" }}>
+        <FieldProbe />
+      </Harness>,
+    );
+    expect(screen.getByTestId("field-probe").textContent).toBe("taxId/Required in Germany");
+  });
+
+  it("a nested gate replaces the published field for its own subtree", () => {
+    render(
+      <Harness field={{ type: "group", name: "owners", badge: "Outer" }}>
+        <FieldGate field={{ type: "text", name: "owners.0.name", badge: "Inner" }}>
+          <FieldProbe />
+        </FieldGate>
+      </Harness>,
+    );
+    expect(screen.getByTestId("field-probe").textContent).toBe("owners.0.name/Inner");
   });
 });
 

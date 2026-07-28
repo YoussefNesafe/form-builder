@@ -9,8 +9,8 @@ function Section() {
   return (
     <DocsSection id={id} title={title}>
       <P>
-        Every field type below accepts these 12 on top of its own — documented once here rather than repeated
-        per type.
+        Every field type below accepts these {BASE_FIELD_PROPS.length} on top of its own — documented once here
+        rather than repeated per type.
       </P>
       <PropsTable
         label="Base field props"

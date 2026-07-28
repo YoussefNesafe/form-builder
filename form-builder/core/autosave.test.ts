@@ -9,6 +9,7 @@ import {
   sanitizeDraftValues,
   saveDraft,
 } from "./autosave";
+import type { DraftStorageOption } from "./autosave";
 import type { AnyFieldConfig } from "./types";
 
 afterEach(() => window.localStorage.clear());
@@ -85,5 +86,62 @@ describe("draft persistence", () => {
     saveDraft("signup", "h1", { name: "Ada" });
     clearDraft("signup");
     expect(hasDraft("signup")).toBe(false);
+  });
+});
+
+describe("storage selection", () => {
+  afterEach(() => window.sessionStorage.clear());
+
+  it("defaults to localStorage", () => {
+    saveDraft("signup", "h1", { name: "Ada" });
+    expect(window.localStorage.getItem(draftStorageKey("signup"))).not.toBeNull();
+    expect(window.sessionStorage.getItem(draftStorageKey("signup"))).toBeNull();
+  });
+
+  it("round-trips through localStorage when selected explicitly", () => {
+    saveDraft("signup", "h1", { name: "Ada" }, 2, "local");
+    expect(window.sessionStorage.getItem(draftStorageKey("signup"))).toBeNull();
+    expect(loadDraft("signup", "h1", "local")).toEqual({ values: { name: "Ada" }, step: 2 });
+    expect(hasDraft("signup", "local")).toBe(true);
+    clearDraft("signup", "local");
+    expect(hasDraft("signup", "local")).toBe(false);
+  });
+
+  it("round-trips through sessionStorage when selected", () => {
+    saveDraft("signup", "h1", { name: "Ada" }, 2, "session");
+    expect(window.localStorage.getItem(draftStorageKey("signup"))).toBeNull();
+    expect(loadDraft("signup", "h1", "session")).toEqual({ values: { name: "Ada" }, step: 2 });
+    expect(hasDraft("signup", "session")).toBe(true);
+    clearDraft("signup", "session");
+    expect(hasDraft("signup", "session")).toBe(false);
+  });
+
+  it("falls back to localStorage for a null storage argument", () => {
+    // Unreachable through the types, but this source is copied into consumer
+    // repos where a null can arrive from plain JS — the guard in resolveStorage
+    // exists so that degrades to the default instead of silently no-opping.
+    const nullish = null as unknown as DraftStorageOption;
+    saveDraft("signup", "h1", { name: "Ada" }, undefined, nullish);
+    expect(window.localStorage.getItem(draftStorageKey("signup"))).not.toBeNull();
+    expect(loadDraft("signup", "h1", nullish)).toEqual({ values: { name: "Ada" } });
+    expect(hasDraft("signup", nullish)).toBe(true);
+    clearDraft("signup", nullish);
+    expect(hasDraft("signup", nullish)).toBe(false);
+  });
+
+  it("accepts a custom storage object", () => {
+    const map = new Map<string, string>();
+    const custom = {
+      getItem: (k: string) => map.get(k) ?? null,
+      setItem: (k: string, v: string) => void map.set(k, v),
+      removeItem: (k: string) => void map.delete(k),
+    };
+    saveDraft("signup", "h1", { name: "Ada" }, undefined, custom);
+    expect(window.localStorage.getItem(draftStorageKey("signup"))).toBeNull();
+    expect(window.sessionStorage.getItem(draftStorageKey("signup"))).toBeNull();
+    expect(loadDraft("signup", "h1", custom)).toEqual({ values: { name: "Ada" } });
+    expect(hasDraft("signup", custom)).toBe(true);
+    clearDraft("signup", custom);
+    expect(hasDraft("signup", custom)).toBe(false);
   });
 });

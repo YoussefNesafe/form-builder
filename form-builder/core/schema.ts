@@ -66,6 +66,12 @@ const baseFieldSchema = z.strictObject({
     }),
   label: z.string().optional(),
   description: z.string().optional(),
+  badge: z.string().optional(),
+  // Not an enum of the WCAG 1.3.5 purposes: the attribute is a grammar around
+  // one purpose token (optional section-*/shipping/billing/home/work/mobile
+  // groups, optional trailing webauthn) plus the standalone on/off, so an
+  // allowlist would reject valid HTML. See BaseField.autocomplete.
+  autocomplete: z.string().optional(),
   placeholder: z.string().optional(),
   required: z.boolean().optional(),
   disabled: z.boolean().optional(),
@@ -76,6 +82,18 @@ const baseFieldSchema = z.strictObject({
   copyFrom: z.string().min(1).optional(),
   width: fieldWidthSchema.optional(),
 });
+
+/**
+ * Every key `baseFieldSchema` accepts, `type` included. Exported only so a test
+ * can pin it against `keyof BaseField`.
+ *
+ * This is the one base-prop surface the compiler cannot police. A prop added to
+ * `BaseField` but not to the strictObject above typechecks clean everywhere and
+ * then throws `Unrecognized key` on the first config that sets it — and because
+ * `AnyFieldConfig` admits `Record<string, unknown>` for custom types, even the
+ * config literal that triggers it compiles.
+ */
+export const BASE_FIELD_SCHEMA_KEYS: readonly string[] = Object.keys(baseFieldSchema.shape);
 
 const NESTED_QUANTIFIER = /\([^)]*[+*}][^)]*\)[+*{]/;
 
@@ -213,6 +231,13 @@ const fieldSchemasByType: Record<FieldConfig["type"], z.ZodType> = {
       maxDate: z.iso.date().optional(),
       minDateField: z.string().min(1).optional(),
       maxDateField: z.string().min(1).optional(),
+      // min(1): "" is not nullish, so `field.message ?? messages.max(...)` would
+      // keep it and Zod would fall back to its own untranslated "Invalid input"
+      // — losing the bound text and escaping the Messages layer at once.
+      message: z.string().min(1).optional(),
+      // Picker-only: "validate" leaves out-of-range days selectable so the
+      // bound can explain itself. The value is rejected either way.
+      pickerBounds: z.enum(["restrict", "validate"]).optional(),
     })
     .refine((field) => !field.range || (field.minDateField === undefined && field.maxDateField === undefined), {
       message: "minDateField/maxDateField are not supported on range date fields",

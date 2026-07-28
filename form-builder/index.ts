@@ -1,3 +1,19 @@
+/**
+ * The in-repo and copy-in entry point — `@/form-builder`, what a
+ * shadcn-style install imports.
+ *
+ * It is `headless.ts` re-listed in full, plus the layer that entry
+ * deliberately omits: the components, the `ui/` primitives, the field-runtime
+ * hooks, and the built-in field registration. The types those UI-only APIs
+ * force a host to name (`StepperOrientation`, `DraftRestoreInfo`,
+ * `FileDropzoneProps`) live here and NOT in `headless.ts`, because that
+ * package ships no renderer to use them on — a name a consumer cannot act on
+ * is contract surface bought for nothing.
+ *
+ * The list is written out rather than re-exported from `./headless`, so each
+ * barrel reads as its own contract. `barrels.test-d.ts` pins that this one
+ * never falls behind, and enumerates exactly what it adds.
+ */
 export type {
   FormConfig,
   FieldConfig,
@@ -20,9 +36,11 @@ export { BUILT_IN_FIELD_TYPES, isBuiltInField } from "./core/types";
 export { defaultMessages, type Messages } from "./core/messages";
 export { registerField, getRegisteredTypes, type FieldComponentProps } from "./core/registry";
 export { validateFormConfig } from "./core/schema";
-export { FormRenderer } from "./components/FormRenderer";
+export { FormRenderer, type DraftRestoreInfo } from "./components/FormRenderer";
+export type { StepperOrientation } from "./components/FormStepper";
 export { FormSection } from "./components/FormSection";
 export { FieldWrapper, fieldAriaDescribedBy } from "./ui/FieldWrapper";
+export { FileDropzone, type FileDropzoneProps } from "./ui/FileDropzone";
 export { useFieldRuntime, useFieldDisabled, type FormLocale } from "./components/FieldRuntime";
 export {
   conditionMatches,
@@ -35,7 +53,13 @@ export {
 } from "./core/conditions";
 export { useDynamicForm, type FormDraft } from "./hooks/useDynamicForm";
 export { buildDefaultValues } from "./core/defaults";
-export { clearDraft, type AutosaveOptions } from "./core/autosave";
+export {
+  clearDraft,
+  type AutosaveOptions,
+  type DraftStorage,
+  type DraftStorageOption,
+} from "./core/autosave";
+export { acceptedFormatsLabel } from "./core/fileAccept";
 export { useOtpFlow, type OtpFlowConfig, type OtpFlowStatus } from "./hooks/useOtpFlow";
 export {
   useOtpController,

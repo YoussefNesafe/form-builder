@@ -68,7 +68,14 @@ export const ENGINE_DIRS = ["core", "hooks", "store", "ui", "components", "inter
 // in the owning item's `dependencies`.
 export const PEER_PACKAGES = new Set(["react", "react-dom", "react-hook-form", "zod", "date-fns", "lucide-react"]);
 
-const isTestFile = (relPath) => /\.test\.(ts|tsx)$/.test(relPath);
+// Both test spellings this repo uses: `.test.ts(x)` runtime tests, and
+// `.test-d.ts(x)` type tests (vitest typecheck mode — see vitest.config.ts's
+// `typecheck.include`). The `-d` variant is easy to miss because it is not a
+// suffix of the other, and missing it ships type tests to copy-in consumers:
+// `expectTypeOf` resolves to vitest, which a consumer has no reason to have
+// installed. A guard in build-registry.test.mjs asserts neither spelling
+// reaches the shipped file list.
+const isTestFile = (relPath) => /\.test(-d)?\.(ts|tsx)$/.test(relPath);
 const toPosix = (p) => p.split(path.sep).join("/");
 
 /**

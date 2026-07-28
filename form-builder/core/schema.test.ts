@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { registerField } from "./registry";
-import { validateFormConfig } from "./schema";
-import type { FieldConfig, FormConfig } from "./types";
+import { BASE_FIELD_SCHEMA_KEYS, validateFormConfig } from "./schema";
+import type { BaseField, FieldConfig, FormConfig } from "./types";
 
 const valid: FormConfig = {
   id: "t",
@@ -55,6 +55,75 @@ describe("validateFormConfig", () => {
         fields: [{ type: "text", name: "a", width: { phablet: "half" } as never }],
       }),
     ).toThrow());
+
+  // baseFieldSchema is a strictObject, so every base prop has to be declared
+  // there as well as on the BaseField type — a prop that only exists in
+  // TypeScript typechecks fine and then throws on the first real config. This
+  // is the only base-prop surface where divergence survives tsc, so it gets a
+  // completeness guard rather than a per-prop test.
+  it("accepts every prop on BaseField, so none can typecheck and then throw", () => {
+    // Compiler-enforced: a new BaseField prop leaves this literal incomplete.
+    const BASE_FIELD_KEYS: Record<keyof BaseField, true> = {
+      name: true,
+      label: true,
+      description: true,
+      badge: true,
+      autocomplete: true,
+      placeholder: true,
+      required: true,
+      disabled: true,
+      visibleWhen: true,
+      disabledWhen: true,
+      enabledWhen: true,
+      enabledWhenVerified: true,
+      copyFrom: true,
+      width: true,
+    };
+    const accepted = new Set(BASE_FIELD_SCHEMA_KEYS);
+    for (const key of Object.keys(BASE_FIELD_KEYS)) {
+      expect(accepted.has(key), `baseFieldSchema rejects the BaseField prop "${key}"`).toBe(true);
+    }
+  });
+
+  it("accepts badge on every field type, not just the one it was added for", () =>
+    expect(() =>
+      validateFormConfig({
+        id: "t",
+        fields: [
+          { type: "text", name: "taxId", badge: "Required in Germany" },
+          { type: "radio", name: "residency", badge: "Screened", options: [{ label: "DE", value: "de" }] },
+          { type: "group", name: "team", badge: "Beneficial owners", fields: [{ type: "text", name: "member" }] },
+        ],
+      }),
+    ).not.toThrow());
+
+  it("accepts a composed autocomplete value, not just a bare purpose token", () =>
+    // The schema deliberately does not enumerate the WCAG 1.3.5 purposes: the
+    // attribute is a grammar (optional section/address/contact groups around
+    // one purpose token) and an allowlist of purposes alone would reject every
+    // one of these — including `off`, which is not a purpose at all.
+    expect(() =>
+      validateFormConfig({
+        id: "t",
+        fields: [
+          { type: "text", name: "a", autocomplete: "name" },
+          { type: "text", name: "b", autocomplete: "section-owner-1 name" },
+          { type: "textarea", name: "c", autocomplete: "shipping street-address" },
+          { type: "phone", name: "d", autocomplete: "mobile tel" },
+          { type: "text", name: "e", autocomplete: "off" },
+        ],
+      }),
+    ).not.toThrow());
+
+  it("rejects a non-string autocomplete", () =>
+    expect(() =>
+      validateFormConfig({ id: "t", fields: [{ type: "text", name: "a", autocomplete: 12 as never }] }),
+    ).toThrow(/autocomplete/));
+
+  it("rejects a non-string badge", () =>
+    expect(() =>
+      validateFormConfig({ id: "t", fields: [{ type: "text", name: "a", badge: 12 as never }] }),
+    ).toThrow(/badge/));
 
   it("rejects field names containing dots", () =>
     expect(() =>
@@ -1297,6 +1366,65 @@ describe("rating config", () => {
     ).toThrow();
     expect(() =>
       validateFormConfig({ id: "t", fields: [{ type: "rating", name: "s", max: 3.5 }] }),
+    ).toThrow();
+  });
+});
+
+describe("date config", () => {
+  it("accepts message on a date field", () => {
+    expect(() =>
+      validateFormConfig({
+        id: "f",
+        fields: [{ type: "date", name: "dob", maxDate: "2008-07-27", message: "Too young" }],
+      }),
+    ).not.toThrow();
+  });
+
+  it("accepts message on a range date field", () => {
+    expect(() =>
+      validateFormConfig({
+        id: "f",
+        fields: [{ type: "date", name: "stay", range: true, minDate: "2026-01-01", message: "January only" }],
+      }),
+    ).not.toThrow();
+  });
+
+  it("rejects an empty message, which would fall through to Zod's untranslated default", () => {
+    expect(() =>
+      validateFormConfig({
+        id: "f",
+        fields: [{ type: "date", name: "dob", maxDate: "2008-07-27", message: "" }],
+      }),
+    ).toThrow();
+  });
+
+  it("rejects a non-string message", () => {
+    expect(() =>
+      validateFormConfig({
+        id: "f",
+        fields: [{ type: "date", name: "dob", maxDate: "2008-07-27", message: 18 } as never],
+      }),
+    ).toThrow();
+  });
+
+  it("accepts pickerBounds on a date field", () => {
+    expect(() =>
+      validateFormConfig({
+        id: "f",
+        fields: [
+          { type: "date", name: "dob", maxDate: "2008-07-27", message: "Too young", pickerBounds: "validate" },
+          { type: "date", name: "booking", minDate: "2026-01-01", pickerBounds: "restrict" },
+        ],
+      }),
+    ).not.toThrow();
+  });
+
+  it("rejects a pickerBounds value outside the two modes", () => {
+    expect(() =>
+      validateFormConfig({
+        id: "f",
+        fields: [{ type: "date", name: "dob", pickerBounds: "nope" } as never],
+      }),
     ).toThrow();
   });
 });

@@ -2,6 +2,7 @@ import { z } from "zod";
 import { getCountries, isValidPhoneNumber } from "libphonenumber-js";
 import { assertNever } from "./assertNever";
 import { visibleFieldsFor } from "./conditions";
+import { acceptedFormatsLabel, fileExtensionLabel, fileMatchesAccept } from "./fileAccept";
 import type { Messages } from "./messages";
 import { getPasswordChecks } from "./password";
 import { isBuiltInField } from "./types";
@@ -55,6 +56,26 @@ function datePart(value: string): string {
   return value.slice(0, ISO_DATE_LENGTH);
 }
 
+/**
+ * The schema for one ISO date value — the whole field when it is a single date,
+ * and each of `from`/`to` when it is a range, which is why `field.message`
+ * lands on both endpoints.
+ *
+ * `field.message` replaces the bound messages only. A value that is not a date
+ * at all keeps `messages.invalidDate`: the override explains a rule, and a
+ * typo has not reached the rule yet.
+ *
+ * The override is reported before the `minDateField`/`maxDateField` message
+ * when a field carries both a static bound and a cross-field rule and both
+ * fail — these refinements run inside the field's own schema, and the
+ * cross-field pass is a `superRefine` on the enclosing object, which Zod runs
+ * afterwards. Under react-hook-form's default `criteriaMode: "firstError"` only
+ * the leading issue per path reaches the user, so this ordering decides which
+ * sentence they read. It is the intended one: the override was written for this
+ * field's rule, whereas the cross-field message is derivable from the form. As
+ * with the type-before-size ordering in `fileIssueReporter`, moving either
+ * check out of its current pass is a user-visible change.
+ */
 function isoDateSchema(field: Extract<FieldConfig, { type: "date" }>, messages: Messages): z.ZodType<string> {
   let schema = z
     .string({ error: field.required ? messages.required : undefined })
@@ -64,22 +85,84 @@ function isoDateSchema(field: Extract<FieldConfig, { type: "date" }>, messages: 
     );
   if (field.minDate !== undefined) {
     const min = datePart(field.minDate);
-    schema = schema.refine((value) => datePart(value) >= min, messages.min(field.minDate));
+    schema = schema.refine((value) => datePart(value) >= min, field.message ?? messages.min(field.minDate));
   }
   if (field.maxDate !== undefined) {
     const max = datePart(field.maxDate);
-    schema = schema.refine((value) => datePart(value) <= max, messages.max(field.maxDate));
+    schema = schema.refine((value) => datePart(value) <= max, field.message ?? messages.max(field.maxDate));
   }
   return schema;
 }
 
-function fileSchema(field: Extract<FieldConfig, { type: "file" }>, messages: Messages): z.ZodType {
-  let schema: z.ZodType = z.instanceof(File, { error: messages.required });
-  if (field.maxSizeMB !== undefined) {
-    const maxBytes = field.maxSizeMB * BYTES_PER_MB;
-    schema = schema.refine((file) => (file as File).size <= maxBytes, messages.fileSize(field.maxSizeMB));
-  }
-  return schema;
+type FileField = Extract<FieldConfig, { type: "file" }>;
+
+/** `maxSizeMB` as the schema needs it: a byte ceiling and its ready-made message. */
+type SizeLimit = { maxBytes: number; message: string };
+
+function sizeLimitFor(field: FileField, messages: Messages): SizeLimit | undefined {
+  if (field.maxSizeMB === undefined) return undefined;
+  return { maxBytes: field.maxSizeMB * BYTES_PER_MB, message: messages.fileSize(field.maxSizeMB) };
+}
+
+/**
+ * Builds the per-file check for a field, or `undefined` when the field
+ * constrains nothing and needs no refinement wrapped around it at all. Both the
+ * single-file and multi-file branches go through this, so a new per-file
+ * constraint is added in one place and neither branch can quietly skip it.
+ *
+ * The returned reporter says everything wrong with one file — an unaccepted
+ * type and an oversize file are independent problems, so a file with both gets
+ * an issue for each.
+ *
+ * Type is reported before size on purpose. Both issues land on the same path,
+ * and under react-hook-form's default `criteriaMode: "firstError"` only the
+ * leading one per path reaches the user — and "wrong format" is the more
+ * actionable of the two. Reordering these two blocks is a user-visible change.
+ * (Both issues are always present in the parse result, so a consumer using
+ * `criteriaMode: "all"`, or reading the schema directly, sees each of them.)
+ *
+ * `path` is empty for a single-file field and `[index]` within a multi-file
+ * array, which is what lets the UI mark exactly which file failed and why.
+ */
+function fileIssueReporter(field: FileField, messages: Messages) {
+  const size = sizeLimitFor(field, messages);
+  const { accept } = field;
+  // An empty `accept` constrains nothing, same as an absent one — without this
+  // it would wrap the schema in a refinement that can never fire.
+  if (!accept && size === undefined) return undefined;
+  const formats = acceptedFormatsLabel(accept);
+  return (ctx: z.RefinementCtx, file: File, path: (string | number)[]): void => {
+    // Each issue gets its own copy of `path`. Zod walks the parse back up the
+    // tree prepending the parent key to every issue *in place*, so two issues
+    // sharing one array get that array prefixed twice, and react-hook-form then
+    // nests the error under a second copy of the field name where no consumer
+    // can find it. Both callers are affected, not just the multi-file one:
+    // - multi-file passes [index], so a file that is both the wrong type and
+    //   too large is reported at ["docs","docs",0] instead of ["docs",0];
+    // - single-file passes [] (see `fileSchema` below), so the same file is
+    //   reported at ["doc","doc"] instead of ["doc"] — measured, and just as
+    //   total. There is no shape of file field that escapes this.
+    // Only the async parse prefixes in place — and the async parse is the one
+    // react-hook-form's resolver uses, so the corruption is invisible to a
+    // `safeParse` test and complete in the browser.
+    if (accept && !fileMatchesAccept(file, accept)) {
+      ctx.addIssue({
+        code: "custom",
+        path: [...path],
+        message: messages.fileTypeRejected(file.name, fileExtensionLabel(file) || undefined, formats),
+      });
+    }
+    if (size !== undefined && file.size > size.maxBytes) {
+      ctx.addIssue({ code: "custom", path: [...path], message: size.message });
+    }
+  };
+}
+
+function fileSchema(field: FileField, messages: Messages): z.ZodType {
+  const base = z.instanceof(File, { error: messages.required });
+  const report = fileIssueReporter(field, messages);
+  if (!report) return base;
+  return base.superRefine((file, ctx) => report(ctx, file, []));
 }
 
 export type OtpVerifiedChecker = (fieldName: string, code: string) => boolean;
@@ -243,14 +326,14 @@ export function toZodSchema(
       if (field.multiple) {
         const base = z.array(z.instanceof(File, { error: messages.required }));
         const withMin = field.required ? base.min(1, messages.required) : base;
-        const maxBytes = field.maxSizeMB !== undefined ? field.maxSizeMB * BYTES_PER_MB : undefined;
-        const schema =
-          maxBytes === undefined
-            ? withMin
-            : withMin.refine(
-                (files) => files.every((file) => file.size <= maxBytes),
-                messages.fileSize(field.maxSizeMB as number),
-              );
+        const report = fileIssueReporter(field, messages);
+        // One issue per index rather than one for the whole list, so the UI can
+        // say which file failed and why.
+        const schema = report
+          ? withMin.superRefine((files, ctx) => {
+              files.forEach((file, index) => report(ctx, file, [index]));
+            })
+          : withMin;
         return field.required ? schema : schema.optional();
       }
       const single = fileSchema(field, messages);

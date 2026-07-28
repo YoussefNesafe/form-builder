@@ -95,6 +95,16 @@ export function useDynamicForm<C extends FormConfig = FormConfig>(
   const draftId = autosave ? (autosave.key ?? config.id) : null;
   const draftDebounceMs = autosave?.debounceMs ?? DEFAULT_DRAFT_DEBOUNCE_MS;
   const includeSignatures = autosave?.includeSignatures ?? false;
+  const draftStorage = autosave?.storage;
+  // Read through a ref inside the save effect so the effect never resubscribes on
+  // storage identity: an inline object would otherwise tear the effect down every
+  // render, and its cleanup flushes the pending save — a write per keystroke.
+  // Assigned in an effect, not during render: the ref is only read from the
+  // debounce callback and the effect cleanup, both of which run after this.
+  const draftStorageRef = useRef(draftStorage);
+  useEffect(() => {
+    draftStorageRef.current = draftStorage;
+  }, [draftStorage]);
   const draftHash = useMemo(() => (draftId !== null ? draftConfigHash(config.fields) : ""), [draftId, config]);
   const [restoredStep, setRestoredStep] = useState<number | undefined>(undefined);
   const [restoreGeneration, setRestoreGeneration] = useState(0);
@@ -103,16 +113,18 @@ export function useDynamicForm<C extends FormConfig = FormConfig>(
 
   useEffect(() => {
     if (!draftId) return;
-    const draft = loadDraft(draftId, draftHash);
+    const draft = loadDraft(draftId, draftHash, draftStorage);
     draftRestoredRef.current = true;
     if (!draft) return;
     const sanitized = sanitizeDraftValues(config.fields, draft.values, includeSignatures);
     form.reset({ ...buildDefaultValues(config.fields), ...sanitized });
     setRestoreGeneration((generation) => generation + 1);
-    if (draft.step !== undefined) {
-      draftStepRef.current = draft.step;
-      setRestoredStep(draft.step);
-    }
+    // Assigned even when the draft carries no step, so a second restore (the
+    // draft key changed) can't leave the first draft's step behind to be
+    // re-persisted or reported. Batched with the generation bump above, so
+    // anything keyed on restoreGeneration sees the matching step.
+    draftStepRef.current = draft.step;
+    setRestoredStep(draft.step);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [draftId]);
 
@@ -129,6 +141,7 @@ export function useDynamicForm<C extends FormConfig = FormConfig>(
           draftHash,
           sanitizeDraftValues(config.fields, values as FormValues, includeSignatures),
           draftStepRef.current,
+          draftStorageRef.current,
         );
       }, draftDebounceMs);
     });
@@ -142,6 +155,7 @@ export function useDynamicForm<C extends FormConfig = FormConfig>(
           draftHash,
           sanitizeDraftValues(config.fields, form.getValues(), includeSignatures),
           draftStepRef.current,
+          draftStorageRef.current,
         );
       }
     };
@@ -151,24 +165,25 @@ export function useDynamicForm<C extends FormConfig = FormConfig>(
     (step: number) => {
       if (!draftId || !draftRestoredRef.current) return;
       draftStepRef.current = step;
-      if (hasDraft(draftId)) {
+      if (hasDraft(draftId, draftStorage)) {
         saveDraft(
           draftId,
           draftHash,
           sanitizeDraftValues(config.fields, form.getValues(), includeSignatures),
           step,
+          draftStorage,
         );
       }
     },
-    [draftId, draftHash, config, form, includeSignatures],
+    [draftId, draftHash, config, form, includeSignatures, draftStorage],
   );
 
   const clearDraftAndPending = useCallback(() => {
     if (!draftId) return;
     clearTimeout(draftSaveTimerRef.current);
     draftSaveTimerRef.current = undefined;
-    clearDraft(draftId);
-  }, [draftId]);
+    clearDraft(draftId, draftStorage);
+  }, [draftId, draftStorage]);
 
   const draft = useMemo<FormDraft | undefined>(
     () => (draftId ? { restoredStep, clear: clearDraftAndPending, noteStep } : undefined),

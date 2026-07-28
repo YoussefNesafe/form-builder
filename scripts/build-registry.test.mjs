@@ -16,7 +16,11 @@ import { collectFiles } from "./collectFiles.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const FORM_BUILDER_DIR = path.join(ROOT, "form-builder");
-const isTestFile = (relPath) => /\.test\.(ts|tsx)$/.test(relPath);
+// Kept as an independent copy of build-registry.mjs's filter, per this file's
+// header. It must cover BOTH test spellings for the same reason the original
+// does: a test-only file left in `allSourceFiles()` makes the import-closure
+// checks below demand that its imports ship, which is a false failure.
+const isTestFile = (relPath) => /\.test(-d)?\.(ts|tsx)$/.test(relPath);
 
 function allSourceFiles() {
   const files = [];
@@ -76,6 +80,38 @@ describe("build-registry closure", () => {
     expect(first).toEqual(second);
   });
 
+  // The exclusion itself had no guard until now, and it was wrong: the filter
+  // read `.test.(ts|tsx)`, which does not match `.test-d.ts(x)`, so four type
+  // tests shipped to copy-in consumers. Nothing caught it, because every other
+  // check here asks whether something is MISSING from the model — none asked
+  // what got in that should not have.
+  //
+  // Matches deliberately WIDER than the filter it guards (`.test` or `.spec`
+  // followed by either separator), so a third spelling escapes the filter and
+  // still lands here rather than slipping past both.
+  it("ships no test file, in any spelling", () => {
+    const testFilePattern = /\.(test|spec)[.-]/;
+
+    const present = ENGINE_DIRS.flatMap((dir) => {
+      const abs = path.join(FORM_BUILDER_DIR, dir);
+      if (!fs.existsSync(abs)) return [];
+      return collectFiles(abs)
+        .filter((rel) => testFilePattern.test(rel))
+        .map((rel) => `${dir}/${rel}`);
+    });
+    // Sanity: if this is empty the assertion below passes for the wrong
+    // reason. Both spellings must be represented, or the guard is only
+    // proving whichever one happens to still exist.
+    expect(present.some((rel) => /\.test\.(ts|tsx)$/.test(rel))).toBe(true);
+    expect(present.some((rel) => /\.test-d\.(ts|tsx)$/.test(rel))).toBe(true);
+
+    const shipped = [...model.engine.filesRel].filter((rel) => testFilePattern.test(rel));
+    expect(
+      shipped,
+      `${shipped[0]} is a test file but is in form-engine's shipped file list — a copy-in consumer would receive it, and a type test drags in vitest's expectTypeOf. Widen isTestFile in scripts/build-registry.mjs.`,
+    ).toEqual([]);
+  });
+
   it("every field item's registryDependencies-implying uiDeps resolve to a real primitive item", () => {
     for (const [itemName, info] of model.fields) {
       for (const uiName of info.uiDeps) {
@@ -104,5 +140,36 @@ describe("build-registry closure", () => {
       unclassified,
       `form-builder/${unclassified[0]}/ is a new top-level dir covered by neither ENGINE_DIRS nor the known non-engine set — it would silently NOT ship in the copy-in CLI. Add it to ENGINE_DIRS (to ship it) or to this test's NON_ENGINE_DIRS (to deliberately exclude it).`,
     ).toEqual([]);
+  });
+
+  // The installation docs page states how many shadcn primitives a full
+  // install copies. It cannot call this scanner (Node-only) at render time,
+  // so the number is a literal there — and a literal restating a derived
+  // list is exactly the thing that desynchronises quietly. `primitives.size`
+  // moves whenever a field adds or drops a `@/components/ui/*` import, and
+  // nothing about that edit would prompt anyone to reopen a docs page.
+  //
+  // Note this is NOT `components/ui/`'s file count: that folder also holds
+  // primitives outside the registry's closure (alert, progress,
+  // segmented-control today), which are never vendored. Reading the source as
+  // text rather than importing it keeps this .mjs test free of JSX/React.
+  it("the installation docs page's primitive count matches the derived model", () => {
+    const docsPath = path.join(ROOT, "components", "docs", "installation", "InstallCliSection.tsx");
+    const src = fs.readFileSync(docsPath, "utf8");
+    const match = /export const VENDORED_PRIMITIVE_COUNT = (\d+);/.exec(src);
+    expect(
+      match,
+      `Could not find "export const VENDORED_PRIMITIVE_COUNT = <n>;" in ${path.relative(ROOT, docsPath)} — if it was renamed or inlined back into the prose, update this guard rather than deleting it.`,
+    ).not.toBeNull();
+    expect(
+      Number(match[1]),
+      `${path.relative(ROOT, docsPath)} claims ${match[1]} vendored shadcn primitives, but the registry closure derives ${model.primitives.size}. Set VENDORED_PRIMITIVE_COUNT to ${model.primitives.size}.`,
+    ).toBe(model.primitives.size);
+    // Guards the guard: a prose edit that drops the interpolation would leave
+    // the constant correct-but-unused and the page silently stale.
+    expect(
+      (src.match(/\{VENDORED_PRIMITIVE_COUNT\}/g) ?? []).length,
+      "VENDORED_PRIMITIVE_COUNT is declared but no longer interpolated into the prose — the page has a hardcoded number again.",
+    ).toBeGreaterThan(0);
   });
 });
