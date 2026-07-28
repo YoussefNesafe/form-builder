@@ -103,6 +103,10 @@ export const builder = {
         label: "Badge",
         help: "Short note beside the label, e.g. \"Required in Germany\". Read out as part of the field's name; needs a label to sit next to.",
       },
+      autocomplete: {
+        label: "Autocomplete",
+        help: "HTML autocomplete token, e.g. \"email\" or \"street-address\". Required by WCAG 1.3.5 on anything asking about the person filling the form.",
+      },
       placeholder: { label: "Placeholder" },
       required: { label: "Required" },
       disabled: { label: "Disabled" },

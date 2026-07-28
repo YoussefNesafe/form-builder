@@ -102,6 +102,14 @@ function OtpControl({
         <InputOTP
           ref={inputRef}
           id={id}
+          // Omitted entirely rather than passed as undefined. input-otp builds
+          // its input as `{ autoComplete: props.autoComplete || "one-time-code",
+          // ...props }` — the spread comes second, so a present-but-undefined
+          // key overwrites the default it just computed, and the field would
+          // silently lose SMS autofill on every config that never set this.
+          // PhoneInput's equivalent default is `defaultProps`, which React
+          // applies to undefined, so that one takes the value directly.
+          {...(config.autocomplete !== undefined && { autoComplete: config.autocomplete })}
           maxLength={config.length}
           value={(rhf.value as string) ?? ""}
           onChange={(value) => {

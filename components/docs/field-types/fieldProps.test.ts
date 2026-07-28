@@ -42,6 +42,7 @@ describe("field-types docs BASE_FIELD_PROPS", () => {
       label: true,
       description: true,
       badge: true,
+      autocomplete: true,
       placeholder: true,
       required: true,
       disabled: true,

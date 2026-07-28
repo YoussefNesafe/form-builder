@@ -527,6 +527,15 @@ export const BASE_FIELD_PROPS: BasePropDoc[] = [
       "needs a label to annotate: no label, no badge — which also means static, submit, and hidden ignore it, since they render none.",
   },
   {
+    name: "autocomplete",
+    type: "string (HTML autocomplete value)",
+    required: false,
+    description:
+      'The control\'s autocomplete attribute — "name", "email", "street-address", "postal-code", "address-level2", "bday". WCAG 2.2 SC 1.3.5 (AA) requires one on every field collecting information about the person filling the form; a label alone does not carry the purpose, since "Postleitzahl" and "ZIP" are the same purpose to a person and neither to a parser. Typed as a plain string rather than an enum of the WCAG purposes because the attribute is a grammar around one purpose token — "section-owner-1 name", "shipping street-address", "mobile tel" and "off" are all valid and an allowlist would reject them.',
+    exceptions:
+      "reaches the DOM on text, email, password, textarea, number, masked, time, phone and otp — the types whose control is a native text-entry input. date, select and country render a popover behind a button, and HTML ignores the attribute on file, checkbox/switch, radio and segmented; set there it is inert, not an error. phone and otp already default to \"tel\" and \"one-time-code\", which an unset value leaves alone.",
+  },
+  {
     name: "placeholder",
     type: "string",
     required: false,

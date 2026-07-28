@@ -107,6 +107,30 @@ link already there points at `HEAD`).
   accessible name. Read off the field runtime context, so custom types
   registered with `registerField` inherit it without passing anything through.
   Needs a `label` to sit beside.
+- **`BaseField.autocomplete`** — the control's HTML `autocomplete` attribute,
+  which is what **WCAG 2.2 SC 1.3.5 Identify Input Purpose (AA)** requires on
+  any field collecting information about the person filling the form. Before
+  this there was no way to set it at all, so every config built on this engine
+  failed 1.3.5 on its name, email and address fields with no way out short of
+  forking a field component.
+
+  Typed `string`, deliberately not a union of the 1.3.5 purposes. The
+  attribute's value is a *grammar* — an optional `section-*` group, an optional
+  `shipping`/`billing`, an optional `home`/`work`/`mobile`/`fax`/`pager`, then
+  the purpose token, then an optional `webauthn`; plus the standalone
+  `on`/`off`. The 1.3.5 list is only the purpose slot, so a union of it would
+  reject `"section-owner-1 name"`, `"shipping street-address"`, `"mobile tel"`
+  and `"off"`, all valid HTML — and the first of those is what a repeating
+  `group` of people needs to stop a browser filling every row alike. A wrong
+  token is caught by a test on the config, not by the type.
+
+  Reaches the DOM on the types whose control is a native text-entry input:
+  `text`, `email`, `password`, `textarea`, `number`, `masked`, `time`, `phone`,
+  `otp`. On `date`, `select` and `country` there is no input to carry it (a
+  popover behind a `<button>`), and HTML ignores the attribute on `file`,
+  `checkbox`/`switch`, `radio` and `segmented` — set there it is inert, not an
+  error. `phone` and `otp` already default to `"tel"` and `"one-time-code"`;
+  leaving `autocomplete` unset preserves both.
 
 ### Rendered UI layer
 

@@ -52,6 +52,7 @@ const IDENTITY: PropDescriptor[] = [
   { key: "label", label: P.label.label, control: "text" },
   { key: "description", label: P.description.label, control: "text" },
   { key: "badge", label: P.badge.label, control: "text", help: P.badge.help },
+  { key: "autocomplete", label: P.autocomplete.label, control: "text", help: P.autocomplete.help },
   { key: "placeholder", label: P.placeholder.label, control: "text" },
 ];
 

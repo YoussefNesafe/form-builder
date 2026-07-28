@@ -14,6 +14,7 @@ const BASE_FIELD_KEYS: Record<keyof BaseField, true> = {
   label: true,
   description: true,
   badge: true,
+  autocomplete: true,
   placeholder: true,
   required: true,
   disabled: true,

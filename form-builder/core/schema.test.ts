@@ -68,6 +68,7 @@ describe("validateFormConfig", () => {
       label: true,
       description: true,
       badge: true,
+      autocomplete: true,
       placeholder: true,
       required: true,
       disabled: true,
@@ -95,6 +96,29 @@ describe("validateFormConfig", () => {
         ],
       }),
     ).not.toThrow());
+
+  it("accepts a composed autocomplete value, not just a bare purpose token", () =>
+    // The schema deliberately does not enumerate the WCAG 1.3.5 purposes: the
+    // attribute is a grammar (optional section/address/contact groups around
+    // one purpose token) and an allowlist of purposes alone would reject every
+    // one of these — including `off`, which is not a purpose at all.
+    expect(() =>
+      validateFormConfig({
+        id: "t",
+        fields: [
+          { type: "text", name: "a", autocomplete: "name" },
+          { type: "text", name: "b", autocomplete: "section-owner-1 name" },
+          { type: "textarea", name: "c", autocomplete: "shipping street-address" },
+          { type: "phone", name: "d", autocomplete: "mobile tel" },
+          { type: "text", name: "e", autocomplete: "off" },
+        ],
+      }),
+    ).not.toThrow());
+
+  it("rejects a non-string autocomplete", () =>
+    expect(() =>
+      validateFormConfig({ id: "t", fields: [{ type: "text", name: "a", autocomplete: 12 as never }] }),
+    ).toThrow(/autocomplete/));
 
   it("rejects a non-string badge", () =>
     expect(() =>
