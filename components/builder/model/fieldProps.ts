@@ -51,6 +51,8 @@ const IDENTITY: PropDescriptor[] = [
   { key: "name", label: P.name.label, control: "text", help: P.name.help },
   { key: "label", label: P.label.label, control: "text" },
   { key: "description", label: P.description.label, control: "text" },
+  { key: "badge", label: P.badge.label, control: "text", help: P.badge.help },
+  { key: "autocomplete", label: P.autocomplete.label, control: "text", help: P.autocomplete.help },
   { key: "placeholder", label: P.placeholder.label, control: "text" },
 ];
 
@@ -100,6 +102,11 @@ const AS_OPTIONS = [
   { label: P.as.options.h2, value: "h2" },
   { label: P.as.options.p, value: "p" },
   { label: P.as.options.divider, value: "divider" },
+];
+
+const PICKER_BOUNDS_OPTIONS = [
+  { label: P.pickerBounds.options.restrict, value: "restrict" },
+  { label: P.pickerBounds.options.validate, value: "validate" },
 ];
 
 const VARIANT_OPTIONS = ["default", "destructive", "outline", "secondary", "ghost", "link"].map((v) => ({
@@ -171,6 +178,13 @@ export const FIELD_PROPS: Record<FieldType, PropDescriptor[]> = {
     { key: "minDate", label: P.minDate.label, control: "date" },
     { key: "maxDate", label: P.maxDate.label, control: "date" },
     {
+      key: "pickerBounds",
+      label: P.pickerBounds.label,
+      control: "select",
+      options: PICKER_BOUNDS_OPTIONS,
+      help: P.pickerBounds.help,
+    },
+    {
       key: "minDateField",
       label: P.minDateField.label,
       control: "fieldRef",
@@ -184,6 +198,7 @@ export const FIELD_PROPS: Record<FieldType, PropDescriptor[]> = {
       refKind: "dateSource",
       help: P.maxDateField.help,
     },
+    { key: "message", label: P.message.label, control: "text" },
   ],
   time: [
     ...BASE,

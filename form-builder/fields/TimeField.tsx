@@ -33,6 +33,7 @@ export function TimeField({ field }: FieldComponentProps) {
         >
           <Input
             type="time"
+            autoComplete={config.autocomplete}
             min={config.minTime}
             max={config.maxTime}
             step={config.stepMinutes !== undefined ? config.stepMinutes * SECONDS_PER_MINUTE : undefined}

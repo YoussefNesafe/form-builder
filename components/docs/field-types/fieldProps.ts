@@ -182,6 +182,12 @@ export const FIELD_PROP_DOCS: { [T in FieldType]: Record<OwnProps<T>, PropDoc> }
       required: false,
       description: "Latest selectable date; also biases the calendar's initial month.",
     },
+    pickerBounds: {
+      type: '"restrict" | "validate"',
+      required: false,
+      description:
+        'What minDate/maxDate do to the calendar — they always constrain the value. "restrict" (default) disables out-of-range days and clamps month navigation, for a range that is genuinely unavailable. "validate" leaves those days selectable by mouse and keyboard so picking one fails with message instead, which is how an age cutoff says "You must be 18 or older" rather than greying out most of the calendar. Governs these two bounds only — minDateField/maxDateField never shape the calendar either way.',
+    },
     minDateField: {
       type: "string",
       required: false,
@@ -193,6 +199,12 @@ export const FIELD_PROP_DOCS: { [T in FieldType]: Record<OwnProps<T>, PropDoc> }
       required: false,
       description:
         "Bounds this date to be on/before a sibling non-range date field's current value; same range: true restriction as minDateField.",
+    },
+    message: {
+      type: "string",
+      required: false,
+      description:
+        'Custom error for a minDate/maxDate violation, replacing "Must be at least/at most <date>" — the way to say "You must be 18 or older" instead of a bare bound. One sentence covers both bounds, and with range: true both endpoints; unparseable values and the minDateField/maxDateField rules keep their own messages.',
     },
   },
   time: {
@@ -251,7 +263,8 @@ export const FIELD_PROP_DOCS: { [T in FieldType]: Record<OwnProps<T>, PropDoc> }
     accept: {
       type: "string",
       required: false,
-      description: 'Native accept attribute (MIME types / extensions), e.g. ".pdf,.doc,.docx".',
+      description:
+        'Native accept attribute (MIME types / extensions), e.g. ".pdf,.doc,.docx". Also enforced by the generated schema — a file the browser could not type matches no MIME token, so list the extension too (".pdf,application/pdf") if those must get through — and written out as the dropzone\'s hint ("PDF, DOC or DOCX").',
     },
     maxSizeMB: {
       type: "number",
@@ -448,7 +461,7 @@ export const FIELD_VALUE_INFO: { [T in FieldType]: FieldValueInfo<T> } = {
   },
   file: {
     valueShape:
-      "single (default): a File, or undefined — not JSON-serializable, consumers handle upload in onSubmit. multiple: true → File[]",
+      "single (default): a File, or undefined — not JSON-serializable, consumers handle upload in onSubmit. multiple: true → File[]. Files that failed accept or maxSizeMB are in there too: they stay in the value so the field can show each one its own reason, and the field is invalid until they are removed — so onSubmit never sees them, but a manual read of the value will.",
     example: { type: "file", name: "resume", label: "Resume", accept: ".pdf,.doc,.docx", maxSizeMB: 5 },
   },
   hidden: {
@@ -505,12 +518,30 @@ export const BASE_FIELD_PROPS: BasePropDoc[] = [
     description: "Helper text rendered under the label and wired into aria-describedby alongside any error.",
   },
   {
+    name: "badge",
+    type: "string",
+    required: false,
+    description:
+      "Short annotation rendered beside the label — \"Required in Germany\" — so a conditionally-revealed field can say why it appeared. Part of the field's accessible name, unlike the required mark, which is aria-hidden because the control already exposes required-ness on its own.",
+    exceptions:
+      "needs a label to annotate: no label, no badge — which also means static, submit, and hidden ignore it, since they render none.",
+  },
+  {
+    name: "autocomplete",
+    type: "string (HTML autocomplete value)",
+    required: false,
+    description:
+      'The control\'s autocomplete attribute — "name", "email", "street-address", "postal-code", "address-level2", "bday". WCAG 2.2 SC 1.3.5 (AA) requires one on every field collecting information about the person filling the form; a label alone does not carry the purpose, since "Postleitzahl" and "ZIP" are the same purpose to a person and neither to a parser. Typed as a plain string rather than an enum of the WCAG purposes because the attribute is a grammar around one purpose token — "section-owner-1 name", "shipping street-address", "mobile tel" and "off" are all valid and an allowlist would reject them.',
+    exceptions:
+      "reaches the DOM on text, email, password, textarea, number, masked, time, phone and otp — the types whose control is a native text-entry input. date, select and country render a popover behind a button, and HTML ignores the attribute on file, checkbox/switch, radio and segmented; set there it is inert, not an error. phone and otp already default to \"tel\" and \"one-time-code\", which an unset value leaves alone.",
+  },
+  {
     name: "placeholder",
     type: "string",
     required: false,
     description: "Placeholder/prompt text; meaning is per-control (input placeholder, empty-select prompt, unset-date prompt).",
     exceptions:
-      "on group it overrides the \"Add\" button's label instead of a text placeholder; has no effect on radio, segmented, checkbox group, rating, slider, or signature.",
+      "on group it overrides the \"Add\" button's label instead of a text placeholder; on file it replaces the dropzone's \"Drag files here, or browse\" prompt, which is part of the file input's accessible name — so it is read aloud after the label, not just shown; has no effect on radio, segmented, checkbox group, rating, slider, or signature.",
   },
   {
     name: "required",

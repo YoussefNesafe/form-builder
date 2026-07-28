@@ -12,3 +12,21 @@ describe("FormRenderer onSubmit typing", () => {
     expectTypeOf<Payload>().toEqualTypeOf<InferValues<typeof cfg>>();
   });
 });
+
+describe("FormRenderer step-control prop typing", () => {
+  it("onDraftRestore receives an info object carrying an optional step", () => {
+    type OnDraftRestore = NonNullable<ComponentProps<typeof FormRenderer>["onDraftRestore"]>;
+    expectTypeOf<Parameters<OnDraftRestore>[0]>().toEqualTypeOf<{ step?: number }>();
+  });
+
+  it("step and onStepChange are plain, non-generic step indices", () => {
+    type Props = ComponentProps<typeof FormRenderer>;
+    expectTypeOf<Props["step"]>().toEqualTypeOf<number | undefined>();
+    expectTypeOf<NonNullable<Props["onStepChange"]>>().toEqualTypeOf<(step: number) => void>();
+  });
+
+  it("stepperOrientation is closed to the two supported layouts", () => {
+    type Orientation = ComponentProps<typeof FormRenderer>["stepperOrientation"];
+    expectTypeOf<Orientation>().toEqualTypeOf<"horizontal" | "vertical" | undefined>();
+  });
+});

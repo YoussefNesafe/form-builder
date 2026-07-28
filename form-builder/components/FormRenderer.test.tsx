@@ -1,4 +1,5 @@
 ﻿// @vitest-environment jsdom
+import { useEffect, useState } from "react";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { FormProvider, useForm, type UseFormReturn } from "react-hook-form";
@@ -272,10 +273,15 @@ describe("FormRenderer server errors", () => {
         { title: "Finish", fieldNames: ["final"] },
       ],
     };
-    let form: UseFormReturn | undefined;
+    const formRef: { current?: UseFormReturn } = {};
     function StepperHarness() {
       const f = useForm({ defaultValues: buildDefaultValues(conditionalConfig.fields) });
-      form = f;
+      // Published in an effect, not during render: react-hooks/globals (the
+      // React Compiler-backed rule) rightly rejects writing to a variable from
+      // an enclosing scope while rendering.
+      useEffect(() => {
+        formRef.current = f;
+      }, [f]);
       return (
         <FormProvider {...f}>
           <FieldRuntimeContext.Provider value={{ disabled: false, messages: defaultMessages }}>
@@ -286,13 +292,13 @@ describe("FormRenderer server errors", () => {
     }
     render(<StepperHarness />);
 
-    await act(async () => form!.setValue("wantsExtras", true));
+    await act(async () => formRef.current!.setValue("wantsExtras", true));
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "Next" }));
     });
     expect(document.querySelector('[aria-current="step"]')?.textContent).toContain("Extras");
 
-    await act(async () => form!.setValue("wantsExtras", false));
+    await act(async () => formRef.current!.setValue("wantsExtras", false));
     expect(document.querySelector('[aria-current="step"]')?.textContent).toContain("Finish");
     expect(screen.getByLabelText("Final")).toBeTruthy();
   });
@@ -371,5 +377,601 @@ describe("FormRenderer server errors", () => {
     expect(screen.getByText("Rejected upstream")).toBeTruthy();
     const currentStep = document.querySelector('[aria-current="step"]');
     expect(currentStep?.textContent).toContain("One");
+  });
+});
+
+const wizardConfig: FormConfig = {
+  id: "controlled-wizard",
+  fields: [
+    { type: "text", name: "first", label: "First" },
+    { type: "text", name: "second", label: "Second" },
+    { type: "text", name: "third", label: "Third" },
+    { type: "submit", name: "go", text: "Go" },
+  ],
+  steps: [
+    { title: "One", fieldNames: ["first"] },
+    { title: "Two", fieldNames: ["second"] },
+    { title: "Three", fieldNames: ["third"] },
+  ],
+};
+
+const conditionalWizardConfig: FormConfig = {
+  id: "controlled-cond-wizard",
+  fields: [
+    { type: "checkbox", name: "wantsExtras", label: "Extras?" },
+    { type: "text", name: "extra", label: "Extra" },
+    { type: "text", name: "final", label: "Final" },
+    { type: "submit", name: "go", text: "Go" },
+  ],
+  steps: [
+    { title: "Base", fieldNames: ["wantsExtras"] },
+    { title: "Extras", fieldNames: ["extra"], visibleWhen: { field: "wantsExtras", equals: true } },
+    { title: "Finish", fieldNames: ["final"] },
+  ],
+};
+
+const currentStepText = () => document.querySelector('[aria-current="step"]')?.textContent ?? "";
+
+async function click(name: string) {
+  await act(async () => {
+    fireEvent.click(screen.getByRole("button", { name }));
+  });
+}
+
+/** Stands in for a host that mirrors the step into its router: it feeds every
+ *  reported step straight back in as the controlled `step` prop. `follow: false`
+ *  models a host that ignores the callback entirely. */
+function RouterLikeHost({
+  config = wizardConfig,
+  initialStep = 0,
+  follow = true,
+  spy,
+}: {
+  config?: FormConfig;
+  initialStep?: number;
+  follow?: boolean;
+  spy?: (step: number) => void;
+}) {
+  const [step, setStep] = useState(initialStep);
+  return (
+    <FormRenderer
+      config={config}
+      onSubmit={vi.fn()}
+      step={step}
+      onStepChange={(next) => {
+        spy?.(next);
+        if (follow) setStep(next);
+      }}
+    />
+  );
+}
+
+describe("FormRenderer step control", () => {
+  it("uncontrolled: Next/Back still drive the stepper with no step props supplied", async () => {
+    render(<FormRenderer config={wizardConfig} onSubmit={vi.fn()} />);
+
+    expect(currentStepText()).toContain("One");
+    await click("Next");
+    expect(currentStepText()).toContain("Two");
+    expect(screen.getByLabelText("Second")).toBeTruthy();
+    await click("Back");
+    expect(currentStepText()).toContain("One");
+    expect(screen.getByLabelText("First")).toBeTruthy();
+  });
+
+  it("onStepChange stays silent on mount and reports every step the wizard lands on", async () => {
+    const onStepChange = vi.fn();
+    render(<FormRenderer config={wizardConfig} onSubmit={vi.fn()} onStepChange={onStepChange} />);
+
+    expect(onStepChange).not.toHaveBeenCalled();
+
+    await click("Next");
+    expect(onStepChange.mock.calls).toEqual([[1]]);
+    await click("Next");
+    await click("Back");
+    expect(onStepChange.mock.calls).toEqual([[1], [2], [1]]);
+  });
+
+  it("controlled: mounts on the named step without reporting it back", () => {
+    const spy = vi.fn();
+    render(<RouterLikeHost initialStep={1} spy={spy} />);
+
+    expect(currentStepText()).toContain("Two");
+    expect(screen.getByLabelText("Second")).toBeTruthy();
+    expect(spy).not.toHaveBeenCalled();
+  });
+
+  it("controlled: a new step prop moves the wizard, and moving there is not reported back", () => {
+    const spy = vi.fn();
+    const { rerender } = render(
+      <FormRenderer config={wizardConfig} onSubmit={vi.fn()} step={0} onStepChange={spy} />,
+    );
+    expect(currentStepText()).toContain("One");
+
+    rerender(<FormRenderer config={wizardConfig} onSubmit={vi.fn()} step={2} onStepChange={spy} />);
+    expect(currentStepText()).toContain("Three");
+    expect(screen.getByLabelText("Third")).toBeTruthy();
+    expect(spy).not.toHaveBeenCalled();
+  });
+
+  it("controlled: Next advances locally and reports, so a host that ignores the callback is not stuck", async () => {
+    const spy = vi.fn();
+    render(<RouterLikeHost follow={false} spy={spy} />);
+
+    await click("Next");
+    expect(spy.mock.calls).toEqual([[1]]);
+    expect(currentStepText()).toContain("Two");
+    expect(screen.getByLabelText("Second")).toBeTruthy();
+  });
+
+  it("controlled: an out-of-range step clamps into range and reports where it actually landed", () => {
+    const spy = vi.fn();
+    render(<FormRenderer config={wizardConfig} onSubmit={vi.fn()} step={9} onStepChange={spy} />);
+
+    expect(currentStepText()).toContain("Three");
+    expect(spy.mock.calls).toEqual([[2]]);
+  });
+
+  it("controlled: a negative step clamps to where the wizard already was, so nothing is reported", () => {
+    const spy = vi.fn();
+    render(<FormRenderer config={wizardConfig} onSubmit={vi.fn()} step={-5} onStepChange={spy} />);
+
+    expect(currentStepText()).toContain("One");
+    expect(spy).not.toHaveBeenCalled();
+  });
+
+  // Documented on the `step` JSDoc as consequence 1 of a lagging `step`.
+  it("controlled: a return to the step the host still holds is not reported", async () => {
+    const spy = vi.fn();
+    render(<FormRenderer config={wizardConfig} onSubmit={vi.fn()} step={1} onStepChange={spy} />);
+    expect(currentStepText()).toContain("Two");
+
+    await click("Next");
+    expect(spy.mock.calls).toEqual([[2]]);
+
+    await click("Back");
+    expect(currentStepText()).toContain("Two");
+    // The move happened; it just matches the step the host passed in, so the
+    // engine treats it as one the host already knows about.
+    expect(spy.mock.calls).toEqual([[2]]);
+  });
+
+  // Documented on the `step` JSDoc as consequence 2 of a lagging `step`.
+  it("controlled: a step prop arriving late pulls the wizard forward again", async () => {
+    const spy = vi.fn();
+    const wizard = (atStep: number) => (
+      <FormRenderer config={wizardConfig} onSubmit={vi.fn()} step={atStep} onStepChange={spy} />
+    );
+    const { rerender } = render(wizard(0));
+
+    await click("Next");
+    await click("Next");
+    await click("Back");
+    expect(currentStepText()).toContain("Two");
+    expect(spy.mock.calls).toEqual([[1], [2], [1]]);
+
+    // The host's router finally catches up to the *first* report — and the
+    // wizard honours it, overriding the Back the visitor has since pressed.
+    rerender(wizard(2));
+    expect(currentStepText()).toContain("Three");
+    expect(spy.mock.calls).toEqual([[1], [2], [1]]);
+  });
+
+  // I1: both props landing in one commit. `initialStep` has no public prop —
+  // it comes from the draft — so this is the one case that has to drive
+  // FormStepper directly to get them into the same render.
+  it("a restored step beats the host's when both arrive in the same commit", () => {
+    function BothAtOnce() {
+      const f = useForm({ defaultValues: buildDefaultValues(wizardConfig.fields) });
+      return (
+        <FormProvider {...f}>
+          <FieldRuntimeContext.Provider value={{ disabled: false, messages: defaultMessages }}>
+            <FormStepper config={wizardConfig} initialStep={2} restoreKey={1} controlledStep={1} />
+          </FieldRuntimeContext.Provider>
+        </FormProvider>
+      );
+    }
+    render(<BothAtOnce />);
+
+    expect(currentStepText()).toContain("Three");
+  });
+
+  it("controlled: a hidden step redirects to the nearest visible one and reports the correction", () => {
+    const spy = vi.fn();
+    render(
+      <FormRenderer config={conditionalWizardConfig} onSubmit={vi.fn()} step={1} onStepChange={spy} />,
+    );
+
+    expect(currentStepText()).toContain("Finish");
+    expect(spy.mock.calls).toEqual([[2]]);
+  });
+
+  it("controlled: a restored draft's step wins over the host's and is reported", async () => {
+    window.localStorage.clear();
+    const { draftConfigHash } = await import("../core/autosave");
+    window.localStorage.setItem(
+      "form-builder:draft:controlled-restore",
+      JSON.stringify({ hash: draftConfigHash(wizardConfig.fields), values: { first: "saved" }, step: 1 }),
+    );
+    const spy = vi.fn();
+    render(
+      <FormRenderer
+        config={wizardConfig}
+        onSubmit={vi.fn()}
+        step={0}
+        onStepChange={spy}
+        autosave={{ key: "controlled-restore", debounceMs: 0 }}
+      />,
+    );
+
+    await waitFor(() => expect(currentStepText()).toContain("Two"));
+    expect(spy.mock.calls).toEqual([[1]]);
+  });
+
+  it("controlled + autosave: a host-driven step is still recorded in the draft", async () => {
+    window.localStorage.clear();
+    const key = "controlled-autosave";
+    const spy = vi.fn();
+    const wizard = (atStep: number) => (
+      <FormRenderer
+        config={wizardConfig}
+        onSubmit={vi.fn()}
+        step={atStep}
+        onStepChange={spy}
+        autosave={{ key, debounceMs: 0 }}
+      />
+    );
+    const { rerender } = render(wizard(0));
+
+    // A step is only persisted onto an existing draft, so give it one first.
+    await act(async () => {
+      fireEvent.change(screen.getByLabelText("First"), { target: { value: "typed" } });
+    });
+    await waitFor(() => expect(window.localStorage.getItem(`form-builder:draft:${key}`)).not.toBeNull());
+
+    rerender(wizard(2));
+    expect(currentStepText()).toContain("Three");
+
+    await act(async () => {
+      fireEvent.change(screen.getByLabelText("Third"), { target: { value: "edited" } });
+    });
+    await waitFor(() => {
+      const saved = JSON.parse(window.localStorage.getItem(`form-builder:draft:${key}`)!) as {
+        values: Record<string, unknown>;
+        step?: number;
+      };
+      expect(saved.values).toMatchObject({ third: "edited" });
+      // The move came from the host, so it is never reported back to the host —
+      // but autosave still has to record it, or the visitor resumes on step one.
+      expect(saved.step).toBe(2);
+    });
+    expect(spy).not.toHaveBeenCalled();
+  });
+
+  // M2: the bounce is two landings, so the draft momentarily records a step the
+  // visitor was never on. It self-corrects on the very next landing, and the
+  // stale value would be discarded by the bounce again on restore — so this
+  // pins the correction rather than trying to coalesce the writes. Coalescing
+  // would mean deferring the callback off the synchronous commit, which buys
+  // one avoided write per bounce at the cost of making the ordering against
+  // autosave's unmount flush unclear.
+  it("controlled: bouncing off a hidden step writes the transient step, then corrects it", async () => {
+    const { draftConfigHash } = await import("../core/autosave");
+    const data = new Map<string, string>();
+    const recorded: (number | undefined)[] = [];
+    const storage = {
+      getItem: (key: string) => data.get(key) ?? null,
+      setItem: (key: string, value: string) => {
+        data.set(key, value);
+        recorded.push((JSON.parse(value) as { step?: number }).step);
+      },
+      removeItem: (key: string) => {
+        data.delete(key);
+      },
+    };
+    data.set(
+      "form-builder:draft:bounce-writes",
+      JSON.stringify({
+        hash: draftConfigHash(conditionalWizardConfig.fields),
+        values: { wantsExtras: false },
+      }),
+    );
+
+    render(
+      <FormRenderer
+        config={conditionalWizardConfig}
+        onSubmit={vi.fn()}
+        step={1}
+        autosave={{ key: "bounce-writes", debounceMs: 0, storage }}
+      />,
+    );
+
+    await waitFor(() => expect(currentStepText()).toContain("Finish"));
+    expect(recorded).toContain(1);
+    await waitFor(() => expect(recorded[recorded.length - 1]).toBe(2));
+  });
+
+  it("vertical and controlled compose: the rail renders on the host's step", async () => {
+    const spy = vi.fn();
+    render(
+      <FormRenderer
+        config={wizardConfig}
+        onSubmit={vi.fn()}
+        step={1}
+        stepperOrientation="vertical"
+        onStepChange={spy}
+      />,
+    );
+
+    const list = document.querySelector("ol")!;
+    expect(list.getAttribute("data-orientation")).toBe("vertical");
+    expect(currentStepText()).toContain("Two");
+    expect(spy).not.toHaveBeenCalled();
+
+    await click("Next");
+    expect(spy.mock.calls).toEqual([[2]]);
+    expect(document.activeElement).toBe(list);
+  });
+
+  it("a fresh onStepChange identity on re-render does not re-report the current step", async () => {
+    const spy = vi.fn();
+    // A new inline arrow every render — the common case, and the one that would
+    // re-fire if the report effect keyed on callback identity alone.
+    const wizard = () => (
+      <FormRenderer config={wizardConfig} onSubmit={vi.fn()} onStepChange={(next) => spy(next)} />
+    );
+    const { rerender } = render(wizard());
+
+    await click("Next");
+    expect(spy.mock.calls).toEqual([[1]]);
+
+    rerender(wizard());
+    rerender(wizard());
+    expect(spy.mock.calls).toEqual([[1]]);
+  });
+
+  it("composes the consumer callback with autosave's own step bookkeeping", async () => {
+    window.localStorage.clear();
+    const spy = vi.fn();
+    render(
+      <FormRenderer
+        config={wizardConfig}
+        onSubmit={vi.fn()}
+        autosave={{ key: "compose-steps", debounceMs: 0 }}
+        onStepChange={spy}
+      />,
+    );
+
+    // A step is only persisted onto an existing draft, so give it one first.
+    await act(async () => {
+      fireEvent.change(screen.getByLabelText("First"), { target: { value: "typed" } });
+    });
+    await waitFor(() =>
+      expect(window.localStorage.getItem("form-builder:draft:compose-steps")).not.toBeNull(),
+    );
+
+    await click("Next");
+    expect(spy.mock.calls).toEqual([[1]]);
+    const raw = window.localStorage.getItem("form-builder:draft:compose-steps");
+    expect((JSON.parse(raw!) as { step?: number }).step).toBe(1);
+  });
+});
+
+describe("FormRenderer stepper orientation", () => {
+  it("defaults to a horizontal step list laid out along the top", () => {
+    render(<FormRenderer config={wizardConfig} onSubmit={vi.fn()} />);
+
+    const list = document.querySelector("ol")!;
+    expect(list.getAttribute("data-orientation")).toBe("horizontal");
+    expect(list.className).toContain("items-center");
+    expect(list.className).not.toContain("flex-col");
+    expect(list.parentElement!.className).not.toContain("flex-row");
+  });
+
+  it("vertical lays the list down the side, and keeps the semantics, aria-current and focus move", async () => {
+    render(<FormRenderer config={wizardConfig} onSubmit={vi.fn()} stepperOrientation="vertical" />);
+
+    const list = document.querySelector("ol")!;
+    expect(list.getAttribute("data-orientation")).toBe("vertical");
+    expect(list.className).toContain("flex-col");
+    // Only a rail once there is room beside the fields; it stacks below tablet.
+    expect(list.parentElement!.className).toContain("tablet:flex-row");
+    expect(list.getAttribute("aria-label")).toBe(defaultMessages.steps);
+    expect(list.querySelectorAll("li")).toHaveLength(3);
+    expect(currentStepText()).toContain("One");
+
+    await click("Next");
+    expect(currentStepText()).toContain("Two");
+    expect(document.activeElement).toBe(list);
+  });
+});
+
+describe("FormRenderer onDraftRestore", () => {
+  async function seedDraft(key: string, values: Record<string, unknown>, step?: number) {
+    const { draftConfigHash } = await import("../core/autosave");
+    window.localStorage.setItem(
+      `form-builder:draft:${key}`,
+      JSON.stringify({ hash: draftConfigHash(wizardConfig.fields), values, step }),
+    );
+  }
+
+  it("fires once with the restored step, and not again as the user moves", async () => {
+    window.localStorage.clear();
+    await seedDraft("restore-with-step", { first: "from draft" }, 1);
+    const onDraftRestore = vi.fn();
+    render(
+      <FormRenderer
+        config={wizardConfig}
+        onSubmit={vi.fn()}
+        autosave={{ key: "restore-with-step", debounceMs: 0 }}
+        onDraftRestore={onDraftRestore}
+      />,
+    );
+
+    await waitFor(() => expect(onDraftRestore).toHaveBeenCalledTimes(1));
+    expect(onDraftRestore).toHaveBeenCalledWith({ step: 1 });
+    expect(currentStepText()).toContain("Two");
+
+    await click("Next");
+    await click("Back");
+    expect(onDraftRestore).toHaveBeenCalledTimes(1);
+  });
+
+  it("announces the restore before reporting the step it moved the wizard to", async () => {
+    window.localStorage.clear();
+    await seedDraft("restore-order", { first: "from draft" }, 1);
+    const calls: string[] = [];
+    render(
+      <FormRenderer
+        config={wizardConfig}
+        onSubmit={vi.fn()}
+        autosave={{ key: "restore-order", debounceMs: 0 }}
+        onDraftRestore={({ step }) => calls.push(`restore:${step}`)}
+        onStepChange={(step) => calls.push(`change:${step}`)}
+      />,
+    );
+
+    await waitFor(() => expect(currentStepText()).toContain("Two"));
+    // A host that toasts on restore and navigates on change gets them in this
+    // order: you learn a restore happened, then you learn where it landed.
+    expect(calls).toEqual(["restore:1", "change:1"]);
+  });
+
+  it("fires with an undefined step when the restored draft carried none", async () => {
+    window.localStorage.clear();
+    await seedDraft("restore-no-step", { first: "from draft" });
+    const onDraftRestore = vi.fn();
+    render(
+      <FormRenderer
+        config={wizardConfig}
+        onSubmit={vi.fn()}
+        autosave={{ key: "restore-no-step", debounceMs: 0 }}
+        onDraftRestore={onDraftRestore}
+      />,
+    );
+
+    await waitFor(() =>
+      expect((screen.getByLabelText("First") as HTMLInputElement).value).toBe("from draft"),
+    );
+    expect(onDraftRestore).toHaveBeenCalledTimes(1);
+    expect(onDraftRestore).toHaveBeenCalledWith({ step: undefined });
+    expect(currentStepText()).toContain("One");
+  });
+
+  it("does not fire when there is nothing stored, nor when autosave is off", async () => {
+    window.localStorage.clear();
+    const fresh = vi.fn();
+    const { unmount } = render(
+      <FormRenderer
+        config={wizardConfig}
+        onSubmit={vi.fn()}
+        autosave={{ key: "restore-absent", debounceMs: 0 }}
+        onDraftRestore={fresh}
+      />,
+    );
+    await click("Next");
+    expect(fresh).not.toHaveBeenCalled();
+    unmount();
+
+    window.localStorage.clear();
+    const noAutosave = vi.fn();
+    render(<FormRenderer config={wizardConfig} onSubmit={vi.fn()} onDraftRestore={noAutosave} />);
+    await click("Next");
+    expect(noAutosave).not.toHaveBeenCalled();
+  });
+
+  it("does not fire for a draft whose config hash no longer matches", async () => {
+    window.localStorage.clear();
+    window.localStorage.setItem(
+      "form-builder:draft:restore-stale",
+      JSON.stringify({ hash: "not-the-current-hash", values: { first: "stale" }, step: 2 }),
+    );
+    const onDraftRestore = vi.fn();
+    render(
+      <FormRenderer
+        config={wizardConfig}
+        onSubmit={vi.fn()}
+        autosave={{ key: "restore-stale", debounceMs: 0 }}
+        onDraftRestore={onDraftRestore}
+      />,
+    );
+
+    await click("Next");
+    expect(onDraftRestore).not.toHaveBeenCalled();
+  });
+
+  // M3: the handover is keyed on the restore itself, not on the step's value,
+  // so a second draft naming the SAME step still moves the wizard back.
+  it("moves the wizard on a second restore that names the step it already restored once", async () => {
+    window.localStorage.clear();
+    await seedDraft("same-step-a", { first: "a" }, 1);
+    await seedDraft("same-step-b", { first: "b" }, 1);
+    const onDraftRestore = vi.fn();
+    const wizard = (key: string) => (
+      <FormRenderer
+        config={wizardConfig}
+        onSubmit={vi.fn()}
+        autosave={{ key, debounceMs: 0 }}
+        onDraftRestore={onDraftRestore}
+      />
+    );
+
+    const { rerender } = render(wizard("same-step-a"));
+    await waitFor(() => expect(currentStepText()).toContain("Two"));
+
+    await click("Next");
+    expect(currentStepText()).toContain("Three");
+
+    rerender(wizard("same-step-b"));
+    await waitFor(() => expect(onDraftRestore).toHaveBeenCalledTimes(2));
+    expect(onDraftRestore).toHaveBeenLastCalledWith({ step: 1 });
+    // The value of restoredStep never changed, so keying the handover on it
+    // would silently leave the visitor on "Three" while the draft said 1.
+    expect(currentStepText()).toContain("Two");
+  });
+
+  it("reports each restore when the draft key changes, without carrying the previous step over", async () => {
+    window.localStorage.clear();
+    await seedDraft("key-a", { first: "a" }, 2);
+    await seedDraft("key-b", { first: "b" });
+    const onDraftRestore = vi.fn();
+
+    const { rerender } = render(
+      <FormRenderer
+        config={wizardConfig}
+        onSubmit={vi.fn()}
+        autosave={{ key: "key-a", debounceMs: 0 }}
+        onDraftRestore={onDraftRestore}
+      />,
+    );
+    await waitFor(() => expect(onDraftRestore).toHaveBeenCalledTimes(1));
+    expect(onDraftRestore).toHaveBeenLastCalledWith({ step: 2 });
+
+    rerender(
+      <FormRenderer
+        config={wizardConfig}
+        onSubmit={vi.fn()}
+        autosave={{ key: "key-b", debounceMs: 0 }}
+        onDraftRestore={onDraftRestore}
+      />,
+    );
+    await waitFor(() => expect(onDraftRestore).toHaveBeenCalledTimes(2));
+    expect(onDraftRestore).toHaveBeenLastCalledWith({ step: undefined });
+
+    // The wizard is still on the step key-a asked for — a draft that names no
+    // step doesn't move it — but that stale step must not be re-persisted onto
+    // the new key, so editing here saves key-b with no step at all.
+    expect(currentStepText()).toContain("Three");
+    await act(async () => {
+      fireEvent.change(screen.getByLabelText("Third"), { target: { value: "edited" } });
+    });
+    await waitFor(() => {
+      const saved = JSON.parse(window.localStorage.getItem("form-builder:draft:key-b")!) as {
+        values: Record<string, unknown>;
+        step?: number;
+      };
+      expect(saved.values).toMatchObject({ third: "edited" });
+      expect(saved.step).toBeUndefined();
+    });
   });
 });

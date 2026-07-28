@@ -89,7 +89,12 @@ export const fieldTypes: Record<FieldType, FieldTypeCopy> = {
     description: "Draw-to-sign canvas (signature_pad); value is a PNG data URL.",
     note: "Not keyboard-accessible — drawing is inherently pointer/touch-only, with no keyboard fallback.",
   },
-  file: { label: "File", description: "File upload with progress; accept, maxSizeMB, and multiple." },
+  file: {
+    label: "File",
+    description:
+      "Drag-and-drop or browse, with a per-file rejection reason; accept, maxSizeMB, and multiple.",
+    note: "The field holds File objects and stops there — uploading them is the host's job, in onSubmit. There is no progress bar because the engine never transfers anything.",
+  },
   hidden: { label: "Hidden", description: "Not rendered; carries a static value along with the rest of the form's values." },
   static: { label: "Static text", description: "Non-field content block — heading, paragraph, or divider. Has no value." },
   group: {

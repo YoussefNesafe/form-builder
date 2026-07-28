@@ -4,6 +4,21 @@ import { DocsSection, DocsBody as P, DocsInlineCode as IC, DocsNote } from "@/co
 const id = "install";
 const title = "Install (one command)";
 
+/**
+ * How many shadcn primitives a full install copies. NOT the file count of
+ * `components/ui/` (20 today) — the CLI vendors only the primitives the
+ * registry's import closure actually reaches, so `alert`, `progress` and
+ * `segmented-control` sit in that folder without ever being installed. The
+ * authoritative number is `buildRegistryModel().primitives.size`, which is
+ * derived by scanning imports and can move whenever a field's imports change.
+ *
+ * A .tsx page can't call that Node-only scanner at render time, so the number
+ * is pinned here and machine-checked instead: scripts/build-registry.test.mjs
+ * reads this file and fails if the literal drifts from the real model. Change
+ * it in one place; the test names the new value.
+ */
+export const VENDORED_PRIMITIVE_COUNT = 17;
+
 const INSTALL_ALL = `# from a checkout of this repo, targeting another project on disk
 node cli/bin/form-builder.mjs --cwd ../my-app`;
 
@@ -19,8 +34,9 @@ function Section() {
         the one-command install.
       </DocsNote>
       <P>
-        One command copies the engine, every built-in field, the 17 vendored shadcn primitives, and the theme
-        tokens into a single self-contained <IC>&lt;base&gt;/form-builder/</IC> folder (<IC>src/</IC> if your
+        One command copies the engine, every built-in field, the {VENDORED_PRIMITIVE_COUNT} vendored shadcn
+        primitives, and the theme tokens into a single self-contained{" "}
+        <IC>&lt;base&gt;/form-builder/</IC> folder (<IC>src/</IC> if your
         project has one, else <IC>app/</IC>, else the project root). Every <IC>@/components/ui/*</IC> import
         inside the copy is rewritten to a relative path on the way in — zero alias setup to do, and the folder
         works regardless of your own <IC>tsconfig.json</IC>.
@@ -28,7 +44,7 @@ function Section() {
       <CodeBlock code={INSTALL_ALL} copy copyLabel="command" />
       <P>
         Only need a few field types? Install a scoped subset instead — it pulls in just the requested fields plus
-        whatever slice of the engine and primitives they actually need, not the full 17:
+        whatever slice of the engine and primitives they actually need, not the full {VENDORED_PRIMITIVE_COUNT}:
       </P>
       <CodeBlock code={INSTALL_SUBSET} copy copyLabel="command" />
       <P>

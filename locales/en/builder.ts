@@ -99,6 +99,14 @@ export const builder = {
       name: { label: "Name", help: "Unique key in the submitted values. No dots." },
       label: { label: "Label" },
       description: { label: "Description" },
+      badge: {
+        label: "Badge",
+        help: "Short note beside the label, e.g. \"Required in Germany\". Read out as part of the field's name; needs a label to sit next to.",
+      },
+      autocomplete: {
+        label: "Autocomplete",
+        help: "HTML autocomplete token, e.g. \"email\" or \"street-address\". Required by WCAG 1.3.5 on anything asking about the person filling the form.",
+      },
       placeholder: { label: "Placeholder" },
       required: { label: "Required" },
       disabled: { label: "Disabled" },
@@ -158,6 +166,14 @@ export const builder = {
         help: "Must be on or after the named date field's value. Not available on range fields.",
       },
       maxDateField: { label: "Not after field", help: "Must be on or before the named date field's value." },
+      pickerBounds: {
+        label: "Min/max in the calendar",
+        options: {
+          restrict: "Disable out-of-range days",
+          validate: "Allow the pick, show the error",
+        },
+        help: "Disabling is the default. Allowing the pick lets people choose a date and be told why it fails — useful for an age cutoff. The value is rejected either way.",
+      },
       minTime: { label: "Min time" },
       maxTime: { label: "Max time" },
       stepMinutes: { label: "Step (minutes)" },

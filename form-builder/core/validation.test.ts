@@ -135,17 +135,39 @@ describe("password complexity", () => {
 });
 
 describe("file", () => {
-  it("multiple: oversize file errors at the array root with the size message", () => {
+  it("multiple: oversize file errors at its own index with the size message", () => {
     const schema = schemaFor({ type: "file", name: "f", multiple: true, maxSizeMB: 1, required: true });
+    const small = new File([new ArrayBuffer(1024)], "small.bin");
     const big = new File([new ArrayBuffer(2 * 1024 * 1024)], "big.bin");
-    const result = schema.safeParse([big]);
+    const result = schema.safeParse([small, big]);
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.error.issues[0].path).toEqual([]);
+      expect(result.error.issues).toHaveLength(1);
+      expect(result.error.issues[0].path).toEqual([1]);
       expect(result.error.issues[0].message).toBe(messages.fileSize(1));
     }
-    const small = new File([new ArrayBuffer(1024)], "small.bin");
     expect(schema.safeParse([small]).success).toBe(true);
+  });
+
+  it("multiple: a non-File entry errors on its own without reaching the per-file checks", () => {
+    const schema = schemaFor({ type: "file", name: "f", multiple: true, accept: ".pdf", maxSizeMB: 1, required: true });
+    const result = schema.safeParse(["not a file"]);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues).toHaveLength(1);
+      expect(result.error.issues[0].path).toEqual([0]);
+      expect(result.error.issues[0].message).toBe(messages.required);
+    }
+  });
+
+  it("single: a non-File value errors without reaching the per-file checks", () => {
+    const schema = schemaFor({ type: "file", name: "f", accept: ".pdf", maxSizeMB: 1, required: true });
+    const result = schema.safeParse("not a file");
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues).toHaveLength(1);
+      expect(result.error.issues[0].message).toBe(messages.required);
+    }
   });
 });
 
@@ -794,6 +816,204 @@ describe("optionsFrom", () => {
   });
 });
 
+describe("file accept enforcement", () => {
+  const pdf = () => new File(["x"], "passport.pdf", { type: "application/pdf" });
+  const tiff = () => new File(["x"], "scan.tiff", { type: "image/tiff" });
+
+  it("rejects a single file whose type is not accepted, naming the format", () => {
+    const schema = schemaFor({ type: "file", name: "doc", required: true, accept: ".pdf,.jpg,.png" });
+    const result = schema.safeParse(tiff());
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0].message).toBe(
+        "scan.tiff isn't in a format we accept (TIFF) — please upload PDF, JPG or PNG",
+      );
+    }
+  });
+
+  it("writes MIME-token accepts out in prose rather than leaking the raw attribute", () => {
+    const schema = schemaFor({ type: "file", name: "doc", required: true, accept: "application/pdf,image/*" });
+    const result = schema.safeParse(new File(["x"], "notes.txt", { type: "text/plain" }));
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0].message).toBe(
+        "notes.txt isn't in a format we accept (TXT) — please upload PDF or images",
+      );
+    }
+  });
+
+  // "pdf" is the missing-dot typo fileAccept defends against: it matches nothing,
+  // so every file is rejected and this is the message the whole form shows.
+  it("drops the upload clause when accept names no format it can write out", () => {
+    const schema = schemaFor({ type: "file", name: "doc", required: true, accept: "pdf" });
+    const result = schema.safeParse(new File(["x"], "notes.txt", { type: "text/plain" }));
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0].message).toBe("notes.txt isn't in a format we accept (TXT)");
+      expect(result.error.issues[0].message).not.toMatch(/please upload\s*$/);
+    }
+  });
+
+  it("names no format for a file that has no extension, rather than an empty one", () => {
+    const schema = schemaFor({ type: "file", name: "doc", required: true, accept: ".pdf" });
+    const result = schema.safeParse(new File(["x"], "scan", { type: "image/tiff" }));
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0].message).toBe("scan isn't in a format we accept — please upload PDF");
+      expect(result.error.issues[0].message).not.toContain("undefined");
+    }
+  });
+
+  // The default copy treats "" and undefined alike, so only an override can see
+  // the difference — and an override interpolating the sentinel is exactly the
+  // "scan est un fichier " bug the undefined is there to prevent.
+  it("hands an override undefined for a missing extension, never an empty string", () => {
+    const seen: (string | undefined)[] = [];
+    const spying = mergeMessages({
+      fileTypeRejected: (name, extension, formats) => {
+        seen.push(extension);
+        return `${name} ${extension} ${formats}`;
+      },
+    });
+    const schema = toZodSchema({ type: "file", name: "doc", required: true, accept: ".pdf" }, spying);
+    schema!.safeParse(new File(["x"], "scan", { type: "image/tiff" }));
+    schema!.safeParse(tiff());
+    expect(seen).toEqual([undefined, "TIFF"]);
+  });
+
+  it("an optional field accepts nothing at all but still checks a file that is provided", () => {
+    const single = schemaFor({ type: "file", name: "doc", accept: ".pdf" });
+    expect(single.safeParse(undefined).success).toBe(true);
+    expect(single.safeParse(pdf()).success).toBe(true);
+    expect(single.safeParse(tiff()).success).toBe(false);
+
+    const many = schemaFor({ type: "file", name: "docs", multiple: true, accept: ".pdf" });
+    expect(many.safeParse(undefined).success).toBe(true);
+    expect(many.safeParse([pdf()]).success).toBe(true);
+    expect(many.safeParse([tiff()]).success).toBe(false);
+  });
+
+  it("accepts a file whose type is allowed", () => {
+    const schema = schemaFor({ type: "file", name: "doc", required: true, accept: ".pdf,.jpg,.png" });
+    expect(schema.safeParse(pdf()).success).toBe(true);
+  });
+
+  it("reports the offending index for multi-file uploads", () => {
+    const schema = schemaFor({ type: "file", name: "docs", required: true, multiple: true, accept: ".pdf" });
+    const result = schema.safeParse([pdf(), tiff()]);
+    expect(result.success).toBe(false);
+    if (!result.success) expect(result.error.issues[0].path).toEqual([1]);
+  });
+
+  it("reports each file's own problem at its own index — an oversize one and a wrong-type one", () => {
+    const big = new File([new Uint8Array(3 * 1024 * 1024)], "big.pdf", { type: "application/pdf" });
+    const schema = schemaFor({
+      type: "file",
+      name: "docs",
+      required: true,
+      multiple: true,
+      accept: ".pdf",
+      maxSizeMB: 2,
+    });
+    const result = schema.safeParse([big, tiff()]);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues.map((issue) => issue.path[0]).sort()).toEqual([0, 1]);
+    }
+  });
+
+  // Size and type are independent problems, so one file can fail both. Order is
+  // load-bearing, not incidental: both issues land on the same path, and
+  // react-hook-form keeps only the first per path — so the type message is the
+  // one the user actually reads. Type first, then size.
+  const bigTiff = () => new File([new Uint8Array(3 * 1024 * 1024)], "scan.tiff", { type: "image/tiff" });
+
+  it("multiple: a file that is both wrong-type and oversize gets both issues, type first", () => {
+    const schema = schemaFor({
+      type: "file",
+      name: "docs",
+      required: true,
+      multiple: true,
+      accept: ".pdf",
+      maxSizeMB: 2,
+    });
+    const result = schema.safeParse([bigTiff()]);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues).toHaveLength(2);
+      expect(result.error.issues.map((issue) => issue.path)).toEqual([[0], [0]]);
+      expect(result.error.issues[0].message).toContain("TIFF");
+      expect(result.error.issues[1].message).toBe(messages.fileSize(2));
+    }
+  });
+
+  it("single: a file that is both wrong-type and oversize gets both issues at the root, type first", () => {
+    const schema = schemaFor({ type: "file", name: "doc", required: true, accept: ".pdf", maxSizeMB: 2 });
+    const result = schema.safeParse(bigTiff());
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues).toHaveLength(2);
+      expect(result.error.issues.map((issue) => issue.path)).toEqual([[], []]);
+      expect(result.error.issues[0].message).toContain("TIFF");
+      expect(result.error.issues[1].message).toBe(messages.fileSize(2));
+    }
+  });
+
+  // The two tests above pass even with both issues sharing one path array,
+  // because the sync parse builds each issue's final path without touching the
+  // array it was given. The async parse prepends the parent key in place, so a
+  // shared array is prefixed once per issue — and the async parse is the one
+  // react-hook-form's resolver calls. Asserting the field name is what makes
+  // the difference visible: unfixed, this reads ["docs", "docs", 0].
+  it("multiple: keeps both issues on the same path under the async parse the resolver uses", async () => {
+    const schema = buildFieldsSchema(
+      [{ type: "file", name: "docs", required: true, multiple: true, accept: ".pdf", maxSizeMB: 2 }],
+      messages,
+    );
+    const result = await schema.safeParseAsync({ docs: [bigTiff()] });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues.map((issue) => issue.path)).toEqual([
+        ["docs", 0],
+        ["docs", 0],
+      ]);
+    }
+  });
+
+  // Single-file fields were corrupted by the same shared array, via the `[]`
+  // that fileSchema passes: unfixed this reads [["doc","doc"], ["doc","doc"]].
+  // Pinned separately because the two call sites pass different paths and only
+  // this one proves a field with no index is affected too.
+  it("single: keeps both issues on the field's own path under the async parse", async () => {
+    const schema = buildFieldsSchema(
+      [{ type: "file", name: "doc", required: true, accept: ".pdf", maxSizeMB: 2 }],
+      messages,
+    );
+    const result = await schema.safeParseAsync({ doc: bigTiff() });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues.map((issue) => issue.path)).toEqual([["doc"], ["doc"]]);
+    }
+  });
+
+  it("multiple: one broken file does not disturb another's path", async () => {
+    const schema = buildFieldsSchema(
+      [{ type: "file", name: "docs", required: true, multiple: true, accept: ".pdf", maxSizeMB: 2 }],
+      messages,
+    );
+    const bigPdf = new File([new Uint8Array(3 * 1024 * 1024)], "statement.pdf", { type: "application/pdf" });
+    const result = await schema.safeParseAsync({ docs: [bigPdf, bigTiff()] });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues.map((issue) => [issue.path, issue.message])).toEqual([
+        [["docs", 0], messages.fileSize(2)],
+        [["docs", 1], expect.stringContaining("TIFF")],
+        [["docs", 1], messages.fileSize(2)],
+      ]);
+    }
+  });
+});
+
 describe("optionsFrom blank source", () => {
   it("a blank source allows nothing — stale pre-filled values error, even against an \"undefined\" branch key", () => {
     const fields: FieldConfig[] = [
@@ -808,5 +1028,164 @@ describe("optionsFrom blank source", () => {
     const result = schema.safeParse({ country: undefined, city: "nyc" });
     expect(result.success).toBe(false);
     if (!result.success) expect(result.error.issues[0].message).toBe(messages.invalidOption);
+  });
+});
+
+describe("date message override", () => {
+  const field = {
+    type: "date" as const,
+    name: "dob",
+    required: true,
+    maxDate: "2008-07-27",
+    message: "You must be 18 or older to open an account.",
+  };
+
+  it("uses the override for a bound violation", () => {
+    const result = schemaFor(field).safeParse("2015-01-01");
+    expect(result.success).toBe(false);
+    if (!result.success) expect(result.error.issues[0].message).toBe(field.message);
+  });
+
+  it("keeps the generic message for an unparseable date", () => {
+    const result = schemaFor(field).safeParse("not-a-date");
+    expect(result.success).toBe(false);
+    if (!result.success) expect(result.error.issues[0].message).toBe(messages.invalidDate);
+  });
+
+  it("still passes a date inside the bound", () => {
+    expect(schemaFor(field).safeParse("1990-03-14").success).toBe(true);
+  });
+
+  it("covers both bounds with the one sentence", () => {
+    const schema = schemaFor({
+      type: "date",
+      name: "settles",
+      required: true,
+      minDate: "2026-01-01",
+      maxDate: "2026-01-31",
+      message: "Settlement must fall inside January 2026.",
+    });
+    const early = schema.safeParse("2025-12-31");
+    const late = schema.safeParse("2026-02-01");
+    expect(early.success).toBe(false);
+    expect(late.success).toBe(false);
+    if (!early.success && !late.success) {
+      expect(early.error.issues[0].message).toBe("Settlement must fall inside January 2026.");
+      expect(late.error.issues[0].message).toBe("Settlement must fall inside January 2026.");
+    }
+  });
+
+  it("leaves the cross-field minDateField/maxDateField messages alone", () => {
+    const schema = buildFieldsSchema(
+      [
+        { type: "date", name: "start", label: "Start date", required: true },
+        {
+          type: "date",
+          name: "end",
+          required: true,
+          minDate: "2026-01-01",
+          minDateField: "start",
+          message: "Pick a date in the current plan year.",
+        },
+      ],
+      messages,
+    );
+    const boundViolation = schema.safeParse({ start: "2025-06-01", end: "2025-07-01" });
+    expect(boundViolation.success).toBe(false);
+    if (!boundViolation.success) {
+      expect(boundViolation.error.issues[0].message).toBe("Pick a date in the current plan year.");
+    }
+    const crossViolation = schema.safeParse({ start: "2026-06-01", end: "2026-05-01" });
+    expect(crossViolation.success).toBe(false);
+    if (!crossViolation.success) {
+      expect(crossViolation.error.issues[0].message).toBe(messages.dateAfter("Start date"));
+    }
+  });
+
+  it("when a bound and a cross-field rule both fail, the override is reported first", () => {
+    const schema = buildFieldsSchema(
+      [
+        { type: "date", name: "start", label: "Start date", required: true },
+        {
+          type: "date",
+          name: "end",
+          required: true,
+          minDate: "2026-01-01",
+          minDateField: "start",
+          message: "Pick a date in the current plan year.",
+        },
+      ],
+      messages,
+    );
+    // Before 2026-01-01 (static bound) and before "start" (cross-field): both fail.
+    const result = schema.safeParse({ start: "2026-06-01", end: "2025-05-01" });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues.map((issue) => [issue.path, issue.message])).toEqual([
+        [["end"], "Pick a date in the current plan year."],
+        [["end"], messages.dateAfter("Start date")],
+      ]);
+    }
+  });
+
+  it("range: the override covers a bound violation on either endpoint", () => {
+    const schema = schemaFor({
+      type: "date",
+      name: "stay",
+      range: true,
+      required: true,
+      minDate: "2026-01-01",
+      maxDate: "2026-01-31",
+      message: "Bookings are open for January 2026 only.",
+    });
+    const earlyFrom = schema.safeParse({ from: "2025-12-30", to: "2026-01-10" });
+    const lateTo = schema.safeParse({ from: "2026-01-10", to: "2026-02-10" });
+    expect(earlyFrom.success).toBe(false);
+    expect(lateTo.success).toBe(false);
+    if (!earlyFrom.success && !lateTo.success) {
+      expect(earlyFrom.error.issues[0].message).toBe("Bookings are open for January 2026 only.");
+      expect(earlyFrom.error.issues[0].path).toEqual(["from"]);
+      expect(lateTo.error.issues[0].message).toBe("Bookings are open for January 2026 only.");
+      expect(lateTo.error.issues[0].path).toEqual(["to"]);
+    }
+  });
+
+  it("range: the override does not replace the missing-to or from-after-to messages", () => {
+    const schema = schemaFor({
+      type: "date",
+      name: "stay",
+      range: true,
+      required: true,
+      minDate: "2026-01-01",
+      maxDate: "2026-01-31",
+      message: "Bookings are open for January 2026 only.",
+    });
+    const missingTo = schema.safeParse({ from: "2026-01-10" });
+    expect(missingTo.success).toBe(false);
+    if (!missingTo.success) expect(missingTo.error.issues[0].message).toBe(messages.required);
+    const reversed = schema.safeParse({ from: "2026-01-20", to: "2026-01-10" });
+    expect(reversed.success).toBe(false);
+    if (!reversed.success) expect(reversed.error.issues[0].message).toBe(messages.invalidDate);
+  });
+
+  it("range: a reversed range that also breaks a bound reports the override and the generic message", () => {
+    const schema = schemaFor({
+      type: "date",
+      name: "stay",
+      range: true,
+      required: true,
+      minDate: "2026-01-01",
+      maxDate: "2026-01-31",
+      message: "Bookings are open for January 2026 only.",
+    });
+    const result = schema.safeParse({ from: "2026-02-20", to: "2025-12-10" });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues.map((issue) => [issue.path, issue.message])).toEqual([
+        [["from"], "Bookings are open for January 2026 only."],
+        [["to"], "Bookings are open for January 2026 only."],
+        [[], messages.invalidDate],
+      ]);
+    }
   });
 });

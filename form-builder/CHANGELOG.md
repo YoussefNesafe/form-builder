@@ -37,6 +37,131 @@ publishable package appears in this repo (multi-package versioning is where
 changesets earns its keep) or if this changelog becomes a bottleneck in
 practice.
 
+## [Unreleased]
+
+Nothing exported was removed or renamed, and no existing `FormConfig` needs
+editing to keep working, so this is a minor bump — but read **Changed** first:
+one behaviour tightened, and a config that already sets `accept` will start
+rejecting files it used to accept. **Cut this as `0.2.0`**. `form-builder/package.json` is deliberately still `0.1.4`: this section
+records the work so it does not have to be reconstructed from `git log`, but
+bumping the version and pushing `engine-v0.2.0` is the release act and stays
+with whoever performs it. To cut: bump the version, rename this heading to
+`## [0.2.0] - <date>`, add its compare link at the foot (the `[Unreleased]`
+link already there points at `HEAD`).
+
+### Changed
+
+- **`accept` is now enforced by validation, per file.** Previously `accept`
+  only shaped the browser's file picker, which a drag-and-drop bypasses; the
+  schema now rejects a non-matching file and names the file, its format, and
+  the accepted formats in the message. **A config that already sets `accept`
+  now fails submissions it used to pass** — this is the one behaviour in this
+  release that tightens rather than adds, and the only upgrade risk here.
+  Tokens are read the way a file picker reads them (`.pdf` against the name,
+  `image/*` and `application/pdf` against the MIME type); an uninterpretable
+  token matches nothing, so a typo in `accept` narrows the selection instead
+  of silently opening it up. Type is checked before size, and every file is
+  judged independently of the others.
+
+### Added
+
+- **`AutosaveOptions.storage`** — where drafts live: `"local"` (the default,
+  unchanged), `"session"`, or any object implementing the newly exported
+  `DraftStorage` (`getItem`/`setItem`/`removeItem`). `DraftStorage` and
+  `DraftStorageOption` are exported so a custom store can be annotated
+  without reaching into `core/`. `clearDraft(idOrKey, storage?)` takes the
+  same option, so a draft written to a non-default store can be cleared from
+  it. Note the SSR asymmetry: the built-in `"local"`/`"session"` stores are
+  skipped when there is no `window`, but a custom store is used as given and
+  will therefore be read and written during server rendering. Keep the object
+  referentially stable (module scope or `useMemo`) — a fresh one each render
+  re-subscribes the autosave effect.
+- **`acceptedFormatsLabel(accept)`** — the accepted formats as prose
+  (`".pdf,.jpg,image/*"` → `"PDF, JPG or images"`). Exported so a
+  custom file-taking field type can write the same hint the built-in `file`
+  field writes rather than re-splitting `accept` at the call site. Returns
+  `""` when `accept` names no format at all; render that as a clause you can
+  drop, never interpolated into a sentence.
+- **Six `Messages` keys**, for the above and for the upload UI:
+  `fileTypeRejected`, `fileRejected`, `fileHint`, `dropFiles`,
+  `filesSelected`, `oneFileOnly`. Messages are taken as `Partial<Messages>`
+  everywhere, so no consumer needs to change anything; the one exception is a
+  consumer who hand-authored a *complete* `Messages` literal instead of
+  spreading `defaultMessages`, who will now be asked for the new keys.
+- **`date.message`** — replaces the generic bound text on a `minDate`/`maxDate`
+  violation for that field, so a date expressing a rule can state the rule
+  ("You must be 18 or older to open an account"). One sentence serves both
+  bounds, and on `range: true` both endpoints. `minDateField`/`maxDateField`
+  keep their own messages, which already name the other field. An unparseable
+  value still gets `messages.invalidDate`. Must be non-empty
+  (`validateFormConfig`-enforced).
+- **`date.pickerBounds`** — `"restrict"` (the default, unchanged: out-of-range
+  days disabled and month/year navigation clamped) or `"validate"` (those days
+  stay selectable and picking one fails with `message`, and the navigable
+  window widens to reach the bounds). Picker only — the schema rejects an
+  out-of-range value under either setting, so this never widens what a form
+  accepts. `minDateField`/`maxDateField` never shaped the calendar under
+  either setting.
+- **`BaseField.badge`** — a short annotation rendered beside any field's label
+  ("Required in Germany"), and, unlike the required `*`, part of the field's
+  accessible name. Read off the field runtime context, so custom types
+  registered with `registerField` inherit it without passing anything through.
+  Needs a `label` to sit beside.
+- **`BaseField.autocomplete`** — the control's HTML `autocomplete` attribute,
+  which is what **WCAG 2.2 SC 1.3.5 Identify Input Purpose (AA)** requires on
+  any field collecting information about the person filling the form. Before
+  this there was no way to set it at all, so every config built on this engine
+  failed 1.3.5 on its name, email and address fields with no way out short of
+  forking a field component.
+
+  Typed `string`, deliberately not a union of the 1.3.5 purposes. The
+  attribute's value is a *grammar* — an optional `section-*` group, an optional
+  `shipping`/`billing`, an optional `home`/`work`/`mobile`/`fax`/`pager`, then
+  the purpose token, then an optional `webauthn`; plus the standalone
+  `on`/`off`. The 1.3.5 list is only the purpose slot, so a union of it would
+  reject `"section-owner-1 name"`, `"shipping street-address"`, `"mobile tel"`
+  and `"off"`, all valid HTML — and the first of those is what a repeating
+  `group` of people needs to stop a browser filling every row alike. A wrong
+  token is caught by a test on the config, not by the type.
+
+  Reaches the DOM on the types whose control is a native text-entry input:
+  `text`, `email`, `password`, `textarea`, `number`, `masked`, `time`, `phone`,
+  `otp`. On `date`, `select` and `country` there is no input to carry it (a
+  popover behind a `<button>`), and HTML ignores the attribute on `file`,
+  `checkbox`/`switch`, `radio` and `segmented` — set there it is inert, not an
+  error. `phone` and `otp` already default to `"tel"` and `"one-time-code"`;
+  leaving `autocomplete` unset preserves both.
+
+### Rendered UI layer
+
+Copy-in/registry distribution only — not published to npm, and outside this
+package's semver contract (see "Not included (by design)" under 0.1.0).
+Recorded here because a copy-in consumer has no other changelog.
+
+- `FormRenderer` gained **`step`** and **`onStepChange`**, which *share* the
+  wizard step with a host router rather than controlling it: the wizard still
+  advances on its own validation gate, clamps an out-of-range index, redirects
+  away from a step hidden by `visibleWhen`, and reports where it actually
+  landed. `onStepChange` never echoes back a step you passed as `step`, and
+  does not fire for the step the wizard mounts on. A restored autosave draft's
+  step beats `step`. Autosave records the step over a separate internal
+  channel, so driving the wizard from a router never costs a draft its resume
+  point.
+- `FormRenderer` gained **`stepperOrientation`** — `"horizontal"` (default) or
+  `"vertical"`, a left rail from the tablet breakpoint up that stacks below
+  it. The list markup, its accessible name, `aria-current="step"` and the
+  focus move on step change are identical in both. Exported type
+  `StepperOrientation` (`index.ts` only).
+- `FormRenderer` gained **`onDraftRestore(info)`**, called once each time
+  autosave restores a draft into the form, after the values are applied;
+  `info.step` is the step that draft recorded, if any. Exported type
+  `DraftRestoreInfo` (`index.ts` only).
+- New **`FileDropzone`** (`index.ts` only) — a drag-and-drop surface wrapping a
+  real `<input type="file">`, so the platform picker still opens from the
+  keyboard with no invented ARIA and no mouse-only capability. The built-in
+  `file` field now uses it and shows a per-file accepted/rejected status,
+  with a reason on each rejected file.
+
 ## [0.1.4] - 2026-07-20
 
 ### Fixed

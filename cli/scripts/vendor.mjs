@@ -57,7 +57,17 @@ const FORM_BUILDER_SRC = path.join(REPO_ROOT, "form-builder");
 const UI_SRC = path.join(REPO_ROOT, "components", "ui");
 const VENDOR_DIR = path.join(CLI_ROOT, "vendor");
 
-const isTestFile = (relPath) => /\.test\.(ts|tsx)$/.test(relPath);
+// Deliberately IDENTICAL to scripts/build-registry.mjs's filter of the same
+// name — both test spellings this repo uses: `.test.ts(x)` runtime tests and
+// `.test-d.ts(x)` type tests. Kept as an independent derivation rather than a
+// shared import because this script must stay runnable from a bare tarball
+// checkout; a guard in scripts/build-registry.test.mjs asserts neither
+// spelling reaches cli/vendor/. The mirror is wider than the shipped file
+// list (install.mjs picks specific files out of it by relative path), so a
+// leak here bloats the published tarball rather than reaching a consumer's
+// disk — but the header below promises parity with build-registry.mjs, and
+// that promise is the thing under test.
+const isTestFile = (relPath) => /\.test(-d)?\.(ts|tsx)$/.test(relPath);
 
 function copyFormBuilderSource() {
   const outDir = path.join(VENDOR_DIR, "form-builder");

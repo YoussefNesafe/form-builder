@@ -274,6 +274,114 @@ describe("useDynamicForm", () => {
     }
   });
 
+  it("autosave: storage 'session' round-trips through sessionStorage, never localStorage", async () => {
+    window.localStorage.clear();
+    window.sessionStorage.clear();
+    const draftConfig: FormConfig = { id: "draft-form", fields: [{ type: "text", name: "name" }] };
+    const first = renderHook(() =>
+      useDynamicForm(draftConfig, { autosave: { debounceMs: 0, storage: "session" } }),
+    );
+    await act(async () => {
+      first.result.current.form.setValue("name", "Ada");
+    });
+    await waitFor(() =>
+      expect(window.sessionStorage.getItem("form-builder:draft:draft-form")).toContain("Ada"),
+    );
+    expect(window.localStorage.getItem("form-builder:draft:draft-form")).toBeNull();
+    first.unmount();
+
+    const second = renderHook(() =>
+      useDynamicForm(draftConfig, { autosave: { debounceMs: 0, storage: "session" } }),
+    );
+    await waitFor(() => expect(second.result.current.form.getValues("name")).toBe("Ada"));
+
+    act(() => second.result.current.draft!.clear());
+    expect(window.sessionStorage.getItem("form-builder:draft:draft-form")).toBeNull();
+  });
+
+  it("autosave: explicit storage 'local' writes to localStorage only", async () => {
+    window.localStorage.clear();
+    window.sessionStorage.clear();
+    const draftConfig: FormConfig = { id: "draft-form", fields: [{ type: "text", name: "name" }] };
+    const { result } = renderHook(() =>
+      useDynamicForm(draftConfig, { autosave: { debounceMs: 0, storage: "local" } }),
+    );
+    await act(async () => {
+      result.current.form.setValue("name", "Ada");
+    });
+    await waitFor(() =>
+      expect(window.localStorage.getItem("form-builder:draft:draft-form")).toContain("Ada"),
+    );
+    expect(window.sessionStorage.getItem("form-builder:draft:draft-form")).toBeNull();
+  });
+
+  it("autosave: noteStep and the unmount flush honour the selected storage", async () => {
+    window.localStorage.clear();
+    window.sessionStorage.clear();
+    vi.useFakeTimers();
+    try {
+      const draftConfig: FormConfig = { id: "draft-form", fields: [{ type: "text", name: "name" }] };
+      const { result, unmount } = renderHook(() =>
+        useDynamicForm(draftConfig, { autosave: { debounceMs: 60_000, storage: "session" } }),
+      );
+      await act(async () => {});
+      act(() => {
+        result.current.form.setValue("name", "Ada");
+      });
+      act(() => {
+        vi.advanceTimersByTime(120_000);
+      });
+      // noteStep: reads hasDraft() then re-saves, both against sessionStorage.
+      act(() => result.current.draft!.noteStep(3));
+      expect(window.sessionStorage.getItem("form-builder:draft:draft-form")).toContain('"step":3');
+
+      // Unmount with a save still pending: the cleanup flush must also use session.
+      act(() => {
+        result.current.form.setValue("name", "Grace");
+      });
+      unmount();
+      expect(window.sessionStorage.getItem("form-builder:draft:draft-form")).toContain("Grace");
+      expect(window.localStorage.getItem("form-builder:draft:draft-form")).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("autosave: an unstable storage object does not flush the pending debounced save on re-render", async () => {
+    vi.useFakeTimers();
+    try {
+      const draftConfig: FormConfig = { id: "draft-form", fields: [{ type: "text", name: "name" }] };
+      const store = new Map<string, string>();
+      const { result, rerender } = renderHook(() =>
+        useDynamicForm(draftConfig, {
+          autosave: {
+            debounceMs: 60_000,
+            // Deliberately a fresh object every render — the save effect must not
+            // tear down (and flush) just because storage identity changed.
+            storage: {
+              getItem: (k: string) => store.get(k) ?? null,
+              setItem: (k: string, v: string) => void store.set(k, v),
+              removeItem: (k: string) => void store.delete(k),
+            },
+          },
+        }),
+      );
+      await act(async () => {});
+      act(() => {
+        result.current.form.setValue("name", "half typed");
+      });
+      act(() => rerender());
+      expect(store.size).toBe(0);
+
+      act(() => {
+        vi.advanceTimersByTime(120_000);
+      });
+      expect(store.get("form-builder:draft:draft-form")).toContain("half typed");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("no autosave option: no draft api, nothing written", async () => {
     window.localStorage.clear();
     const { result } = renderHook(() => useDynamicForm(config));
