@@ -71,6 +71,8 @@ local draft.
 
 The engine is copy-in, not an npm package — same model as shadcn/ui.
 
+(The `form-builder-nextjs` package on npm is that installer CLI — it does the copying for you and is not a runtime dependency.).
+
 1. Copy the `form-builder/` folder into your Next.js project (or grab a
    ready-made `form-builder.zip` from the **Download** button on the
    [Installation docs page](https://form-builder.youssefnesafe.com/docs/installation)

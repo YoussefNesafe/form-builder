@@ -39,15 +39,20 @@ practice.
 
 ## [Unreleased]
 
+Nothing yet.
+
+## [0.2.0] - 2026-07-28
+
 Nothing exported was removed or renamed, and no existing `FormConfig` needs
 editing to keep working, so this is a minor bump — but read **Changed** first:
 one behaviour tightened, and a config that already sets `accept` will start
-rejecting files it used to accept. **Cut this as `0.2.0`**. `form-builder/package.json` is deliberately still `0.1.4`: this section
-records the work so it does not have to be reconstructed from `git log`, but
-bumping the version and pushing `engine-v0.2.0` is the release act and stays
-with whoever performs it. To cut: bump the version, rename this heading to
-`## [0.2.0] - <date>`, add its compare link at the foot (the `[Unreleased]`
-link already there points at `HEAD`).
+rejecting files it used to accept.
+
+Shipped to consumers by the CLI installer (`form-builder-nextjs@0.2.0`, Unit B
+— it vendors this source). The npm engine package (Unit A) is still unpublished
+and carries no `engine-v0.2.0` tag: its release workflow stays inert until the
+placeholder package name is replaced with an owned one, so the version here is
+the record of what the copy-in layer ships, not a registry release.
 
 ### Changed
 
@@ -359,7 +364,8 @@ rendering-layer coupling (`core/boundary.test.ts` at the source level;
   reserved as an empty placeholder (a reserved-but-broken entry was cut in
   review as a footgun).
 
-[Unreleased]: https://github.com/YoussefNesafe/form-builder/compare/engine-v0.1.4...HEAD
+[Unreleased]: https://github.com/YoussefNesafe/form-builder/compare/cli-v0.2.0...HEAD
+[0.2.0]: https://github.com/YoussefNesafe/form-builder/compare/cli-v0.1.6...cli-v0.2.0
 [0.1.4]: https://github.com/YoussefNesafe/form-builder/compare/engine-v0.1.3...engine-v0.1.4
 [0.1.3]: https://github.com/YoussefNesafe/form-builder/compare/engine-v0.1.2...engine-v0.1.3
 [0.1.2]: https://github.com/YoussefNesafe/form-builder/compare/engine-v0.1.0...engine-v0.1.2
